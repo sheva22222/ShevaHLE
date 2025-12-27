@@ -26,7 +26,7 @@ use super::util::{
     ParamType,
 };
 use super::GLES;
-use crate::gles::gles11_raw::GetFixedv
+use crate::gles::gles11_raw::GetFixedv;
 use crate::window::{GLContext, GLVersion, Window};
 use std::collections::HashSet;
 use std::ffi::CStr;
