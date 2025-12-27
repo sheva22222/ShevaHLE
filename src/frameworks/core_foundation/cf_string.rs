@@ -403,8 +403,10 @@ fn CFStringGetBytes(
 
     let sub: id = msg![env; string substringWithRange:ns_range];
 
+    let max_len: NSUInteger = max_buf_len.try_into().unwrap();
+
     let success: bool =
-        msg![env; sub getCString:buffer maxLength:max_buf_len as NSUInteger encoding:encoding];
+        msg![env; sub getCString:buffer maxLength:max_len encoding:encoding];
 
     if success {
         let len = CFStringGetLength(env, sub);
