@@ -379,6 +379,17 @@ fn glScissor(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height: 
         gles.Scissor(x, y, width, height)
     })
 }
+fn glGetFixedv(env: &mut Environment, pname: GLenum, params: MutPtr<GLfixed>) {
+    // These are explicitly excluded in glGetFloatv, so mirror behavior
+    // assert_ne!(gles11::NUM_COMPRESSED_TEXTURE_FORMATS, pname);
+    // assert_ne!(gles11::COMPRESSED_TEXTURE_FORMATS, pname);
+
+    with_ctx_and_mem(env, |gles, mem| {
+        let params = mem.ptr_at_mut(params, 16 /* upper bound */);
+        unsafe { gles.GetFixedv(pname, params) };
+    });
+}
+
 fn glViewport(env: &mut Environment, x: GLint, y: GLint, width: GLsizei, height: GLsizei) {
     // apply scale hack: assume framebuffer's size is larger than the app thinks
     // and scale viewport appropriately
@@ -1458,6 +1469,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glBlendFunc(_, _)),
     export_c_func!(glBlendEquationOES(_)),
     export_c_func!(glColorMask(_, _, _, _)),
+    export_c_func!(glGetFixedv(_, _)),
     export_c_func!(glClipPlanef(_, _)),
     export_c_func!(glClipPlanex(_, _)),
     export_c_func!(glCullFace(_)),
