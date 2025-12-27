@@ -12,7 +12,7 @@ use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::NSUInteger;
-use crate::mem::{ConstVoidPtr, MutPtr, Ptr};
+use crate::mem::{ConstVoidPtr, MutPtr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 use std::ops::Add;
@@ -102,13 +102,18 @@ fn CFArrayGetValueAtIndex(env: &mut Environment, array: CFArrayRef, idx: CFIndex
 fn CFArrayGetValues(
     env: &mut Environment,
     array: CFArrayRef,
-    range: super::CFRange,
-    values: Ptr<ConstVoidPtr, true>,
+    range: CFRange,
+    values: MutPtr<ConstVoidPtr>,
 ) {
-    for i in 0..range.length {
-        let idx = range.location + i;
-        let value = CFArrayGetValueAtIndex(env, array, idx);
-        env.mem.write(values + i.try_into().unwrap(), value);
+    let count = range.length;
+
+    let mut out: MutPtr<ConstVoidPtr> = values;
+
+    for i in 0..count {
+        let idx = (range.location + i) as NSUInteger;
+        let obj: id = msg![env; array objectAtIndex:idx];
+
+        env.mem.write(out + i, obj.cast().cast_const());
     }
 }
 
