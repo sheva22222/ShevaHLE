@@ -501,7 +501,7 @@ fn strsignal(env: &mut Environment, sig: i32) -> ConstPtr<u8> {
     };
 
     env.mem
-        .alloc_and_write_bytes(s)
+        .alloc_and_write(s)
         .cast() // MutPtr<u8> → ConstPtr<u8>
 }
 
