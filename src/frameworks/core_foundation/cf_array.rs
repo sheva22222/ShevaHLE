@@ -62,7 +62,8 @@ fn CFArrayCreate(
 
     if num_values > 0 {
         for i in 0..num_values {
-            let value = unsafe { values.add((i as usize).try_into().unwrap()).read() };
+            let value: ConstVoidPtr = env.mem.read(values + i);
+            env.mem.write(values + i, value);
             let obj: id = value.cast().cast_mut();
             msg![env; array addObject:obj];
         }
