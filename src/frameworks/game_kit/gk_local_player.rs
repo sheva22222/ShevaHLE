@@ -27,19 +27,3 @@ pub const CONSTANTS: ConstantExports = &[(
     "_GKPlayerAuthenticationDidChangeNotificationName",
     HostConstant::NSString(GKPlayerAuthenticationDidChangeNotificationName),
 )];
-
-@end
-
-};
-
-
-};
-
-pub const GKPlayerAuthenticationDidChangeNotificationName: &str =
-    "GKPlayerAuthenticationDidChangeNotificationName";
-
-/// `NSNotificationName` values.
-pub const CONSTANTS: ConstantExports = &[(
-    "_GKPlayerAuthenticationDidChangeNotificationName",
-    HostConstant::NSString(GKPlayerAuthenticationDidChangeNotificationName),
-)];
