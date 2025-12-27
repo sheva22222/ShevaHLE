@@ -62,7 +62,7 @@ fn CFArrayCreate(
 
     if num_values > 0 {
         for i in 0..num_values {
-            let value = unsafe { values.add(i as usize).read() };
+            let value = unsafe { values.add((i as usize).try_into().unwrap()).read() };
             let obj: id = value.cast().cast_mut();
             msg![env; array addObject:obj];
         }
@@ -103,7 +103,7 @@ fn CFArrayGetValues(
         let idx = range.location + i;
         let value = CFArrayGetValueAtIndex(env, array, idx);
         unsafe {
-            values.add(i as usize).write(value);
+            values.add((i as usize).try_into().unwrap()).write(value);
         }
     }
 }
