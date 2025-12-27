@@ -33,6 +33,19 @@ fn CFArrayCreateMutable(
     msg_class![env; _touchHLE_NSMutableArray_non_retaining new]
 }
 
+fn CFArrayCreateMutableCopy(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    capacity: CFIndex,
+    array: CFArrayRef,
+) -> CFMutableArrayRef {
+    assert!(allocator == kCFAllocatorDefault);
+    assert!(capacity == 0); // fixed-capacity arrays not supported yet
+
+    let copy: id = msg![env; array mutableCopy];
+    copy
+}
+
 fn CFArrayCreate(
     env: &mut Environment,
     allocator: CFAllocatorRef,
@@ -58,6 +71,17 @@ fn CFArrayCreate(
     }
 
     array
+}
+
+fn CFArrayCreateCopy(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    array: CFArrayRef,
+) -> CFArrayRef {
+    assert!(allocator == kCFAllocatorDefault);
+
+    let copy: id = msg![env; array copy];
+    copy
 }
 
 fn CFArrayGetCount(env: &mut Environment, array: CFArrayRef) -> CFIndex {
@@ -104,6 +128,18 @@ fn CFArrayInsertValueAtIndex(
     msg![env; array insertObject:value atIndex:idx]
 }
 
+fn CFArraySetValueAtIndex(
+    env: &mut Environment,
+    array: CFMutableArrayRef,
+    idx: CFIndex,
+    value: ConstVoidPtr,
+) {
+    let idx: NSUInteger = idx.try_into().unwrap();
+    let value: id = value.cast().cast_mut();
+
+    msg![env; array replaceObjectAtIndex:idx withObject:value]
+}
+
 fn CFArrayRemoveValueAtIndex(env: &mut Environment, array: CFMutableArrayRef, idx: CFIndex) {
     let idx: NSUInteger = idx.try_into().unwrap();
     msg![env; array removeObjectAtIndex:idx]
@@ -145,14 +181,18 @@ fn CFArrayGetFirstIndexOfValue(
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFArrayCreateMutable(_, _, _)),
     export_c_func!(CFArrayCreate(_, _, _, _)),
+    export_c_func!(CFArrayCreateCopy(_, _)),
+    export_c_func!(CFArrayCreateMutableCopy(_, _, _)),
     export_c_func!(CFArrayGetCount(_)),
     export_c_func!(CFArrayGetValueAtIndex(_, _)),
     export_c_func!(CFArrayGetValues(_, _, _)),
     export_c_func!(CFArrayAppendValue(_, _)),
     export_c_func!(CFArrayInsertValueAtIndex(_, _, _)),
+    export_c_func!(CFArraySetValueAtIndex(_, _, _)),
     export_c_func!(CFArrayRemoveValueAtIndex(_, _)),
     export_c_func!(CFArrayRemoveAllValues(_)),
     export_c_func!(CFArrayContainsValue(_, _, _)),
     export_c_func!(CFArrayGetFirstIndexOfValue(_, _, _)),
 ];
+
 
