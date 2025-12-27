@@ -6,16 +6,40 @@
 //! `GKLocalPlayer`.
 
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::objc::{objc_classes, ClassExports};
+use crate::Environment;
+use crate::objc::{id, msg, objc_classes};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-// TODO: proper inheritance chain
 @implementation GKLocalPlayer: NSObject
-// TODO
+
++ (id)localPlayer {
+    let obj: id = msg![env; super alloc];
+    msg![env; obj init]
+}
+
+- (bool)isAuthenticated {
+    false
+}
+
+- (id)playerID {
+    msg![env; NSString stringWithUTF8String:"LocalPlayer"]
+}
+
+- (id)displayName {
+    msg![env; NSString stringWithUTF8String:"Player"]
+}
+
+- (id)alias {
+    msg![env; NSString stringWithUTF8String:"Player"]
+}
+
 @end
+
+};
+
 
 };
 
