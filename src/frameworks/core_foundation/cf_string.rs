@@ -14,7 +14,7 @@ use super::cf_locale::CFLocaleRef;
 use super::{kCFNotFound, CFComparisonResult, CFIndex, CFOptionFlags, CFRange};
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::foundation::{ns_string, unichar, NSNotFound, NSRange, NSUInteger};
+use crate::frameworks::foundation::{ns_array, ns_string, unichar, NSNotFound, NSRange, NSUInteger};
 use crate::mem::{ConstPtr, MutPtr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
@@ -353,6 +353,93 @@ fn CFStringGetPascalString(
     )
 }
 
+fn CFStringHasPrefix(
+    env: &mut Environment,
+    the_string: CFStringRef,
+    prefix: CFStringRef,
+) -> bool {
+    msg![env; the_string hasPrefix:prefix]
+}
+
+fn CFStringLowercase(env: &mut Environment, string: CFMutableStringRef, _locale: CFLocaleRef) {
+    let lowercase: id = msg![env; string lowercaseString];
+    msg![env; string setString:lowercase]
+}
+
+fn CFStringTrimWhitespace(env: &mut Environment, string: CFMutableStringRef) {
+    let set: id = msg_class![env; NSCharacterSet whitespaceAndNewlineCharacterSet];
+    let trimmed: id = msg![env; string stringByTrimmingCharactersInSet:set];
+    msg![env; string setString:trimmed]
+}
+
+fn CFStringGetMaximumSizeForEncoding(
+    length: CFIndex,
+    encoding: CFStringEncoding,
+) -> CFIndex {
+    match encoding {
+        kCFStringEncodingUTF8 => length * 4,
+        kCFStringEncodingUnicode | kCFStringEncodingUTF16 => length * 2,
+        _ => length,
+    }
+}
+
+fn CFStringGetBytes(
+    env: &mut Environment,
+    string: CFStringRef,
+    range: CFRange,
+    encoding: CFStringEncoding,
+    _loss_byte: u8,
+    _is_external: bool,
+    buffer: MutPtr<u8>,
+    max_buf_len: CFIndex,
+    used_buf_len: MutPtr<CFIndex>,
+) -> CFIndex {
+    let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
+
+    let ns_range = NSRange {
+        location: range.location.try_into().unwrap(),
+        length: range.length.try_into().unwrap(),
+    };
+
+    let sub: id = msg![env; string substringWithRange:ns_range];
+
+    let success: bool =
+        msg![env; sub getCString:buffer maxLength:max_buf_len as NSUInteger encoding:encoding];
+
+    if success {
+        let len = CFStringGetLength(env, sub);
+        env.mem.write(used_buf_len, len);
+        len
+    } else {
+        env.mem.write(used_buf_len, 0);
+        0
+    }
+}
+
+fn CFStringCreateArrayBySeparatingStrings(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    the_string: CFStringRef,
+    separator: CFStringRef,
+) -> CFArrayRef {
+    assert!(allocator == kCFAllocatorDefault); // consistent with existing CFString APIs
+
+    let array: id = msg![env; the_string componentsSeparatedByString:separator];
+    msg![env; array copy]
+}
+
+fn CFStringCreateByCombiningStrings(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    the_array: CFArrayRef,
+    separator: CFStringRef,
+) -> CFStringRef {
+    assert!(allocator == kCFAllocatorDefault);
+
+    let string: id = msg![env; the_array componentsJoinedByString:separator];
+    msg![env; string copy]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringAppend(_, _)),
     export_c_func!(CFStringAppendCString(_, _, _)),
@@ -381,4 +468,11 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringUppercase(_, _)),
     export_c_func!(CFStringCreateWithPascalString(_, _, _)),
     export_c_func!(CFStringGetPascalString(_, _, _, _)),
+    export_c_func!(CFStringHasPrefix(_, _)),
+    export_c_func!(CFStringLowercase(_, _)),
+    export_c_func!(CFStringTrimWhitespace(_)),
+    export_c_func!(CFStringGetMaximumSizeForEncoding(_, _)),
+    export_c_func!(CFStringGetBytes(_, _, _, _, _, _, _, _)),
+    export_c_func!(CFStringCreateArrayBySeparatingStrings(_, _, _)),
+    export_c_func!(CFStringCreateByCombiningStrings(_, _, _)),
 ];
