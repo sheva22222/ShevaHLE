@@ -97,7 +97,7 @@ fn CFArrayGetValues(
         let idx: NSUInteger = (range.location + i).try_into().unwrap();
         let obj: id = msg![env; array objectAtIndex:idx];
 
-        env.mem.write(out + i, obj.cast().cast_const());
+        env.mem.write(out + i.try_into().unwrap(), obj.cast().cast_const());
     }
 }
 
