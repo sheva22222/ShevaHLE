@@ -102,9 +102,7 @@ fn CFArrayGetValues(
     for i in 0..range.length {
         let idx = range.location + i;
         let value = CFArrayGetValueAtIndex(env, array, idx);
-        unsafe {
-            values.add((i as usize).try_into().unwrap()).write(value);
-        }
+        env.mem.write(values + i, value);
     }
 }
 
