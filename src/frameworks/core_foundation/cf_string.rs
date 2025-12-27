@@ -14,6 +14,7 @@ use super::cf_locale::CFLocaleRef;
 use super::{kCFNotFound, CFComparisonResult, CFIndex, CFOptionFlags, CFRange};
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::core_foundation::cf_array::CFArrayRef
 use crate::frameworks::foundation::{ns_array, ns_string, unichar, NSNotFound, NSRange, NSUInteger};
 use crate::mem::{ConstPtr, MutPtr};
 use crate::objc::{id, msg, msg_class};
@@ -373,6 +374,7 @@ fn CFStringTrimWhitespace(env: &mut Environment, string: CFMutableStringRef) {
 }
 
 fn CFStringGetMaximumSizeForEncoding(
+    _env: &mut Environment,
     length: CFIndex,
     encoding: CFStringEncoding,
 ) -> CFIndex {
