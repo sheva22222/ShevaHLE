@@ -62,8 +62,8 @@ fn CFArrayCreate(
 
     if num_values > 0 {
         for i in 0..num_values {
-            let value: ConstVoidPtr = env.mem.read(values + i);
-            env.mem.write(values + i, value);
+            let value: ConstVoidPtr = env.mem.read(values + i.try_into().unwrap());
+            env.mem.write(values + i.try_into().unwrap(), value);
             let obj: id = value.cast().cast_mut();
             msg![env; array addObject:obj];
         }
@@ -103,7 +103,7 @@ fn CFArrayGetValues(
     for i in 0..range.length {
         let idx = range.location + i;
         let value = CFArrayGetValueAtIndex(env, array, idx);
-        env.mem.write(values + i, value);
+        env.mem.write(values + i.try_into().unwrap(), value);
     }
 }
 
