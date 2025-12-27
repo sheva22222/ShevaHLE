@@ -364,7 +364,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringCreateMutableCopy(_, _, _)),
     export_c_func!(CFStringCreateWithBytes(_, _, _, _, _)),
     export_c_func!(CFStringCreateWithCString(_, _, _)),
-    export_c_func!(CFStringCreateWithFileSystemRepresentation(_, _, _)),
+    export_c_func!(CFStringCreateWithFileSystemRepresentation(_, _)),
     export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
     export_c_func!(CFStringCompare(_, _, _)),
