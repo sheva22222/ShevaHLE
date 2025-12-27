@@ -175,7 +175,7 @@ fn CFBundleCopyLocalizedString(
 fn CFBundleGetIdentifier(env: &mut Environment, bundle: CFBundleRef) -> CFStringRef {
     let ident: id = msg![env; bundle bundleIdentifier];
     if ident.is_null() {
-        return std::ptr::null_mut();
+        return id::null();
     }
     msg![env; ident copy]
 }
@@ -183,7 +183,7 @@ fn CFBundleGetIdentifier(env: &mut Environment, bundle: CFBundleRef) -> CFString
 fn CFBundleGetInfoDictionary(env: &mut Environment, bundle: CFBundleRef) -> CFTypeRef {
     let dict: id = msg![env; bundle infoDictionary];
     if dict.is_null() {
-        return std::ptr::null_mut();
+        return id::null();
     }
     retain(env, dict);
     dict
@@ -192,7 +192,7 @@ fn CFBundleGetInfoDictionary(env: &mut Environment, bundle: CFBundleRef) -> CFTy
 fn CFBundleGetLocalInfoDictionary(env: &mut Environment, bundle: CFBundleRef) -> CFTypeRef {
     let dict: id = msg![env; bundle localizedInfoDictionary];
     if dict.is_null() {
-        return std::ptr::null_mut();
+        return id::null();
     }
     retain(env, dict);
     dict
@@ -201,7 +201,7 @@ fn CFBundleGetLocalInfoDictionary(env: &mut Environment, bundle: CFBundleRef) ->
 fn CFBundleGetExecutableURL(env: &mut Environment, bundle: CFBundleRef) -> CFURLRef {
     let url: id = msg![env; bundle executableURL];
     if url.is_null() {
-        return std::ptr::null_mut();
+        return id::null();
     }
     msg![env; url copy]
 }
@@ -210,7 +210,7 @@ fn CFBundleGetDevelopmentRegion(env: &mut Environment, bundle: CFBundleRef) -> C
     let key = ns_string::get_static_str(env, "CFBundleDevelopmentRegion");
     let val = CFBundleGetValueForInfoDictionaryKey(env, bundle, key);
     if val.is_null() {
-        return std::ptr::null_mut();
+        return id::null();
     }
     msg![env; val copy]
 }
@@ -233,17 +233,17 @@ fn CFBundleCopyInfoDictionaryInDirectory(
     bundle_url: CFURLRef,
 ) -> CFTypeRef {
     if bundle_url.is_null() {
-        return std::ptr::null_mut();
+        return id::null();
     }
 
     let bundle: id = msg_class![env; NSBundle bundleWithURL:bundle_url];
     if bundle.is_null() {
-        return std::ptr::null_mut();
+        return id::null();
     }
 
     let dict: id = msg![env; bundle infoDictionary];
     if dict.is_null() {
-        return std::ptr::null_mut();
+        return id::null();
     }
 
     retain(env, dict);
