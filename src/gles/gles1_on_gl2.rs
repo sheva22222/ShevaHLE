@@ -686,6 +686,12 @@ impl GLES for GLES1OnGL2 {
         assert!(type_ == ParamType::Int || allowed_float);
         gl21::GetIntegerv(pname, params);
     }
+    unsafe fn GetFixedv(&mut self, pname: GLenum, params: *mut GLfixed) {
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
+        // TODO: type conversion
+        // assert!(type_ == ParamType::Fixed || type_ == ParamType::FixedSpecial);
+        gl21::GetFixedv(pname, params);
+    }
     unsafe fn GetTexEnviv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
         let (type_, _count) = TEX_ENV_PARAMS.get_type_info(pname);
         assert!(type_ == ParamType::Int);
