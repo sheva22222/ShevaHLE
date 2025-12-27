@@ -171,6 +171,85 @@ fn CFBundleCopyLocalizedString(
     msg![env; res copy]
 }
 
+
+fn CFBundleGetIdentifier(env: &mut Environment, bundle: CFBundleRef) -> CFStringRef {
+    let ident: id = msg![env; bundle bundleIdentifier];
+    if ident.is_null() {
+        return std::ptr::null_mut();
+    }
+    msg![env; ident copy]
+}
+
+fn CFBundleGetInfoDictionary(env: &mut Environment, bundle: CFBundleRef) -> CFTypeRef {
+    let dict: id = msg![env; bundle infoDictionary];
+    if dict.is_null() {
+        return std::ptr::null_mut();
+    }
+    retain(env, dict);
+    dict
+}
+
+fn CFBundleGetLocalInfoDictionary(env: &mut Environment, bundle: CFBundleRef) -> CFTypeRef {
+    let dict: id = msg![env; bundle localizedInfoDictionary];
+    if dict.is_null() {
+        return std::ptr::null_mut();
+    }
+    retain(env, dict);
+    dict
+}
+
+fn CFBundleGetExecutableURL(env: &mut Environment, bundle: CFBundleRef) -> CFURLRef {
+    let url: id = msg![env; bundle executableURL];
+    if url.is_null() {
+        return std::ptr::null_mut();
+    }
+    msg![env; url copy]
+}
+
+fn CFBundleGetDevelopmentRegion(env: &mut Environment, bundle: CFBundleRef) -> CFStringRef {
+    let key = ns_string::get_static_str(env, "CFBundleDevelopmentRegion");
+    let val = CFBundleGetValueForInfoDictionaryKey(env, bundle, key);
+    if val.is_null() {
+        return std::ptr::null_mut();
+    }
+    msg![env; val copy]
+}
+
+fn CFBundleIsExecutableLoaded(_env: &mut Environment, _bundle: CFBundleRef) -> bool {
+    // Matches observed macOS behavior for main bundle
+    true
+}
+
+fn CFBundleLoadExecutable(_env: &mut Environment, _bundle: CFBundleRef) -> bool {
+    true
+}
+
+fn CFBundleUnloadExecutable(_env: &mut Environment, _bundle: CFBundleRef) -> bool {
+    true
+}
+
+fn CFBundleCopyInfoDictionaryInDirectory(
+    env: &mut Environment,
+    bundle_url: CFURLRef,
+) -> CFTypeRef {
+    if bundle_url.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    let bundle: id = msg_class![env; NSBundle bundleWithURL:bundle_url];
+    if bundle.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    let dict: id = msg![env; bundle infoDictionary];
+    if dict.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    retain(env, dict);
+    dict
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFBundleGetMainBundle()),
     export_c_func!(CFBundleGetValueForInfoDictionaryKey(_, _)),
@@ -181,4 +260,13 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFBundleCopyBundleLocalizations(_)),
     export_c_func!(CFBundleCopyPreferredLocalizationsFromArray(_)),
     export_c_func!(CFBundleCopyLocalizedString(_, _, _, _)),
+    export_c_func!(CFBundleGetIdentifier(_)),
+    export_c_func!(CFBundleGetInfoDictionary(_)),
+    export_c_func!(CFBundleGetLocalInfoDictionary(_)),
+    export_c_func!(CFBundleGetExecutableURL(_)),
+    export_c_func!(CFBundleGetDevelopmentRegion(_)),
+    export_c_func!(CFBundleIsExecutableLoaded(_)),
+    export_c_func!(CFBundleLoadExecutable(_)),
+    export_c_func!(CFBundleUnloadExecutable(_)),
+    export_c_func!(CFBundleCopyInfoDictionaryInDirectory(_)),
 ];
