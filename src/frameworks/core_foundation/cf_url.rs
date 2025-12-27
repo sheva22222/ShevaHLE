@@ -248,6 +248,40 @@ pub fn CFURLCreateCopyResolvingSymlinksInPath(
     msg![env; resolved copy]
 }
 
+pub fn CFURLCreateStringByAddingPercentEscapes(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    original_string: CFStringRef,
+    characters_to_leave_unescaped: CFStringRef,
+    legal_url_characters_to_be_escaped: CFStringRef,
+    encoding: CFStringEncoding,
+) -> CFStringRef {
+    // Allocator handling (only default supported)
+    assert!(allocator.is_null() || allocator == kCFAllocatorDefault);
+
+    if original_string.is_null() {
+        return Ptr::null();
+    }
+
+    // Convert CFStringEncoding → NSStringEncoding
+    let ns_encoding =
+        CFStringConvertEncodingToNSStringEncoding(env, encoding);
+
+    // Bridge to NSString
+    let ns_string: id = original_string;
+
+    // Use NSString percent-encoding API
+    let escaped: id = msg![env;
+        ns_string stringByAddingPercentEscapesUsingEncoding:ns_encoding
+    ];
+
+    if escaped.is_null() {
+        return Ptr::null();
+    }
+
+    msg![env; escaped copy]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFURLGetFileSystemRepresentation(_, _, _, _)),
     export_c_func!(CFURLCreateFromFileSystemRepresentation(_, _, _, _)),
@@ -265,4 +299,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFURLIsFileReferenceURL(_)),
     export_c_func!(CFURLCreateCopyStandardizingPath(_, _)),
     export_c_func!(CFURLCreateCopyResolvingSymlinksInPath(_, _)),
+    export_c_func!(CFURLCreateStringByAddingPercentEscapes(_, _, _, _, _)),
 ];
