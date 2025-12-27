@@ -11,8 +11,9 @@
 use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::core_foundation::CFRange;
 use crate::frameworks::foundation::NSUInteger;
-use crate::mem::{ConstVoidPtr, MutPtr};
+use crate::mem::{ConstVoidPtr, MutPtr, Ptr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 use std::ops::Add;
@@ -105,12 +106,12 @@ fn CFArrayGetValues(
     range: CFRange,
     values: MutPtr<ConstVoidPtr>,
 ) {
-    let count = range.length;
+    let count = range.length; // ← THIS WAS MISSING
 
     let mut out: MutPtr<ConstVoidPtr> = values;
 
     for i in 0..count {
-        let idx = (range.location + i) as NSUInteger;
+        let idx: NSUInteger = (range.location + i).try_into().unwrap();
         let obj: id = msg![env; array objectAtIndex:idx];
 
         env.mem.write(out + i, obj.cast().cast_const());
