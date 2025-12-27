@@ -33,6 +33,33 @@ fn CFArrayCreateMutable(
     msg_class![env; _touchHLE_NSMutableArray_non_retaining new]
 }
 
+fn CFArrayCreate(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    values: *const ConstVoidPtr,
+    num_values: CFIndex,
+    callbacks: ConstVoidPtr, // const CFArrayCallBacks*
+) -> CFArrayRef {
+    assert!(allocator == kCFAllocatorDefault);
+    assert!(callbacks.is_null());
+
+    let array: id = msg_class![env; NSArray alloc];
+    let array: id = msg![env; array init];
+
+    if num_values > 0 {
+        // assert!(!values.is_null());
+        let slice = unsafe {
+            std::slice::from_raw_parts(values, num_values as usize)
+        };
+        for value in slice {
+            let obj: id = value.cast().cast_mut();
+            msg![env; array addObject:obj];
+        }
+    }
+
+    array
+}
+
 fn CFArrayGetCount(env: &mut Environment, array: CFArrayRef) -> CFIndex {
     let count: NSUInteger = msg![env; array count];
     count.try_into().unwrap()
@@ -44,9 +71,37 @@ fn CFArrayGetValueAtIndex(env: &mut Environment, array: CFArrayRef, idx: CFIndex
     value.cast().cast_const()
 }
 
+fn CFArrayGetValues(
+    env: &mut Environment,
+    array: CFArrayRef,
+    range: super::CFRange,
+    values: *mut ConstVoidPtr,
+) {
+    // assert!(!values.is_null());
+
+    for i in 0..range.length {
+        let idx = range.location + i;
+        let value = CFArrayGetValueAtIndex(env, array, idx);
+        unsafe {
+            *values.add(i as usize) = value;
+        }
+    }
+}
+
 fn CFArrayAppendValue(env: &mut Environment, array: CFMutableArrayRef, value: ConstVoidPtr) {
     let value: id = value.cast().cast_mut();
     msg![env; array addObject:value]
+}
+
+fn CFArrayInsertValueAtIndex(
+    env: &mut Environment,
+    array: CFMutableArrayRef,
+    idx: CFIndex,
+    value: ConstVoidPtr,
+) {
+    let idx: NSUInteger = idx.try_into().unwrap();
+    let value: id = value.cast().cast_mut();
+    msg![env; array insertObject:value atIndex:idx]
 }
 
 fn CFArrayRemoveValueAtIndex(env: &mut Environment, array: CFMutableArrayRef, idx: CFIndex) {
@@ -54,10 +109,50 @@ fn CFArrayRemoveValueAtIndex(env: &mut Environment, array: CFMutableArrayRef, id
     msg![env; array removeObjectAtIndex:idx]
 }
 
+fn CFArrayRemoveAllValues(env: &mut Environment, array: CFMutableArrayRef) {
+    msg![env; array removeAllObjects]
+}
+
+fn CFArrayContainsValue(
+    env: &mut Environment,
+    array: CFArrayRef,
+    range: super::CFRange,
+    value: ConstVoidPtr,
+) -> bool {
+    CFArrayGetFirstIndexOfValue(env, array, range, value) != -1
+}
+
+fn CFArrayGetFirstIndexOfValue(
+    env: &mut Environment,
+    array: CFArrayRef,
+    range: super::CFRange,
+    value: ConstVoidPtr,
+) -> CFIndex {
+    let value: id = value.cast().cast_mut();
+    let idx: NSUInteger = msg![
+        env;
+        array indexOfObject:value
+        inRange:range
+    ];
+
+    if idx == NSUInteger::MAX {
+        -1
+    } else {
+        idx.try_into().unwrap()
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFArrayCreateMutable(_, _, _)),
+    export_c_func!(CFArrayCreate(_, _, _, _)),
     export_c_func!(CFArrayGetCount(_)),
     export_c_func!(CFArrayGetValueAtIndex(_, _)),
+    export_c_func!(CFArrayGetValues(_, _, _)),
     export_c_func!(CFArrayAppendValue(_, _)),
+    export_c_func!(CFArrayInsertValueAtIndex(_, _, _)),
     export_c_func!(CFArrayRemoveValueAtIndex(_, _)),
+    export_c_func!(CFArrayRemoveAllValues(_)),
+    export_c_func!(CFArrayContainsValue(_, _, _)),
+    export_c_func!(CFArrayGetFirstIndexOfValue(_, _, _)),
 ];
+
