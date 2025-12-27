@@ -17,6 +17,26 @@ pub struct State {
     strtok: Option<MutPtr<u8>>,
 }
 
+fn ffs_impl(x: i32) -> i32 {
+    if x == 0 {
+        0
+    } else {
+        x.trailing_zeros() as i32 + 1
+    }
+}
+
+fn ffsl_impl(x: i64) -> i32 {
+    if x == 0 {
+        0
+    } else {
+        x.trailing_zeros() as i32 + 1
+    }
+}
+
+fn ffsll_impl(x: i64) -> i32 {
+    ffsl_impl(x)
+}
+
 fn strtok(env: &mut Environment, s: MutPtr<u8>, sep: ConstPtr<u8>) -> MutPtr<u8> {
     let s = if s.is_null() {
         let state = env.libc_state.string.strtok.unwrap();
@@ -515,23 +535,18 @@ fn memmem(
     Ptr::null()
 }
 
-fn ffs(x: i32) -> i32 {
-    if x == 0 {
-        return 0;
-    }
-    x.trailing_zeros() as i32 + 1
+fn ffs(_env: &mut Environment, x: i32) -> i32 {
+    ffs_impl(x)
 }
 
-fn ffsl(x: i64) -> i32 {
-    if x == 0 {
-        return 0;
-    }
-    x.trailing_zeros() as i32 + 1
+fn ffsl(_env: &mut Environment, x: i64) -> i32 {
+    ffsl_impl(x)
 }
 
-fn ffsll(x: i64) -> i32 {
-    ffsl(x)
+fn ffsll(_env: &mut Environment, x: i64) -> i32 {
+    ffsll_impl(x)
 }
+
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtok(_, _)),
