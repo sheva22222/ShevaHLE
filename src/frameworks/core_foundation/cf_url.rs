@@ -182,6 +182,72 @@ fn CFURLHasDirectoryPath(env: &mut Environment, url: CFURLRef) -> bool {
         || msg![env; last isEqual:(get_static_str(env, ".."))]
 }
 
+pub fn CFURLCopyLastPathComponent(env: &mut Environment, url: CFURLRef) -> CFStringRef {
+    if url.is_null() {
+        return Ptr::null();
+    }
+    let path = msg![env; url path];
+    let last = msg![env; path lastPathComponent];
+    msg![env; last copy]
+}
+
+pub fn CFURLCopyPath(env: &mut Environment, url: CFURLRef) -> CFStringRef {
+    if url.is_null() {
+        return Ptr::null();
+    }
+    let path: CFStringRef = msg![env; url path];
+    msg![env; path copy]
+}
+
+pub fn CFURLGetString(env: &mut Environment, url: CFURLRef) -> CFStringRef {
+    if url.is_null() {
+        return Ptr::null();
+    }
+    let s: CFStringRef = msg![env; url absoluteString];
+    s
+}
+
+pub fn CFURLCopyAbsoluteURL(env: &mut Environment, url: CFURLRef) -> CFURLRef {
+    if url.is_null() {
+        return Ptr::null();
+    }
+    let abs: id = msg![env; url absoluteURL];
+    msg![env; abs copy]
+}
+
+pub fn CFURLIsFileReferenceURL(_env: &mut Environment, _url: CFURLRef) -> bool {
+    // File reference URLs not currently distinguished
+    false
+}
+
+pub fn CFURLCreateCopyStandardizingPath(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    url: CFURLRef,
+) -> CFURLRef {
+    if url.is_null() {
+        return Ptr::null();
+    }
+    assert!(allocator.is_null() || allocator == kCFAllocatorDefault);
+
+    let std: id = msg![env; url URLByStandardizingPath];
+    msg![env; std copy]
+}
+
+pub fn CFURLCreateCopyResolvingSymlinksInPath(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    url: CFURLRef,
+) -> CFURLRef {
+    if url.is_null() {
+        return Ptr::null();
+    }
+    assert!(allocator.is_null() || allocator == kCFAllocatorDefault);
+
+    let resolved: id = msg![env; url URLByResolvingSymlinksInPath];
+    msg![env; resolved copy]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFURLGetFileSystemRepresentation(_, _, _, _)),
     export_c_func!(CFURLCreateFromFileSystemRepresentation(_, _, _, _)),
@@ -192,4 +258,11 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFURLCreateCopyAppendingPathComponent(_, _, _, _)),
     export_c_func!(CFURLCreateCopyDeletingLastPathComponent(_, _)),
     export_c_func!(CFURLHasDirectoryPath(_)),
+    export_c_func!(CFURLCopyLastPathComponent(_)),
+    export_c_func!(CFURLCopyPath(_)),
+    export_c_func!(CFURLGetString(_)),
+    export_c_func!(CFURLCopyAbsoluteURL(_)),
+    export_c_func!(CFURLIsFileReferenceURL(_)),
+    export_c_func!(CFURLCreateCopyStandardizingPath(_, _)),
+    export_c_func!(CFURLCreateCopyResolvingSymlinksInPath(_, _)),
 ];
