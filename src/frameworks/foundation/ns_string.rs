@@ -362,6 +362,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)stringWithFileSystemRepresentation:(ConstPtr<u8>)string
+                                  length:(NSUInteger)length {
+    // File system representations are UTF-8 byte sequences
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithBytes:string
+                                     length:length
+                                   encoding:NSUTF8StringEncoding];
+    autorelease(env, new)
+}
+
 + (id)pathWithComponents:(id)components {
     let count: NSUInteger = msg![env; components count];
     if count == 0 {
