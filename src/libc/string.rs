@@ -492,15 +492,17 @@ fn explicit_bzero(env: &mut Environment, s: MutVoidPtr, n: GuestUSize) {
 }
 
 fn strsignal(env: &mut Environment, sig: i32) -> ConstPtr<u8> {
-    let s: &'static [u8] = match sig {
-        2 => b"Interrupt\0".as_slice(),
-        9 => b"Killed\0".as_slice(),
-        11 => b"Segmentation fault\0".as_slice(),
-        15 => b"Terminated\0".as_slice(),
-        _ => b"Unknown signal\0".as_slice(),
+    let s: &[u8] = match sig {
+        2  => b"Interrupt\0",
+        9  => b"Killed\0",
+        11 => b"Segmentation fault\0",
+        15 => b"Terminated\0",
+        _  => b"Unknown signal\0",
     };
 
-    env.mem.alloc_and_write(s).cast()
+    env.mem
+        .alloc_and_write_bytes(s)
+        .cast() // MutPtr<u8> → ConstPtr<u8>
 }
 
 fn memmem(
