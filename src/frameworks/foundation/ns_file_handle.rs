@@ -141,6 +141,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
+- (())synchronizeFile {
+    let fd = env.objc.borrow::<NSFileHandleHostObject>(this).fd;
+    // Flush file contents to disk
+    // Ignore errors to match forgiving Cocoa behavior
+    let _ = posix_io::fsync(env, fd);
+}
+
 @end
 
 };
