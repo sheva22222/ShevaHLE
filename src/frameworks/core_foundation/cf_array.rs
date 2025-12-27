@@ -12,7 +12,7 @@ use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::NSUInteger;
-use crate::mem::{ConstVoidPtr, Ptr};
+use crate::mem::{ConstVoidPtr, MutPtr, Ptr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 use std::ops::Add;
@@ -63,7 +63,12 @@ fn CFArrayCreate(
     if num_values > 0 {
         for i in 0..num_values {
             let value: ConstVoidPtr = env.mem.read(values + i.try_into().unwrap());
-            env.mem.write(values + i.try_into().unwrap(), value);
+            let mut out: MutPtr<ConstVoidPtr> = values.cast_mut();
+
+            for i in 0..count {
+                env.mem.write(out + i, value);
+            }
+            
             let obj: id = value.cast().cast_mut();
             msg![env; array addObject:obj];
         }
