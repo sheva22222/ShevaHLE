@@ -51,31 +51,14 @@ fn CFArrayCreateMutableCopy(
 fn CFArrayCreate(
     env: &mut Environment,
     allocator: CFAllocatorRef,
-    values: Ptr<ConstVoidPtr, false>,
-    num_values: CFIndex,
-    callbacks: ConstVoidPtr,
-) -> CFArrayRef {
+    capacity: CFIndex,
+    array: CFArrayRef,
+) -> CFMutableArrayRef {
     assert!(allocator == kCFAllocatorDefault);
-    assert!(callbacks.is_null());
+    assert!(capacity == 0); // fixed-capacity arrays not supported yet
 
-    let array: id = msg_class![env; NSArray alloc];
-    let array: id = msg![env; array init];
-
-    if num_values > 0 {
-        for i in 0..num_values {
-            let value: ConstVoidPtr = env.mem.read(values + i.try_into().unwrap());
-            let mut out: MutPtr<ConstVoidPtr> = values.cast_mut();
-
-            for i in 0..count {
-                env.mem.write(out + i, value);
-            }
-            
-            let obj: id = value.cast().cast_mut();
-            msg![env; array addObject:obj];
-        }
-    }
-
-    array
+    let copy: id = msg![env; array mutableCopy];
+    copy
 }
 
 fn CFArrayCreateCopy(
@@ -186,7 +169,7 @@ fn CFArrayGetFirstIndexOfValue(
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFArrayCreateMutable(_, _, _)),
-    export_c_func!(CFArrayCreate(_, _, _, _)),
+    export_c_func!(CFArrayCreate(_, _, _)),
     export_c_func!(CFArrayCreateCopy(_, _)),
     export_c_func!(CFArrayCreateMutableCopy(_, _, _)),
     export_c_func!(CFArrayGetCount(_)),
