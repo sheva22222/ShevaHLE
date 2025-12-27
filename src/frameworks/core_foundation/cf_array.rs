@@ -49,9 +49,9 @@ fn CFArrayCreateMutableCopy(
 fn CFArrayCreate(
     env: &mut Environment,
     allocator: CFAllocatorRef,
-    values: *const ConstVoidPtr,
+    values: Ptr<ConstVoidPtr, false>,
     num_values: CFIndex,
-    callbacks: ConstVoidPtr, // const CFArrayCallBacks*
+    callbacks: ConstVoidPtr,
 ) -> CFArrayRef {
     assert!(allocator == kCFAllocatorDefault);
     assert!(callbacks.is_null());
@@ -60,11 +60,8 @@ fn CFArrayCreate(
     let array: id = msg![env; array init];
 
     if num_values > 0 {
-        // assert!(!values.is_null());
-        let slice = unsafe {
-            std::slice::from_raw_parts(values, num_values as usize)
-        };
-        for value in slice {
+        for i in 0..num_values {
+            let value = unsafe { values.add(i as usize).read() };
             let obj: id = value.cast().cast_mut();
             msg![env; array addObject:obj];
         }
@@ -99,15 +96,13 @@ fn CFArrayGetValues(
     env: &mut Environment,
     array: CFArrayRef,
     range: super::CFRange,
-    values: *mut ConstVoidPtr,
+    values: Ptr<ConstVoidPtr, true>,
 ) {
-    // assert!(!values.is_null());
-
     for i in 0..range.length {
         let idx = range.location + i;
         let value = CFArrayGetValueAtIndex(env, array, idx);
         unsafe {
-            *values.add(i as usize) = value;
+            values.add(i as usize).write(value);
         }
     }
 }
