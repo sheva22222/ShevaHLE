@@ -279,6 +279,260 @@ fn strlcpy(
     GenericChar::<u8>::strlcpy(env, dst, src, size)
 }
 
+fn memccpy(
+    env: &mut Environment,
+    dest: MutVoidPtr,
+    src: ConstVoidPtr,
+    c: i32,
+    n: GuestUSize,
+) -> MutVoidPtr {
+    let d: MutPtr<u8> = dest.cast();
+    let s: ConstPtr<u8> = src.cast();
+
+    for i in 0..n {
+        let byte = env.mem.read(s + i);
+        env.mem.write(d + i, byte);
+        if byte == c as u8 {
+            return (d + i + 1).cast();
+        }
+    }
+    Ptr::null()
+}
+
+fn memrchr(
+    env: &mut Environment,
+    s: ConstVoidPtr,
+    c: i32,
+    n: GuestUSize,
+) -> ConstVoidPtr {
+    let p: ConstPtr<u8> = s.cast();
+    let mut i = n;
+    while i > 0 {
+        i -= 1;
+        if env.mem.read(p + i) == c as u8 {
+            return (p + i).cast();
+        }
+    }
+    Ptr::null()
+}
+
+fn stpcpy(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {
+    let len = GenericChar::<u8>::strlen(env, src);
+    GenericChar::<u8>::strcpy(env, dest, src, GuestUSize::MAX);
+    dest + len
+}
+
+fn stpncpy(
+    env: &mut Environment,
+    dest: MutPtr<u8>,
+    src: ConstPtr<u8>,
+    n: GuestUSize,
+) -> MutPtr<u8> {
+    let copied = GenericChar::<u8>::strncpy(env, dest, src, n);
+    let len = GenericChar::<u8>::strlen(env, src);
+    dest + core::cmp::min(len, n)
+}
+
+fn strpbrk(env: &mut Environment, s: ConstPtr<u8>, accept: ConstPtr<u8>) -> ConstPtr<u8> {
+    let mut i = 0;
+    loop {
+        let c = env.mem.read(s + i);
+        if c == 0 {
+            return Ptr::null();
+        }
+        let mut j = 0;
+        loop {
+            let a = env.mem.read(accept + j);
+            if a == 0 {
+                break;
+            }
+            if a == c {
+                return s + i;
+            }
+            j += 1;
+        }
+        i += 1;
+    }
+}
+
+fn strspn(env: &mut Environment, s: ConstPtr<u8>, accept: ConstPtr<u8>) -> GuestUSize {
+    let mut i = 0;
+    loop {
+        let c = env.mem.read(s + i);
+        if c == 0 {
+            return i;
+        }
+        let mut j = 0;
+        let mut found = false;
+        loop {
+            let a = env.mem.read(accept + j);
+            if a == 0 {
+                break;
+            }
+            if a == c {
+                found = true;
+                break;
+            }
+            j += 1;
+        }
+        if !found {
+            return i;
+        }
+        i += 1;
+    }
+}
+
+fn strtok_r(
+    env: &mut Environment,
+    s: MutPtr<u8>,
+    sep: ConstPtr<u8>,
+    saveptr: MutPtr<MutPtr<u8>>,
+) -> MutPtr<u8> {
+    let mut s = if s.is_null() {
+        env.mem.read(saveptr)
+    } else {
+        s
+    };
+
+    if s.is_null() {
+        return Ptr::null();
+    }
+
+    let sep_bytes = env.mem.cstr_at(sep);
+
+    while sep_bytes.contains(&env.mem.read(s)) {
+        s += 1;
+    }
+
+    if env.mem.read(s) == 0 {
+        env.mem.write(saveptr, Ptr::null());
+        return Ptr::null();
+    }
+
+    let token = s;
+
+    loop {
+        let c = env.mem.read(s);
+        if c == 0 {
+            env.mem.write(saveptr, Ptr::null());
+            break;
+        }
+        if sep_bytes.contains(&c) {
+            env.mem.write(s, 0);
+            env.mem.write(saveptr, s + 1);
+            break;
+        }
+        s += 1;
+    }
+
+    token
+}
+
+fn strcasestr(
+    env: &mut Environment,
+    haystack: ConstPtr<u8>,
+    needle: ConstPtr<u8>,
+) -> ConstPtr<u8> {
+    let needle_len = GenericChar::<u8>::strlen(env, needle);
+    if needle_len == 0 {
+        return haystack;
+    }
+
+    let mut i = 0;
+    loop {
+        let h = env.mem.read(haystack + i);
+        if h == 0 {
+            return Ptr::null();
+        }
+
+        let mut matched = true;
+        for j in 0..needle_len {
+            let a = env.mem.read(haystack + i + j).to_ascii_lowercase();
+            let b = env.mem.read(needle + j).to_ascii_lowercase();
+            if a != b {
+                matched = false;
+                break;
+            }
+        }
+
+        if matched {
+            return haystack + i;
+        }
+
+        i += 1;
+    }
+}
+
+fn explicit_bzero(env: &mut Environment, s: MutVoidPtr, n: GuestUSize) {
+    let mut p: MutPtr<u8> = s.cast();
+    for _ in 0..n {
+        env.mem.write(p, 0);
+        p += 1;
+    }
+}
+
+fn strsignal(env: &mut Environment, sig: i32) -> ConstPtr<u8> {
+    let s = match sig {
+        2 => b"Interrupt\0",
+        9 => b"Killed\0",
+        11 => b"Segmentation fault\0",
+        15 => b"Terminated\0",
+        _ => b"Unknown signal\0",
+    };
+    env.mem.alloc_and_write(s).cast()
+}
+
+fn memmem(
+    env: &mut Environment,
+    haystack: ConstVoidPtr,
+    haystack_len: GuestUSize,
+    needle: ConstVoidPtr,
+    needle_len: GuestUSize,
+) -> ConstVoidPtr {
+    if needle_len == 0 {
+        return haystack;
+    }
+    if needle_len > haystack_len {
+        return Ptr::null();
+    }
+
+    let h: ConstPtr<u8> = haystack.cast();
+    let n: ConstPtr<u8> = needle.cast();
+
+    for i in 0..=(haystack_len - needle_len) {
+        let mut match_all = true;
+        for j in 0..needle_len {
+            if env.mem.read(h + i + j) != env.mem.read(n + j) {
+                match_all = false;
+                break;
+            }
+        }
+        if match_all {
+            return (h + i).cast();
+        }
+    }
+
+    Ptr::null()
+}
+
+fn ffs(x: i32) -> i32 {
+    if x == 0 {
+        return 0;
+    }
+    x.trailing_zeros() as i32 + 1
+}
+
+fn ffsl(x: i64) -> i32 {
+    if x == 0 {
+        return 0;
+    }
+    x.trailing_zeros() as i32 + 1
+}
+
+fn ffsll(x: i64) -> i32 {
+    ffsl(x)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtok(_, _)),
     export_c_func!(bzero(_, _)),
@@ -310,4 +564,18 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strchr(_, _)),
     export_c_func!(strrchr(_, _)),
     export_c_func!(strlcpy(_, _, _)),
+    export_c_func!(memccpy(_, _, _, _)),
+    export_c_func!(memrchr(_, _, _)),
+    export_c_func!(stpcpy(_, _)),
+    export_c_func!(stpncpy(_, _, _)),
+    export_c_func!(strpbrk(_, _)),
+    export_c_func!(strspn(_, _)),
+    export_c_func!(strtok_r(_, _, _)),
+    export_c_func!(explicit_bzero(_, _)),
+    export_c_func!(strcasestr(_, _)),
+    export_c_func!(strsignal(_)),
+    export_c_func!(memmem(_, _, _, _)),
+    export_c_func!(ffs(_)),
+    export_c_func!(ffsl(_)),
+    export_c_func!(ffsll(_)),
 ];
