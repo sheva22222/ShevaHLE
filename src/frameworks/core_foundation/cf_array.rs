@@ -15,6 +15,7 @@ use crate::frameworks::foundation::NSUInteger;
 use crate::mem::{ConstVoidPtr, Ptr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
+use std::ops::Add;
 
 #[allow(dead_code)]
 pub type CFArrayRef = super::CFTypeRef;
