@@ -491,20 +491,6 @@ fn explicit_bzero(env: &mut Environment, s: MutVoidPtr, n: GuestUSize) {
     }
 }
 
-fn strsignal(env: &mut Environment, sig: i32) -> ConstPtr<u8> {
-    let s: &[u8] = match sig {
-        2  => b"Interrupt\0",
-        9  => b"Killed\0",
-        11 => b"Segmentation fault\0",
-        15 => b"Terminated\0",
-        _  => b"Unknown signal\0",
-    };
-
-    env.mem
-        .alloc_and_write(s)
-        .cast() // MutPtr<u8> → ConstPtr<u8>
-}
-
 fn memmem(
     env: &mut Environment,
     haystack: ConstVoidPtr,
@@ -591,7 +577,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strtok_r(_, _, _)),
     export_c_func!(explicit_bzero(_, _)),
     export_c_func!(strcasestr(_, _)),
-    export_c_func!(strsignal(_)),
     export_c_func!(memmem(_, _, _, _)),
     export_c_func!(ffs(_)),
     export_c_func!(ffsl(_)),
