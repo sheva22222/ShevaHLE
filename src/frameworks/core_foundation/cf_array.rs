@@ -12,7 +12,7 @@ use super::cf_allocator::{kCFAllocatorDefault, CFAllocatorRef};
 use super::CFIndex;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::NSUInteger;
-use crate::mem::{ConstVoidPtr, Ptr}
+use crate::mem::{ConstVoidPtr, Ptr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 
