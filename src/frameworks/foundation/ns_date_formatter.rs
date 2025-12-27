@@ -10,11 +10,13 @@
 //! - [Unicode Technical Standard #35](https://unicode.org/reports/tr35/tr35-10.html#Date_Format_Patterns)
 
 use crate::frameworks::core_foundation::time::CFAbsoluteTimeGetGregorianDate;
-use crate::frameworks::foundation::{ns_string, NSTimeInterval};
+use crate::frameworks::foundation::{ns_string, NSUInteger, NSTimeInterval};
 use crate::objc::{autorelease, id, msg, nil, objc_classes, ClassExports, HostObject, NSZonePtr};
 
 struct NSDateFormatterHostObject {
     date_format: Option<id>,
+    locale: Option<id>,
+    time_zone: Option<id>,
 }
 impl HostObject for NSDateFormatterHostObject {}
 
@@ -27,13 +29,54 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSDateFormatterHostObject {
         date_format: None,
+        locale: None,
+        time_zone: None,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+- (id)dateFormat {
+    let host = env.objc.borrow::<NSDateFormatterHostObject>(this);
+    host.date_format.unwrap_or(nil)
 }
 
 - (())setDateFormat:(id)format { // NSString *
     let date_format: id = msg![env; format copy];
     env.objc.borrow_mut::<NSDateFormatterHostObject>(this).date_format = Some(date_format);
+}
+
+- (())setLocale:(id)locale {
+    env.objc.borrow_mut::<NSDateFormatterHostObject>(this).locale = Some(locale);
+}
+
+- (id)locale {
+    let host = env.objc.borrow::<NSDateFormatterHostObject>(this);
+    host.locale.unwrap_or(nil)
+}
+
+- (())setTimeZone:(id)tz {
+    env.objc.borrow_mut::<NSDateFormatterHostObject>(this).time_zone = Some(tz);
+}
+
+- (id)timeZone {
+    let host = env.objc.borrow::<NSDateFormatterHostObject>(this);
+    host.time_zone.unwrap_or(nil)
+}
+
+- (())setDateStyle:(NSUInteger)_style {}
+- (())setTimeStyle:(NSUInteger)_style {}
+
+- (id)stringForObjectValue:(id)obj {
+    let cls: id = msg![env; obj class];
+    let date_cls: id = msg_class![env; NSDate class];
+    let is_date: bool = msg![env; cls isSubclassOfClass:date_cls];
+
+    if is_date {
+        let s: id = msg![env; this stringFromDate:obj];
+        return autorelease(env, s);
+    }
+
+    nil
 }
 
 - (id)stringFromDate:(id)date {
