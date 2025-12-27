@@ -57,7 +57,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     tag &= !(1 << 1); // clear bit 1 = isAnimating
     msg![env; this setTag: tag];
 
-    let hides: bool = (msg![env; this tag] & 1) != 0;
+    let tag: NSInteger = msg![env; this tag];
+    let hides: bool = (tag & 1) != 0;
+
     if hides {
         msg![env; this setHidden: true];
     } else {
