@@ -73,11 +73,126 @@ fn OSAtomicCompareAndSwapPtrBarrier(
     }
 }
 
+/* --- 32-bit arithmetic --- */
+
+fn OSAtomicIncrement32(env: &mut Environment, value: MutPtr<i32>) -> i32 {
+    OSAtomicIncrement32Barrier(env, value)
+}
+
+fn OSAtomicIncrement32Barrier(env: &mut Environment, value: MutPtr<i32>) -> i32 {
+    let v = env.mem.read(value) + 1;
+    env.mem.write(value, v);
+    v
+}
+
+fn OSAtomicDecrement32(env: &mut Environment, value: MutPtr<i32>) -> i32 {
+    OSAtomicDecrement32Barrier(env, value)
+}
+
+fn OSAtomicDecrement32Barrier(env: &mut Environment, value: MutPtr<i32>) -> i32 {
+    let v = env.mem.read(value) - 1;
+    env.mem.write(value, v);
+    v
+}
+
+/* --- 64-bit arithmetic --- */
+
+fn OSAtomicAdd64(env: &mut Environment, amount: i64, value: MutPtr<i64>) -> i64 {
+    OSAtomicAdd64Barrier(env, amount, value)
+}
+
+fn OSAtomicAdd64Barrier(env: &mut Environment, amount: i64, value: MutPtr<i64>) -> i64 {
+    let v = env.mem.read(value) + amount;
+    env.mem.write(value, v);
+    v
+}
+
+/* --- Compare-and-swap --- */
+
+fn OSAtomicCompareAndSwap64(
+    env: &mut Environment,
+    old: i64,
+    new: i64,
+    value: MutPtr<i64>,
+) -> bool {
+    OSAtomicCompareAndSwap64Barrier(env, old, new, value)
+}
+
+fn OSAtomicCompareAndSwap64Barrier(
+    env: &mut Environment,
+    old: i64,
+    new: i64,
+    value: MutPtr<i64>,
+) -> bool {
+    if env.mem.read(value) == old {
+        env.mem.write(value, new);
+        true
+    } else {
+        false
+    }
+}
+
+fn OSAtomicCompareAndSwapPtr(
+    env: &mut Environment,
+    old: MutVoidPtr,
+    new: MutVoidPtr,
+    value: MutPtr<MutVoidPtr>,
+) -> bool {
+    OSAtomicCompareAndSwapPtrBarrier(env, old, new, value)
+}
+
+/* --- Bit operations --- */
+
+fn OSAtomicTestAndSet(
+    env: &mut Environment,
+    bit: u32,
+    value: MutPtr<u32>,
+) -> bool {
+    let mask = 1u32 << bit;
+    let cur = env.mem.read(value);
+    let was_set = cur & mask != 0;
+    env.mem.write(value, cur | mask);
+    was_set
+}
+
+fn OSAtomicTestAndClear(
+    env: &mut Environment,
+    bit: u32,
+    value: MutPtr<u32>,
+) -> bool {
+    let mask = 1u32 << bit;
+    let cur = env.mem.read(value);
+    let was_set = cur & mask != 0;
+    env.mem.write(value, cur & !mask);
+    was_set
+}
+
+/* --- Memory barriers (no-op by design) --- */
+
+fn OSMemoryBarrier(_env: &mut Environment) {}
+fn OSAtomicBarrier(_env: &mut Environment) {}
+
 pub const FUNCTIONS: FunctionExports = &[
+    /* existing */
     export_c_func!(OSAtomicAdd32(_, _)),
     export_c_func!(OSAtomicAdd32Barrier(_, _)),
     export_c_func!(OSAtomicCompareAndSwap32(_, _, _)),
     export_c_func!(OSAtomicCompareAndSwapIntBarrier(_, _, _)),
     export_c_func!(OSAtomicCompareAndSwap32Barrier(_, _, _)),
     export_c_func!(OSAtomicCompareAndSwapPtrBarrier(_, _, _)),
+
+    /* new */
+    export_c_func!(OSAtomicIncrement32(_)),
+    export_c_func!(OSAtomicIncrement32Barrier(_)),
+    export_c_func!(OSAtomicDecrement32(_)),
+    export_c_func!(OSAtomicDecrement32Barrier(_)),
+    export_c_func!(OSAtomicAdd64(_, _)),
+    export_c_func!(OSAtomicAdd64Barrier(_, _)),
+    export_c_func!(OSAtomicCompareAndSwap64(_, _, _)),
+    export_c_func!(OSAtomicCompareAndSwap64Barrier(_, _, _)),
+    export_c_func!(OSAtomicCompareAndSwapPtr(_, _, _)),
+    export_c_func!(OSAtomicTestAndSet(_, _)),
+    export_c_func!(OSAtomicTestAndClear(_, _)),
+    export_c_func!(OSMemoryBarrier()),
+    export_c_func!(OSAtomicBarrier()),
 ];
