@@ -6,7 +6,7 @@
 //! `UIImagePickerController`
 
 use crate::frameworks::foundation::NSInteger;
-use crate::objc::{id, objc_classes, ClassExports};
+use crate::objc::{id, nil, objc_classes, ClassExports};
 
 type UIImagePickerControllerSourceType = NSInteger;
 
@@ -26,6 +26,62 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())setDelegate:(id)_delegate {
     // TODO
+}
+
+- (UIImagePickerControllerSourceType)sourceType {
+    0
+}
+
+- (())setSourceType:(UIImagePickerControllerSourceType)_type {
+    // ignored
+}
+
+- (id)mediaTypes {
+    nil
+}
+
+- (())setMediaTypes:(id)_mediaTypes {
+    // ignored
+}
+
+- (bool)allowsEditing {
+    false
+}
+
+- (())setAllowsEditing:(bool)_allowsEditing {
+    // ignored
+}
+
+- (NSInteger)cameraDevice {
+    0
+}
+
+- (())setCameraDevice:(NSInteger)_device {
+    // ignored
+}
+
+- (NSInteger)cameraCaptureMode {
+    0
+}
+
+- (())setCameraCaptureMode:(NSInteger)_mode {
+    // ignored
+}
+
+- (NSInteger)videoQuality {
+    0
+}
+
+- (())setVideoQuality:(NSInteger)_quality {
+    // ignored
+}
+
+- (double)videoMaximumDuration {
+    0.0
+}
+
+- (())setVideoMaximumDuration:(double)_duration {
+    // ignored
 }
 
 @end
