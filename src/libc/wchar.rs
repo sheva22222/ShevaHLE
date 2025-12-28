@@ -163,14 +163,6 @@ fn wmempcpy(
     unsafe { out.add(size) }
 }
 
-fn wcsnlen(
-    env: &mut Environment,
-    s: ConstPtr<wchar_t>,
-    maxlen: GuestUSize,
-) -> GuestUSize {
-    GenericChar::<wchar_t>::strnlen(env, s, maxlen)
-}
-
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(btowc(_)),
@@ -195,5 +187,4 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcsrchr(_, _)),
     export_c_func!(wcslcpy(_, _, _)),
     export_c_func!(wmempcpy(_, _, _)),
-    export_c_func!(wcsnlen(_, _)),
 ];
