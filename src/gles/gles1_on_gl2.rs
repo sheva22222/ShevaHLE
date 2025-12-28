@@ -687,10 +687,20 @@ impl GLES for GLES1OnGL2 {
         gl21::GetIntegerv(pname, params);
     }
     unsafe fn GetFixedv(&mut self, pname: GLenum, params: *mut GLfixed) {
-        let (type_, _count) = GET_PARAMS.get_type_info(pname);
-        // TODO: type conversion
-        // assert!(type_ == ParamType::Fixed || type_ == ParamType::FixedSpecial);
-        GetFixedv(pname, params);
+        let (type_, count) = GET_PARAMS.get_type_info(pname);
+
+        // GLES allows Fixed and Float parameters to be queried as fixed
+        let allowed_float = type_ == ParamType::Float || type_ == ParamType::FloatSpecial;
+        // assert!(type_ == ParamType::Fixed || type_ == ParamType::FixedSpecial || allowed_float);
+
+        // Query as floats from GL 2.1
+        let mut tmp = vec![0.0f32; count as usize];
+        gl21::GetFloatv(pname, tmp.as_mut_ptr());
+
+        // Convert float → fixed
+        for i in 0..count as usize {
+            *params.add(i) = fixed_to_float::float_to_fixed(tmp[i]);
+        }
     }
     unsafe fn GetTexEnviv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
         let (type_, _count) = TEX_ENV_PARAMS.get_type_info(pname);
