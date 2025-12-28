@@ -58,27 +58,8 @@ fn pthread_setspecific(env: &mut Environment, key: pthread_key_t, value: ConstVo
     0 // success
 }
 
-fn pthread_key_delete(env: &mut Environment, key: pthread_key_t) -> i32 {
-    let idx: usize = match key.checked_sub(1).and_then(|v| v.try_into().ok()) {
-        Some(v) => v,
-        None => return libc::errno::EINVAL,
-    };
-
-    let state = get_state(env);
-    if idx >= state.keys.len() {
-        return libc::errno::EINVAL;
-    }
-
-    // Invalidate key: clear all thread-specific values and destructor
-    state.keys[idx].0.clear();
-    state.keys[idx].1 = GuestFunction::null();
-
-    0 // success
-}
-
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_key_create(_, _)),
     export_c_func!(pthread_getspecific(_)),
     export_c_func!(pthread_setspecific(_, _)),
-    export_c_func!(pthread_key_delete(_)),
 ];
