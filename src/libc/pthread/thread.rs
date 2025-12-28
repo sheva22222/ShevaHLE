@@ -328,6 +328,22 @@ fn pthread_setschedparam(
     0
 }
 
+fn pthread_exit(env: &mut Environment, retval: MutVoidPtr) -> ! {
+    let tid = env.current_thread;
+    env.exit_thread(tid, retval);
+    unreachable!()
+}
+
+fn pthread_cancel(_env: &mut Environment, _thread: pthread_t) -> i32 {
+    0
+}
+
+/* --- misc --- */
+
+fn pthread_kill(_env: &mut Environment, _thread: pthread_t, _sig: i32) -> i32 {
+    ESRCH
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
@@ -344,4 +360,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_mach_thread_np(_)),
     export_c_func!(pthread_getschedparam(_, _, _)),
     export_c_func!(pthread_setschedparam(_, _, _)),
+    export_c_func!(pthread_exit(_)),
+    export_c_func!(pthread_cancel(_)),
+    export_c_func!(pthread_kill(_, _)),
 ];
