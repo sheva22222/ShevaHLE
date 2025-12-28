@@ -26,7 +26,6 @@ use super::util::{
     ParamType,
 };
 use super::GLES;
-use crate::gles::gles11_raw::GetFixedv;
 use crate::window::{GLContext, GLVersion, Window};
 use std::collections::HashSet;
 use std::ffi::CStr;
@@ -691,7 +690,7 @@ impl GLES for GLES1OnGL2 {
         let (type_, _count) = GET_PARAMS.get_type_info(pname);
         // TODO: type conversion
         // assert!(type_ == ParamType::Fixed || type_ == ParamType::FixedSpecial);
-        gl21::GetFixedv(pname, params);
+        GetFixedv(pname, params);
     }
     unsafe fn GetTexEnviv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
         let (type_, _count) = TEX_ENV_PARAMS.get_type_info(pname);
