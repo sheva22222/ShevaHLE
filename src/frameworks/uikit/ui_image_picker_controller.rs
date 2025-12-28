@@ -76,12 +76,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     // ignored
 }
 
-- (double)videoMaximumDuration {
+- (f64)videoMaximumDuration {
     0.0
 }
 
-- (())setVideoMaximumDuration:(double)_duration {
-    // ignored
+- (())setVideoMaximumDuration:(f64)_duration {
 }
 
 @end
