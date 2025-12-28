@@ -26,6 +26,59 @@ pub struct State {
     locale: std::collections::HashMap<LocaleCategory, MutPtr<u8>>,
 }
 
+#[repr(C)]
+pub struct lconv {
+    pub decimal_point: MutPtr<u8>,
+    pub thousands_sep: MutPtr<u8>,
+    pub grouping: MutPtr<u8>,
+
+    pub int_curr_symbol: MutPtr<u8>,
+    pub currency_symbol: MutPtr<u8>,
+    pub mon_decimal_point: MutPtr<u8>,
+    pub mon_thousands_sep: MutPtr<u8>,
+    pub mon_grouping: MutPtr<u8>,
+    pub positive_sign: MutPtr<u8>,
+    pub negative_sign: MutPtr<u8>,
+
+    pub int_frac_digits: i8,
+    pub frac_digits: i8,
+    pub p_cs_precedes: i8,
+    pub p_sep_by_space: i8,
+    pub n_cs_precedes: i8,
+    pub n_sep_by_space: i8,
+    pub p_sign_posn: i8,
+    pub n_sign_posn: i8,
+}
+
+fn localeconv(env: &mut Environment) -> MutPtr<lconv> {
+    // C locale defaults
+    let conv = lconv {
+        decimal_point: env.mem.alloc_and_write_cstr(b"."),
+        thousands_sep: env.mem.alloc_and_write_cstr(b""),
+        grouping: env.mem.alloc_and_write_cstr(b""),
+
+        int_curr_symbol: env.mem.alloc_and_write_cstr(b""),
+        currency_symbol: env.mem.alloc_and_write_cstr(b""),
+        mon_decimal_point: env.mem.alloc_and_write_cstr(b""),
+        mon_thousands_sep: env.mem.alloc_and_write_cstr(b""),
+        mon_grouping: env.mem.alloc_and_write_cstr(b""),
+        positive_sign: env.mem.alloc_and_write_cstr(b""),
+        negative_sign: env.mem.alloc_and_write_cstr(b""),
+
+        int_frac_digits: -1,
+        frac_digits: -1,
+        p_cs_precedes: -1,
+        p_sep_by_space: -1,
+        n_cs_precedes: -1,
+        n_sep_by_space: -1,
+        p_sign_posn: -1,
+        n_sign_posn: -1,
+    };
+
+    // Allocate once per process
+    env.mem.alloc_and_write(conv)
+}
+
 pub fn setlocale(
     env: &mut Environment,
     category: LocaleCategory,
@@ -51,4 +104,7 @@ pub fn setlocale(
     env.libc_state.clocale.locale.get(&category).unwrap().cast()
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(setlocale(_, _))];
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(setlocale(_, _)),
+    export_c_func!(localeconv()),
+];
