@@ -26,6 +26,8 @@ pub struct State {
     locale: std::collections::HashMap<LocaleCategory, MutPtr<u8>>,
 }
 
+unsafe impl SafeRead for lconv {}
+
 #[repr(C)]
 pub struct lconv {
     pub decimal_point: MutPtr<u8>,
