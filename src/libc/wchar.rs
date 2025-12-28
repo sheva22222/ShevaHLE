@@ -10,6 +10,7 @@ use crate::mem::{ConstPtr, GuestUSize, MutPtr};
 use crate::Environment;
 
 use super::generic_char::GenericChar;
+use std::ops::Add;
 
 #[allow(non_camel_case_types)]
 pub type wchar_t = i32; // not sure if this signedness is correct
@@ -152,31 +153,6 @@ fn wcslcpy(
     GenericChar::<wchar_t>::strlcpy(env, dst, src, size)
 }
 
-fn wcsspn(
-    env: &mut Environment,
-    str: ConstPtr<wchar_t>,
-    charset: ConstPtr<wchar_t>,
-) -> GuestUSize {
-    GenericChar::<wchar_t>::strspn(env, str, charset)
-}
-
-fn wcspbrk(
-    env: &mut Environment,
-    str: ConstPtr<wchar_t>,
-    charset: ConstPtr<wchar_t>,
-) -> ConstPtr<wchar_t> {
-    GenericChar::<wchar_t>::strpbrk(env, str, charset)
-}
-
-fn wcstok(
-    env: &mut Environment,
-    s: MutPtr<wchar_t>,
-    delim: ConstPtr<wchar_t>,
-    saveptr: MutPtr<MutPtr<wchar_t>>,
-) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::strtok(env, s, delim, saveptr)
-}
-
 fn wmempcpy(
     env: &mut Environment,
     dest: MutPtr<wchar_t>,
@@ -218,9 +194,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcschr(_, _)),
     export_c_func!(wcsrchr(_, _)),
     export_c_func!(wcslcpy(_, _, _)),
-    export_c_func!(wcsspn(_, _)),
-    export_c_func!(wcspbrk(_, _)),
-    export_c_func!(wcstok(_, _, _)),
     export_c_func!(wmempcpy(_, _, _)),
     export_c_func!(wcsnlen(_, _)),
 ];
