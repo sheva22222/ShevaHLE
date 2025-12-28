@@ -82,4 +82,25 @@ fn perror(env: &mut Environment, s: ConstPtr<u8>) {
     let _ = std::io::stderr().write_all(msg.as_bytes());
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(__error()), export_c_func!(perror(_))];
+fn herror(env: &mut Environment, s: ConstPtr<u8>) {
+    // No h_errno support yet; mirror perror-style stub
+    let msg = "<TODO: h_errno>\n";
+    let out = if !s.is_null() {
+        if let Ok(str) = env.mem.cstr_at_utf8(s) {
+            format!("{str}: {msg}")
+        } else {
+            msg.to_string()
+        }
+    } else {
+        msg.to_string()
+    };
+
+    let _ = std::io::stderr().write_all(out.as_bytes());
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(__error()),
+    export_c_func!(perror(_)),
+    export_c_func!(herror(_)),
+];
+
