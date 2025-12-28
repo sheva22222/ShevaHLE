@@ -174,9 +174,50 @@ fn scandir(
     count
 }
 
+fn rewinddir(env: &mut Environment, dirp: MutPtr<DIR>) {
+    let mut dir = env.mem.read(dirp);
+    dir.idx = 0;
+    env.mem.write(dirp, dir);
+}
+
+fn telldir(env: &mut Environment, dirp: MutPtr<DIR>) -> i64 {
+    let dir = env.mem.read(dirp);
+    dir.idx as i64
+}
+
+fn seekdir(env: &mut Environment, dirp: MutPtr<DIR>, loc: i64) {
+    let mut dir = env.mem.read(dirp);
+    dir.idx = loc.max(0) as usize;
+    env.mem.write(dirp, dir);
+}
+
+fn dirfd(_env: &mut Environment, _dirp: MutPtr<DIR>) -> i32 {
+    // Early iOS allows -1 for non-backed DIR streams
+    -1
+}
+
+fn alphasort(
+    env: &mut Environment,
+    a: ConstPtr<ConstPtr<dirent>>,
+    b: ConstPtr<ConstPtr<dirent>>,
+) -> i32 {
+    let da = unsafe { env.mem.read(env.mem.read(a)) };
+    let db = unsafe { env.mem.read(env.mem.read(b)) };
+
+    let sa = std::ffi::CStr::from_bytes_until_nul(&da.d_name).unwrap();
+    let sb = std::ffi::CStr::from_bytes_until_nul(&db.d_name).unwrap();
+
+    sa.cmp(sb) as i32
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(opendir(_)),
     export_c_func!(readdir(_)),
     export_c_func!(closedir(_)),
     export_c_func!(scandir(_, _, _, _)),
+    export_c_func!(rewinddir(_)),
+    export_c_func!(telldir(_)),
+    export_c_func!(seekdir(_, _)),
+    export_c_func!(dirfd(_)),
+    export_c_func!(alphasort(_, _)),
 ];
