@@ -717,7 +717,7 @@ impl GLES for GLES1OnGL2 {
 
         // Convert float → fixed
         for i in 0..count as usize {
-            *params.add(i) = fixed_to_float::float_to_fixed(tmp[i]);
+            *params.add(i) = (tmp[i] * 65536.0) as GLfixed;
         }
     }
     unsafe fn GetTexEnviv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
