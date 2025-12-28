@@ -10,7 +10,7 @@ use std::collections::hash_map::Entry;
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
-use crate::mem::{ConstPtr, MutPtr};
+use crate::mem::{ConstPtr, MutPtr, SafeRead};
 
 pub type LocaleCategory = i32;
 pub const LC_ALL: LocaleCategory = 0;
