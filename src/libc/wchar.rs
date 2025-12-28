@@ -152,50 +152,6 @@ fn wcslcpy(
     GenericChar::<wchar_t>::strlcpy(env, dst, src, size)
 }
 
-fn wcsspn(
-    env: &mut Environment,
-    str: ConstPtr<wchar_t>,
-    charset: ConstPtr<wchar_t>,
-) -> GuestUSize {
-    GenericChar::<wchar_t>::strspn(env, str, charset)
-}
-
-fn wcspbrk(
-    env: &mut Environment,
-    str: ConstPtr<wchar_t>,
-    charset: ConstPtr<wchar_t>,
-) -> ConstPtr<wchar_t> {
-    GenericChar::<wchar_t>::strpbrk(env, str, charset)
-}
-
-fn wcstok(
-    env: &mut Environment,
-    s: MutPtr<wchar_t>,
-    delim: ConstPtr<wchar_t>,
-    saveptr: MutPtr<MutPtr<wchar_t>>,
-) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::strtok(env, s, delim, saveptr)
-}
-
-fn wmempcpy(
-    env: &mut Environment,
-    dest: MutPtr<wchar_t>,
-    src: ConstPtr<wchar_t>,
-    size: GuestUSize,
-) -> MutPtr<wchar_t> {
-    let out = GenericChar::<wchar_t>::memcpy(env, dest, src, size);
-    unsafe { out.add(size) }
-}
-
-fn wcsnlen(
-    env: &mut Environment,
-    s: ConstPtr<wchar_t>,
-    maxlen: GuestUSize,
-) -> GuestUSize {
-    GenericChar::<wchar_t>::strnlen(env, s, maxlen)
-}
-
-
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(btowc(_)),
     export_c_func!(wctob(_)),
@@ -218,9 +174,4 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcschr(_, _)),
     export_c_func!(wcsrchr(_, _)),
     export_c_func!(wcslcpy(_, _, _)),
-    export_c_func!(wcsspn(_, _)),
-    export_c_func!(wcspbrk(_, _)),
-    export_c_func!(wcstok(_, _, _)),
-    export_c_func!(wmempcpy(_, _, _)),
-    export_c_func!(wcsnlen(_, _)),
 ];
