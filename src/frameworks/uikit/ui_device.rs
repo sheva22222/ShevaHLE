@@ -90,7 +90,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSString
 - (id)systemVersion {
+    // Already present — keep
     ns_string::get_static_str(env, "2.0")
+}
+
+- (id)modelIdentifier {
+    // Private API on early iOS, but some apps probe it
+    ns_string::get_static_str(env, "iPhone1,1")
 }
 
 - (id)uniqueIdentifier {
@@ -101,6 +107,48 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (bool)isMultitaskingSupported {
     false
+}
+
+- (NSInteger)userInterfaceIdiom {
+    // UIUserInterfaceIdiomPhone = 0
+    0
+}
+
+- (bool)isProximityMonitoringEnabled {
+    false
+}
+
+- (())setProximityMonitoringEnabled:(bool)enabled {
+    // No proximity sensor support
+    log_dbg!("setProximityMonitoringEnabled:{:?} ignored", enabled);
+}
+
+- (bool)proximityState {
+    false
+}
+
+- (bool)isGeneratingDeviceOrientationNotifications {
+    true
+}
+
+- (id)identifierForVendor {
+    nil
+}
+
+- (bool)isBatteryMonitoringEnabled {
+    true
+}
+
+- (bool)isProximityMonitoringAvailable {
+    false
+}
+
+- (bool)isLowPowerModeEnabled {
+    false
+}
+
+- (bool)isBatteryMonitoringAvailable {
+    true
 }
 
 - (UIDeviceOrientation)orientation {
