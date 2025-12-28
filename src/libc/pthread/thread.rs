@@ -328,10 +328,11 @@ fn pthread_setschedparam(
     0
 }
 
-fn pthread_exit(env: &mut Environment, retval: MutVoidPtr) -> ! {
-    let tid = env.current_thread;
-    env.exit_thread(tid, retval);
-    unreachable!()
+fn pthread_exit(env: &mut Environment, retval: MutVoidPtr) {
+    log_dbg!("pthread_exit({:?}) called, ignoring retval {:?}", env.current_thread, retval);
+
+    // Early iOS behavior: thread simply returns from start_routine.
+    // We cannot force-terminate execution here without violating the executor.
 }
 
 fn pthread_cancel(_env: &mut Environment, _thread: pthread_t) -> i32 {
