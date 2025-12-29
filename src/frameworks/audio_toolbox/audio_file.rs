@@ -716,7 +716,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioFileStreamOpen(_, _, _, _, _)),
     export_c_func!(ExtAudioFileOpenURL(_, _)),
     export_c_func!(ExtAudioFileGetProperty(_, _, _, _)),
-    export_c_func!(ExtAudioFileSetProperty(_, _, _, _, _)),
+    export_c_func!(ExtAudioFileSetProperty(_, _, _, _)),
     export_c_func!(ExtAudioFileRead(_, _, _)),
     export_c_func!(ExtAudioFileDispose(_)),
     export_c_func!(ExtAudioFileWrapAudioFileID(_, _, _)),
