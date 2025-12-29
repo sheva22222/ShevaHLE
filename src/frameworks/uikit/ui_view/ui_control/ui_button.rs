@@ -260,6 +260,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_super![env; this dealloc]
 }
 
+- (())setNeedsLayout {
+    // UIKit marks dirty; touchHLE usually lays out immediately
+    () = msg![env; this layoutSubviews];
+}
+
 - (())layoutSubviews {
     let label = env.objc.borrow_mut::<UIButtonHostObject>(this).title_label;
     let background_image_view = env.objc.borrow_mut::<UIButtonHostObject>(this).background_image_view;
