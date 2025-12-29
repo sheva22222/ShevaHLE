@@ -511,7 +511,7 @@ fn CGContextSelectFont(
 fn CGContextAddLines(
     _env: &mut Environment,
     context: CGContextRef,
-    points: Ptr<CGPointZero, true>,
+    points: Ptr<CGPoint, true>,
     count: u32,
 ) {
     log!(
