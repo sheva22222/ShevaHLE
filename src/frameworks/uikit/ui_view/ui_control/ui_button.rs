@@ -29,6 +29,9 @@ const UIButtonTypeInfoDark: UIButtonType = 4;
 #[allow(dead_code)]
 const UIButtonTypeContactAdd: UIButtonType = 5;
 
+pub type UIControlContentVerticalAlignment = NSInteger;
+pub type UIControlContentHorizontalAlignment
+
 // Host object for an intermediate object
 // used for decoding of UIButton from a NIB
 #[derive(Default)]
@@ -57,6 +60,8 @@ pub struct UIButtonHostObject {
     images_for_states: HashMap<UIControlState, id>,
     /// Values are `UIImage*`
     background_images_for_states: HashMap<UIControlState, id>,
+    content_vertical_alignment: UIControlContentVerticalAlignment,
+    content_horizontal_alignment: UIControlContentHorizontalAlignment,
 }
 impl_HostObject_with_superclass!(UIButtonHostObject);
 impl Default for UIButtonHostObject {
@@ -71,6 +76,8 @@ impl Default for UIButtonHostObject {
             title_colors_for_states: HashMap::new(),
             images_for_states: HashMap::new(),
             background_images_for_states: HashMap::new(),
+            content_vertical_alignment: nil,
+            content_horizontal_alignment: nil,
         }
     }
 }
@@ -228,7 +235,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         titles_for_states,
         title_colors_for_states,
         images_for_states,
-        background_images_for_states
+        background_images_for_states,
+        content_vertical_alignment,
+        content_horizontal_alignment
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, title_label);
@@ -258,6 +267,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; label setFrame:bounds];
     // TODO: layout for image
 
+}
+
+- (UIControlContentVerticalAlignment)contentVerticalAlignment {
+    env.objc.borrow::<UIButtonHostObject>(this).content_vertical_alignment
+}
+
+- (())setContentVerticalAlignment:(UIControlContentVerticalAlignment)alignment {
+    env.objc.borrow_mut::<UIButtonHostObject>(this).content_vertical_alignment = alignment;
+    () = msg![env; this setNeedsLayout];
+}
+
+- (UIControlContentHorizontalAlignment)contentHorizontalAlignment {
+    env.objc.borrow::<UIButtonHostObject>(this).content_horizontal_alignment
+}
+
+- (())setContentHorizontalAlignment:(UIControlContentHorizontalAlignment)alignment {
+    env.objc.borrow_mut::<UIButtonHostObject>(this).content_horizontal_alignment = alignment;
+    () = msg![env; this setNeedsLayout];
 }
 
 - (UIButtonType)buttonType {
