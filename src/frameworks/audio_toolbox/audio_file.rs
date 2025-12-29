@@ -547,7 +547,7 @@ pub fn ExtAudioFileOpenURL(
     let ext_ref = env.mem.alloc_and_write(OpaqueExtAudioFile { _filler: 0 });
 
     State::get(&mut env.framework_state)
-        .ext_audio_file
+        .ext_audio_files
         .files
         .insert(
             ext_ref,
@@ -566,7 +566,7 @@ pub fn ExtAudioFileGetProperty(
     out_property_data: MutVoidPtr,
 ) -> OSStatus {
     let host = State::get(&mut env.framework_state)
-        .ext_audio_file
+        .ext_audio_files
         .files
         .get(&in_ext_audio_file)
         .unwrap();
@@ -617,7 +617,7 @@ pub fn ExtAudioFileRead(
     io_data: MutVoidPtr,
 ) -> OSStatus {
     let host = State::get(&mut env.framework_state)
-        .ext_audio_file
+        .ext_audio_files
         .files
         .get(&in_ext_audio_file)
         .unwrap();
@@ -641,7 +641,7 @@ pub fn ExtAudioFileDispose(
     in_ext_audio_file: ExtAudioFileRef,
 ) -> OSStatus {
     let Some(host) = State::get(&mut env.framework_state)
-        .ext_audio_file
+        .ext_audio_files
         .files
         .remove(&in_ext_audio_file)
     else {
@@ -680,7 +680,7 @@ pub fn ExtAudioFileWrapAudioFileID(
 
     // Store wrapper
     State::get(&mut env.framework_state)
-        .ext_audio_file
+        .ext_audio_files
         .files
         .insert(
             ext_ref,
