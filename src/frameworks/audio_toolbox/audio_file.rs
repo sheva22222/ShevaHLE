@@ -24,6 +24,7 @@ use std::collections::HashMap;
 #[derive(Default)]
 pub struct State {
     pub audio_files: HashMap<AudioFileID, AudioFileHostObject>,
+    pub ext_audio_files: HashMap<ExtAudioFileRef, ExtAudioFileHostObject>,
 }
 impl State {
     pub fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
@@ -66,11 +67,6 @@ pub const kAudioFilePropertyPacketSizeUpperBound: AudioFilePropertyID = fourcc(b
 const kAudioFilePropertyMagicCookieData: AudioFilePropertyID = fourcc(b"mgic");
 const kAudioFilePropertyChannelLayout: AudioFilePropertyID = fourcc(b"cmap");
 const kAudioFilePropertyEstimatedDuration: AudioFilePropertyID = fourcc(b"edur");
-
-#[derive(Default)]
-pub struct State {
-    pub ext_audio_files: HashMap<ExtAudioFileRef, ExtAudioFileHostObject>,
-}
 
 #[repr(C, packed)]
 pub struct OpaqueExtAudioFile {
