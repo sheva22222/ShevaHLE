@@ -397,6 +397,23 @@ fn CGRectIntersection(_env: &mut Environment, a: CGRect, b: CGRect) -> CGRect {
     }
 }
 
+fn CGRectContainsRect(_env: &mut Environment, rect1: CGRect, rect2: CGRect) -> bool {
+    let r1_min_x = rect1.origin.x;
+    let r1_min_y = rect1.origin.y;
+    let r1_max_x = rect1.origin.x + rect1.size.width;
+    let r1_max_y = rect1.origin.y + rect1.size.height;
+
+    let r2_min_x = rect2.origin.x;
+    let r2_min_y = rect2.origin.y;
+    let r2_max_x = rect2.origin.x + rect2.size.width;
+    let r2_max_y = rect2.origin.y + rect2.size.height;
+
+    r2_min_x >= r1_min_x
+        && r2_min_y >= r1_min_y
+        && r2_max_x <= r1_max_x
+        && r2_max_y <= r1_max_y
+}
+
 pub const CGRectNull: CGRect = CGRect {
     origin: CGPoint {
         x: f32::INFINITY,
@@ -431,6 +448,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGRectUnion(_, _)),
     export_c_func!(CGRectIntersection(_, _)),
     export_c_func!(CGRectIsNull(_)),
+    export_c_func!(CGRectContainsRect(_, _)),
 ];
 
 
