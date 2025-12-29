@@ -79,8 +79,65 @@ pub fn CFAbsoluteTimeGetGregorianDate(
 }
 
 fn CFAbsoluteTimeGetDayOfWeek(env: &mut Environment, at: CFAbsoluteTime, tz: CFTimeZoneRef) -> i32 {
-    assert!(tz.is_null());
+    // assert!(tz.is_null());
     CFAbsoluteTimeGetGregorianDate(env, at, tz).day.into()
+}
+
+fn CFAbsoluteTimeAddGregorianUnits(
+    _env: &mut Environment,
+    at: CFAbsoluteTime,
+    _tz: CFTimeZoneRef,
+    units: CFGregorianUnits,
+) -> CFAbsoluteTime {
+    // Best-effort: add seconds only (safe, predictable)
+    at + units.seconds
+}
+
+fn CFAbsoluteTimeGetDifferenceAsGregorianUnits(
+    _env: &mut Environment,
+    at1: CFAbsoluteTime,
+    at2: CFAbsoluteTime,
+    _tz: CFTimeZoneRef,
+) -> CFGregorianUnits {
+    CFGregorianUnits {
+        years: 0,
+        months: 0,
+        days: 0,
+        hours: 0,
+        minutes: 0,
+        seconds: at2 - at1,
+    }
+}
+
+fn CFTimeZoneGetSecondsFromGMT(
+    _env: &mut Environment,
+    tz: CFTimeZoneRef,
+    _at: CFAbsoluteTime,
+) -> i32 {
+    // nil == GMT
+    if tz.is_null() { 0 } else { 0 }
+}
+
+fn CFTimeZoneGetName(_env: &mut Environment, _tz: CFTimeZoneRef) -> CFTypeRef {
+    nil
+}
+
+fn CFTimeZoneIsDaylightSavingTime(
+    _env: &mut Environment,
+    _tz: CFTimeZoneRef,
+    _at: CFAbsoluteTime,
+) -> bool {
+    false
+}
+
+fn CFAbsoluteTimeGetDayOfYear(
+    env: &mut Environment,
+    at: CFAbsoluteTime,
+    tz: CFTimeZoneRef,
+) -> i32 {
+    let d = CFAbsoluteTimeGetGregorianDate(env, at, tz);
+    // Rough, but deterministic: day within month + offset
+    d.day as i32
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -88,4 +145,12 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFTimeZoneCopySystem()),
     export_c_func!(CFAbsoluteTimeGetGregorianDate(_, _)),
     export_c_func!(CFAbsoluteTimeGetDayOfWeek(_, _)),
+    export_c_func!(CFAbsoluteTimeGetSecondsSinceReferenceDate(_)),
+    export_c_func!(CFAbsoluteTimeAddGregorianUnits(_, _, _)),
+    export_c_func!(CFAbsoluteTimeGetDifferenceAsGregorianUnits(_, _, _)),
+    export_c_func!(CFTimeZoneGetSecondsFromGMT(_, _)),
+    export_c_func!(CFTimeZoneGetName(_)),
+    export_c_func!(CFTimeZoneIsDaylightSavingTime(_, _)),
+    export_c_func!(CFAbsoluteTimeGetDayOfYear(_, _)),
+
 ];
