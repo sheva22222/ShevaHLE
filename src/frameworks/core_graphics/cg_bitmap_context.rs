@@ -7,7 +7,7 @@
 
 use super::cg_affine_transform::{CGAffineTransform, CGAffineTransformIdentity};
 use super::cg_color_space::{
-    kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceCreateDeviceRGB, CGColorSpaceCreateDeviceGray, CGColorSpaceHostObject, CGColorSpaceRef,
+    kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
 };
 use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
 use super::cg_image::{
@@ -150,26 +150,6 @@ pub fn CGBitmapContextGetBitsPerComponent(
     let host_obj = env.objc.borrow::<CGContextHostObject>(context);
     let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
     bitmap_data.bits_per_component
-}
-
-pub fn CGBitmapContextGetColorSpace(
-    env: &mut Environment,
-    context: CGContextRef,
-) -> CGColorSpaceRef {
-    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
-    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
-
-    match bitmap_data.color_space {
-        kCGColorSpaceGenericRGB => {
-            CGColorSpaceCreateDeviceRGB
-        }
-        kCGColorSpaceGenericGray => {
-            CGColorSpaceCreateDeviceGray
-        }
-        _ => {
-            panic!("unsupported bitmap colorspace");
-        }
-    }
 }
 
 pub fn CGBitmapContextGetAlphaInfo(
@@ -694,7 +674,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGBitmapContextGetHeight(_)),
     export_c_func!(CGBitmapContextGetBytesPerRow(_)),
     export_c_func!(CGBitmapContextGetBitsPerComponent(_)),
-    export_c_func!(CGBitmapContextGetColorSpace(_)),
     export_c_func!(CGBitmapContextGetAlphaInfo(_)),
     export_c_func!(CGBitmapContextGetBitmapInfo(_)),
 ];
