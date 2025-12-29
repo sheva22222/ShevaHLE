@@ -101,7 +101,7 @@ fn CFAbsoluteTimeAddGregorianUnits(
     _env: &mut Environment,
     at: CFAbsoluteTime,
     _tz: CFTimeZoneRef,
-    units: Ptr<CFGregorianUnits>,
+    units: Ptr<CFGregorianUnits, MUT>,
 ) -> CFAbsoluteTime {
     if units.is_null() {
         at
