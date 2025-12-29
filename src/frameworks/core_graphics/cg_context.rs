@@ -6,9 +6,8 @@
 //! `CGContext.h`
 
 use super::cg_affine_transform::CGAffineTransform;
-use super::cg_geometry::CGPointZero;
 use super::cg_image::CGImageRef;
-use super::{cg_bitmap_context, CGFloat, CGRect};
+use super::{cg_bitmap_context, CGFloat, CGPoint, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::core_graphics::cg_bitmap_context::{
@@ -342,8 +341,8 @@ fn CGContextDrawLinearGradient(
     _env: &mut Environment,
     context: CGContextRef,
     _gradient: CFTypeRef,
-    start: CGPointZero,
-    end: CGPointZero,
+    start: CGPoint,
+    end: CGPoint,
     options: u32,
 ) {
     log!(
