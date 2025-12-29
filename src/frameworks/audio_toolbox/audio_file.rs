@@ -24,7 +24,7 @@ use std::collections::HashMap;
 #[derive(Default)]
 pub struct State {
     pub audio_files: HashMap<AudioFileID, AudioFileHostObject>,
-    pub ext_audio_files: HashMap<ExtAudioFileRef, ExtAudioFileHostObject>,
+    pub ext_audio_files: ExtAudioFileState,
 }
 impl State {
     pub fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
@@ -86,7 +86,7 @@ pub struct ExtAudioFileHostObject {
 }
 
 #[derive(Default)]
-pub struct ExtState {
+pub struct ExtAudioFileState {
     pub files: HashMap<ExtAudioFileRef, ExtAudioFileHostObject>,
 }
 
