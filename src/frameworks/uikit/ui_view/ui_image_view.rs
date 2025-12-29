@@ -16,9 +16,15 @@ use crate::objc::{
 #[derive(Default)]
 struct UIImageViewHostObject {
     superclass: super::UIViewHostObject,
-    /// `UIImage*`
     image: id,
+    animation_images: id,          // NSArray<UIImage*>*
+    animation_duration: NSTimeInterval,
+    animation_repeat_count: i32,
+    animating: bool,
+    highlighted_image: id,
+    highlighted: bool,
 }
+
 impl_HostObject_with_superclass!(UIImageViewHostObject);
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -44,6 +50,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     let &UIImageViewHostObject {
         superclass: _,
         image,
+        animation_images,
+        animation_duration,
+        animation_repeat_count,
+        animating,
+        highlighted_image,
+        highlighted,
     } = env.objc.borrow(this);
     release(env, image);
     msg_super![env; this dealloc]
@@ -80,27 +92,103 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; layer setContents:cg_image];
 }
 
-- (())setAnimationImages:(id)images { // NSArray<UIImage *>*
-    log!("TODO: [(UIImageView*) {:?} setAnimationImages:{:?}]", this, images);
-    // TODO: Use all images in the array instead of just the first one
-    let first_image: id = msg![env; images objectAtIndex:0u32];
-    () = msg![env; this setImage:first_image];
+- (id)animationImages {
+    env.objc.borrow::<UIImageViewHostObject>(this).animation_images
 }
 
-- (())setAnimationDuration:(NSTimeInterval)duration { // NSArray<UIImage *>*
-    log!("TODO: [(UIImageView*) {:?} setAnimationDuration:{}]", this, duration);
+- (())setAnimationImages:(id)images {
+    let host = env.objc.borrow_mut::<UIImageViewHostObject>(this);
+    let old = std::mem::replace(&mut host.animation_images, images);
+    retain(env, images);
+    release(env, old);
+}
+
+- (NSTimeInterval)animationDuration {
+    env.objc.borrow::<UIImageViewHostObject>(this).animation_duration
+}
+
+- (())setAnimationDuration:(NSTimeInterval)duration {
+    env.objc.borrow_mut::<UIImageViewHostObject>(this).animation_duration = duration;
+}
+
+- (i32)animationRepeatCount {
+    env.objc.borrow::<UIImageViewHostObject>(this).animation_repeat_count
+}
+
+- (())setAnimationRepeatCount:(i32)count {
+    env.objc.borrow_mut::<UIImageViewHostObject>(this).animation_repeat_count = count;
 }
 
 - (())startAnimating {
-    log!("TODO: [(UIImageView*) {:?} startAnimating]", this);
+    let host = env.objc.borrow_mut::<UIImageViewHostObject>(this);
+    host.animating = true;
+
+    // Optional: display first frame
+    if host.animation_images != nil {
+        let first: id = msg![env; host.animation_images objectAtIndex:0u32];
+        () = msg![env; this setImage:first];
+    }
 }
 
 - (())stopAnimating {
-    log!("TODO: [(UIImageView*) {:?} stopAnimating]", this);
+    env.objc.borrow_mut::<UIImageViewHostObject>(this).animating = false;
 }
 
-- (id)isAnimating {
-    nil
+- (bool)isAnimating {
+    env.objc.borrow::<UIImageViewHostObject>(this).animating
+}
+
+- (())setHighlightedImage:(id)image {
+    let host = env.objc.borrow_mut::<UIImageViewHostObject>(this);
+    let old = std::mem::replace(&mut host.highlighted_image, image);
+    retain(env, image);
+    release(env, old);
+}
+
+- (id)highlightedImage {
+    env.objc.borrow::<UIImageViewHostObject>(this).highlighted_image
+}
+
+- (())setHighlighted:(bool)flag {
+    let host = env.objc.borrow_mut::<UIImageViewHostObject>(this);
+    host.highlighted = flag;
+
+    let image = if flag && host.highlighted_image != nil {
+        host.highlighted_image
+    } else {
+        host.image
+    };
+
+    if image != nil {
+        let layer: id = msg![env; this layer];
+        let cg_image: CGImageRef = msg![env; image CGImage];
+        () = msg![env; layer setContents:cg_image];
+    }
+}
+
+- (bool)isHighlighted {
+    env.objc.borrow::<UIImageViewHostObject>(this).highlighted
+}
+
+- (i32)contentMode {
+    msg_super![env; this contentMode]
+}
+
+- (())setContentMode:(i32)mode {
+    msg_super![env; this setContentMode:mode]
+}
+
+- (CGSize)intrinsicContentSize {
+    let image = env.objc.borrow::<UIImageViewHostObject>(this).image;
+    if image != nil {
+        msg![env; image size]
+    } else {
+        CGSize { width: 0.0, height: 0.0 }
+    }
+}
+
+- (bool)isAccessibilityElement {
+    true
 }
 
 @end
