@@ -553,8 +553,12 @@ fn unsetenv(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
     0
 }
 
-fn abort(_env: &mut Environment) -> ! {
-    panic!("abort()");
+fn abort(env: &mut Environment) {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    echo!("App called abort(), terminating.");
+    std::process::abort();
 }
 
 pub const FUNCTIONS: FunctionExports = &[
