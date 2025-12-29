@@ -362,8 +362,12 @@ pub const CLASSES: ClassExports = objc_classes! {
         transitionType,
         to_rust_string(env, transitionType)
     );
-    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
+
+    // retain first
     retain(env, transitionType);
+
+    // then mutate host object
+    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
     host.transition_type = transitionType;
 }
 
@@ -378,8 +382,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         subtype,
         to_rust_string(env, subtype)
     );
-    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
+
     retain(env, subtype);
+
+    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
     host.subtype = subtype;
 }
 
@@ -394,11 +400,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         value,
         to_rust_string(env, value)
     );
-    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
-    if host.superclass.delegate != nil {
-        // no-op, just clarity
-    }
+
     retain(env, value);
+
+    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
     host.transition_type = value;
 }
 
