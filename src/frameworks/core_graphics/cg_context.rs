@@ -57,6 +57,13 @@ pub(super) enum CGContextSubclass {
 }
 
 pub type CGContextRef = CFTypeRef;
+type CGBlendMode = i32;
+type CGLineCap = i32;
+type CGLineJoin = i32;
+type CGFontRef = CFTypeRef;
+type CGPathDrawingMode = i32;
+type CGGlyph = u16;
+type CGTextEncoding = i32;
 
 pub fn CGContextRelease(env: &mut Environment, c: CGContextRef) {
     if !c.is_null() {
@@ -191,6 +198,365 @@ fn CGContextSetInterpolationQuality(
     );
 }
 
+fn CGContextSetLineWidth(
+    _env: &mut Environment,
+    context: CGContextRef,
+    width: CGFloat,
+) {
+    log!(
+        "TODO: CGContextSetLineWidth({:?}, {:?})",
+        context,
+        width
+    );
+}
+
+fn CGContextSetRGBStrokeColor(
+    _env: &mut Environment,
+    context: CGContextRef,
+    red: CGFloat,
+    green: CGFloat,
+    blue: CGFloat,
+    alpha: CGFloat,
+) {
+    log!(
+        "TODO: CGContextSetRGBStrokeColor({:?}, {:?})",
+        context,
+        (red, green, blue, alpha)
+    );
+}
+
+fn CGContextStrokeRect(
+    _env: &mut Environment,
+    context: CGContextRef,
+    rect: CGRect,
+) {
+    log!(
+        "TODO: CGContextStrokeRect({:?}, {:?})",
+        context,
+        rect
+    );
+}
+
+fn CGContextSetBlendMode(
+    _env: &mut Environment,
+    context: CGContextRef,
+    mode: CGBlendMode,
+) {
+    log!(
+        "TODO: CGContextSetBlendMode({:?}, {:?})",
+        context,
+        mode
+    );
+}
+
+fn CGContextSetAlpha(
+    _env: &mut Environment,
+    context: CGContextRef,
+    alpha: CGFloat,
+) {
+    log!(
+        "TODO: CGContextSetAlpha({:?}, {:?})",
+        context,
+        alpha
+    );
+}
+
+fn CGContextBeginPath(_env: &mut Environment, context: CGContextRef) {
+    log!("TODO: CGContextBeginPath({:?})", context);
+}
+
+fn CGContextAddRect(
+    _env: &mut Environment,
+    context: CGContextRef,
+    rect: CGRect,
+) {
+    log!(
+        "TODO: CGContextAddRect({:?}, {:?})",
+        context,
+        rect
+    );
+}
+
+fn CGContextClosePath(_env: &mut Environment, context: CGContextRef) {
+    log!("TODO: CGContextClosePath({:?})", context);
+}
+
+fn CGContextFillPath(_env: &mut Environment, context: CGContextRef) {
+    log!("TODO: CGContextFillPath({:?})", context);
+}
+
+fn CGContextStrokePath(_env: &mut Environment, context: CGContextRef) {
+    log!("TODO: CGContextStrokePath({:?})", context);
+}
+
+fn CGContextSetShouldAntialias(
+    _env: &mut Environment,
+    context: CGContextRef,
+    should_antialias: bool,
+) {
+    log!(
+        "TODO: CGContextSetShouldAntialias({:?}, {:?})",
+        context,
+        should_antialias
+    );
+}
+
+fn CGContextFlush(_env: &mut Environment, context: CGContextRef) {
+    log!("CGContextFlush({:?})", context);
+}
+
+fn CGContextSetTextPosition(
+    _env: &mut Environment,
+    context: CGContextRef,
+    x: CGFloat,
+    y: CGFloat,
+) {
+    log!(
+        "TODO: CGContextSetTextPosition({:?}, {}, {})",
+        context,
+        x,
+        y
+    );
+}
+
+fn CGContextShowTextAtPoint(
+    _env: &mut Environment,
+    context: CGContextRef,
+    x: CGFloat,
+    y: CGFloat,
+    _text: *const u8,
+    length: usize,
+) {
+    log!(
+        "TODO: CGContextShowTextAtPoint({:?}, {}, {}, len={})",
+        context,
+        x,
+        y,
+        length
+    );
+}
+
+fn CGContextDrawLinearGradient(
+    _env: &mut Environment,
+    context: CGContextRef,
+    _gradient: CFTypeRef,
+    start: CGPointZero,
+    end: CGPointZero,
+    options: u32,
+) {
+    log!(
+        "TODO: CGContextDrawLinearGradient({:?}, {:?} -> {:?}, opts={})",
+        context,
+        start,
+        end,
+        options
+    );
+}
+
+fn CGContextClip(_env: &mut Environment, context: CGContextRef) {
+    log!("TODO: CGContextClip({:?})", context);
+}
+
+fn CGContextAddEllipseInRect(
+    _env: &mut Environment,
+    context: CGContextRef,
+    rect: CGRect,
+) {
+    log!(
+        "TODO: CGContextAddEllipseInRect({:?}, {:?})",
+        context,
+        rect
+    );
+}
+
+fn CGContextSetLineCap(
+    _env: &mut Environment,
+    context: CGContextRef,
+    cap: CGLineCap,
+) {
+    log!(
+        "TODO: CGContextSetLineCap({:?}, {:?})",
+        context,
+        cap
+    );
+}
+
+fn CGContextSetLineJoin(
+    _env: &mut Environment,
+    context: CGContextRef,
+    join: CGLineJoin,
+) {
+    log!(
+        "TODO: CGContextSetLineJoin({:?}, {:?})",
+        context,
+        join
+    );
+}
+
+fn CGContextSetFont(
+    _env: &mut Environment,
+    context: CGContextRef,
+    font: CGFontRef,
+) {
+    log!(
+        "TODO: CGContextSetFont({:?}, {:?})",
+        context,
+        font
+    );
+}
+
+fn CGContextSetFontSize(
+    _env: &mut Environment,
+    context: CGContextRef,
+    size: CGFloat,
+) {
+    log!(
+        "TODO: CGContextSetFontSize({:?}, {:?})",
+        context,
+        size
+    );
+}
+
+fn CGContextShowGlyphsAtPoint(
+    _env: &mut Environment,
+    context: CGContextRef,
+    x: CGFloat,
+    y: CGFloat,
+    _glyphs: *const CGGlyph,
+    count: usize,
+) {
+    log!(
+        "TODO: CGContextShowGlyphsAtPoint({:?}, {}, {}, count={})",
+        context,
+        x,
+        y,
+        count
+    );
+}
+
+fn CGContextAddArc(
+    _env: &mut Environment,
+    context: CGContextRef,
+    x: CGFloat,
+    y: CGFloat,
+    radius: CGFloat,
+    start_angle: CGFloat,
+    end_angle: CGFloat,
+    clockwise: bool,
+) {
+    log!(
+        "TODO: CGContextAddArc({:?}, center=({}, {}), r={}, {}→{}, cw={})",
+        context,
+        x,
+        y,
+        radius,
+        start_angle,
+        end_angle,
+        clockwise
+    );
+}
+
+fn CGContextFillEllipseInRect(
+    _env: &mut Environment,
+    context: CGContextRef,
+    rect: CGRect,
+) {
+    log!(
+        "TODO: CGContextFillEllipseInRect({:?}, {:?})",
+        context,
+        rect
+    );
+}
+
+fn CGContextDrawPath(
+    _env: &mut Environment,
+    context: CGContextRef,
+    mode: CGPathDrawingMode,
+) {
+    log!(
+        "TODO: CGContextDrawPath({:?}, mode={})",
+        context,
+        mode
+    );
+}
+
+fn CGContextSetTextMatrix(
+    _env: &mut Environment,
+    context: CGContextRef,
+    matrix: CGAffineTransform,
+) {
+    log!(
+        "TODO: CGContextSetTextMatrix({:?}, {:?})",
+        context,
+        matrix
+    );
+}
+
+fn CGContextSelectFont(
+    _env: &mut Environment,
+    context: CGContextRef,
+    _name: *const u8,
+    size: CGFloat,
+    encoding: CGTextEncoding,
+) {
+    log!(
+        "TODO: CGContextSelectFont({:?}, size={}, encoding={})",
+        context,
+        size,
+        encoding
+    );
+}
+
+fn CGContextAddLines(
+    _env: &mut Environment,
+    context: CGContextRef,
+    _points: *const CGPointZero,
+    count: usize,
+) {
+    log!(
+        "TODO: CGContextAddLines({:?}, count={})",
+        context,
+        count
+    );
+}
+
+fn CGContextAddCurveToPoint(
+    _env: &mut Environment,
+    context: CGContextRef,
+    cp1x: CGFloat,
+    cp1y: CGFloat,
+    cp2x: CGFloat,
+    cp2y: CGFloat,
+    x: CGFloat,
+    y: CGFloat,
+) {
+    log!(
+        "TODO: CGContextAddCurveToPoint({:?}, cp1=({}, {}), cp2=({}, {}), end=({}, {}))",
+        context,
+        cp1x,
+        cp1y,
+        cp2x,
+        cp2y,
+        x,
+        y
+    );
+}
+
+fn CGContextSetLineDash(
+    _env: &mut Environment,
+    context: CGContextRef,
+    phase: CGFloat,
+    _lengths: *const CGFloat,
+    count: usize,
+) {
+    log!(
+        "TODO: CGContextSetLineDash({:?}, phase={}, count={})",
+        context,
+        phase,
+        count
+    );
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -208,4 +574,34 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSaveGState(_)),
     export_c_func!(CGContextRestoreGState(_)),
     export_c_func!(CGContextSetInterpolationQuality(_, _)),
+    export_c_func!(CGContextSetLineWidth(_, _)),
+    export_c_func!(CGContextSetRGBStrokeColor(_, _, _, _, _)),
+    export_c_func!(CGContextStrokeRect(_, _)),
+    export_c_func!(CGContextSetBlendMode(_, _)),
+    export_c_func!(CGContextSetAlpha(_, _)),
+    export_c_func!(CGContextBeginPath(_)),
+    export_c_func!(CGContextAddRect(_, _)),
+    export_c_func!(CGContextClosePath(_)),
+    export_c_func!(CGContextFillPath(_)),
+    export_c_func!(CGContextStrokePath(_)),
+    export_c_func!(CGContextSetShouldAntialias(_, _)),
+    export_c_func!(CGContextFlush(_)),
+    export_c_func!(CGContextSetTextPosition(_, _, _)),
+    export_c_func!(CGContextShowTextAtPoint(_, _, _, _, _)),
+    export_c_func!(CGContextDrawLinearGradient(_, _, _, _)),
+    export_c_func!(CGContextClip(_)),
+    export_c_func!(CGContextAddEllipseInRect(_, _)),
+    export_c_func!(CGContextSetLineCap(_, _)),
+    export_c_func!(CGContextSetLineJoin(_, _)),
+    export_c_func!(CGContextSetFont(_, _)),
+    export_c_func!(CGContextSetFontSize(_, _)),
+    export_c_func!(CGContextShowGlyphsAtPoint(_, _, _, _, _)),
+    export_c_func!(CGContextAddArc(_, _, _, _, _, _, _)),
+    export_c_func!(CGContextFillEllipseInRect(_, _)),
+    export_c_func!(CGContextDrawPath(_, _)),
+    export_c_func!(CGContextSetTextMatrix(_)),
+    export_c_func!(CGContextSelectFont(_, _, _, _)),
+    export_c_func!(CGContextAddLines(_, _, _)),
+    export_c_func!(CGContextAddCurveToPoint(_, _, _, _, _, _, _)),
+    export_c_func!(CGContextSetLineDash(_, _, _, _)),
 ];
