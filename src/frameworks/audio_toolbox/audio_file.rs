@@ -528,29 +528,28 @@ pub fn ExtAudioFileOpenURL(
     in_url: CFURLRef,
     out_ext_audio_file: MutPtr<ExtAudioFileRef>,
 ) -> OSStatus {
-    let mut audio_file_id: AudioFileID = MutPtr::null();
-
+    let audio_file_id: AudioFileID = MutPtr::null();
     let audio_file_id_ptr = env.mem.alloc_and_write(audio_file_id);
 
     let status = AudioFileOpenURL(
-    env,
-    in_url,
-    kAudioFileReadPermission,
-    0,
-    audio_file_id_ptr,
-);
+        env,
+        in_url,
+        kAudioFileReadPermission,
+        0,
+        audio_file_id_ptr,
+    );
 
     if status != 0 {
         return status;
     }
 
-    let audio_file_id = env.mem.read(env.mem.alloc_and_write(audio_file_id));
+    // ✅ czytamy WYNIK
+    let audio_file_id = env.mem.read(audio_file_id_ptr);
 
     let ext_ref = env.mem.alloc_and_write(OpaqueExtAudioFile { _filler: 0 });
 
     State::get(&mut env.framework_state)
         .ext_audio_files
-        .files
         .insert(
             ext_ref,
             ExtAudioFileHostObject { audio_file_id },
@@ -567,20 +566,23 @@ pub fn ExtAudioFileGetProperty(
     io_data_size: MutPtr<u32>,
     out_property_data: MutVoidPtr,
 ) -> OSStatus {
+    return_if_null!(in_ext_audio_file);
+
+    // ✅ WYCIĄGAMY audio_file_id BEZ trzymania borrow
     let audio_file_id = {
-    let host = State::get(&mut env.framework_state)
-        .ext_audio_files
-        .get(&ext_audio_file)
-        .unwrap();
-    host.audio_file_id
-};
+        let host = State::get(&mut env.framework_state)
+            .ext_audio_files
+            .get(&in_ext_audio_file)
+            .unwrap();
+        host.audio_file_id
+    };
 
     match in_property_id {
         kExtAudioFileProperty_FileDataFormat
         | kExtAudioFileProperty_ClientDataFormat => {
             AudioFileGetProperty(
                 env,
-                host.audio_file_id,
+                audio_file_id,
                 kAudioFilePropertyDataFormat,
                 io_data_size,
                 out_property_data,
@@ -588,17 +590,29 @@ pub fn ExtAudioFileGetProperty(
         }
 
         kExtAudioFileProperty_FileLengthFrames => {
+            // FileLengthFrames = packet_count * frames_per_packet
             let mut size = guest_size_of::<u64>() as u32;
             env.mem.write(io_data_size, size);
 
-            let status = AudioFileGetProperty(
-                    env,
-                    audio_file_id,
-                    property_id,
-                    io_data_size,
-                    out_data,
-           );
+            let mut packet_count: u64 = 0;
+            let packet_count_ptr = env.mem.alloc_and_write(packet_count);
 
+            let status = AudioFileGetProperty(
+                env,
+                audio_file_id,
+                kAudioFilePropertyAudioDataPacketCount,
+                io_data_size,
+                packet_count_ptr.cast(),
+            );
+
+            if status != 0 {
+                return status;
+            }
+
+            packet_count = env.mem.read(packet_count_ptr);
+            env.mem.write(out_property_data.cast(), packet_count);
+
+            0
         }
 
         _ => kAudioFileUnsupportedProperty,
