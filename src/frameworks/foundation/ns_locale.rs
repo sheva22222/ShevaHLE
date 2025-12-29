@@ -142,6 +142,47 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
++ (id)ISOCountryCodes {
+    let codes = vec![
+        ns_string::get_static_str(env, "US"),
+        ns_string::get_static_str(env, "FR"),
+        ns_string::get_static_str(env, "DE"),
+        ns_string::get_static_str(env, "ES"),
+        ns_string::get_static_str(env, "IT"),
+        ns_string::get_static_str(env, "JP"),
+    ];
+    ns_array::from_vec(env, codes)
+}
+
++ (id)ISOLanguageCodes {
+    let codes = vec![
+        ns_string::get_static_str(env, "en"),
+        ns_string::get_static_str(env, "fr"),
+        ns_string::get_static_str(env, "de"),
+        ns_string::get_static_str(env, "es"),
+        ns_string::get_static_str(env, "it"),
+        ns_string::get_static_str(env, "ja"),
+    ];
+    ns_array::from_vec(env, codes)
+}
+
++ (id)availableLocaleIdentifiers {
+    let ids = vec![
+        ns_string::get_static_str(env, "en"),
+        ns_string::get_static_str(env, "fr"),
+        ns_string::get_static_str(env, "de"),
+        ns_string::get_static_str(env, "es"),
+        ns_string::get_static_str(env, "it"),
+        ns_string::get_static_str(env, "ja"),
+    ];
+    ns_array::from_vec(env, ids)
+}
+
++ (id)localeWithLocaleIdentifier:(id)identifier {
+    let locale: id = msg![env; this alloc];
+    msg![env; locale initWithLocaleIdentifier:identifier]
+}
+
 // TODO: constructors, more accessors
 
 - (id)initWithLocaleIdentifier:(id)string { // NSString *
@@ -183,6 +224,38 @@ pub const CLASSES: ClassExports = objc_classes! {
         _ => unimplemented!()
     }
 }
+
+- (id)localeIdentifier {
+    let host = env.objc.borrow::<NSLocaleHostObject>(this);
+    if host.language_code != nil && host.country_code != nil {
+        let lang = ns_string::to_rust_string(env, host.language_code);
+        let country = ns_string::to_rust_string(env, host.country_code);
+        ns_string::from_rust_string(env, format!("{}_{}", lang, country))
+    } else if host.language_code != nil {
+        retain(env, host.language_code)
+    } else {
+        ns_string::get_static_str(env, "en")
+    }
+}
+
+- (id)languageCode {
+    let host = env.objc.borrow::<NSLocaleHostObject>(this);
+    if host.language_code != nil {
+        retain(env, host.language_code)
+    } else {
+        ns_string::get_static_str(env, "en")
+    }
+}
+
+- (id)countryCode {
+    let host = env.objc.borrow::<NSLocaleHostObject>(this);
+    if host.country_code != nil {
+        retain(env, host.country_code)
+    } else {
+        nil
+    }
+}
+
 
 @end
 
