@@ -153,6 +153,13 @@ fn CFAbsoluteTimeGetDayOfYear(
     d.day as i32
 }
 
+fn CFAbsoluteTimeGetSecondsSinceReferenceDate(
+    _env: &mut Environment,
+    at: CFAbsoluteTime,
+) -> CFTimeInterval {
+    at
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFAbsoluteTimeGetCurrent()),
     export_c_func!(CFTimeZoneCopySystem()),
