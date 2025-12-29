@@ -110,6 +110,7 @@ struct CATransitionHostObject {
     superclass: CAAnimationHostObject,
     transition_type: id, // NSString*
     subtype: id,         // NSString*
+    to_value: id,        // id (NSString* lub NSNumber*)
     start_progress: f32,
     end_progress: f32,
 }
@@ -325,6 +326,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let &CATransitionHostObject {
         transition_type,
         subtype,
+        to_value,
         ..
     } = env.objc.borrow(this);
 
@@ -334,10 +336,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     if subtype != nil {
         release(env, subtype);
     }
+    if to_value != nil {
+        release(env, to_value);
+    }
 
     msg_super![env; this dealloc]
 }
-
 
 - (())setStartProgress:(f32)value {
     env.objc.borrow_mut::<CATransitionHostObject>(this).start_progress = value;
@@ -409,6 +413,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)fromValue {
     env.objc.borrow::<CATransitionHostObject>(this).transition_type
+}
+
+- (())setToValue:(id)value {
+    log_dbg!(
+        "[(CATransition*){:?} setToValue:{:?} ({})]",
+        this,
+        value,
+        if value != nil { to_rust_string(env, value) } else { "<nil>".into() }
+    );
+
+    // ✅ retain NAJPIERW
+    retain(env, value);
+
+    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
+
+    if host.to_value != nil {
+        release(env, host.to_value);
+    }
+
+    host.to_value = value;
+}
+
+- (id)toValue {
+    env.objc.borrow::<CATransitionHostObject>(this).to_value
 }
 
 @end
