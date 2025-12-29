@@ -105,6 +105,16 @@ struct CABasicAnimationHostObject {
 }
 impl_HostObject_with_superclass!(CABasicAnimationHostObject);
 
+#[derive(Default)]
+struct CATransitionHostObject {
+    superclass: CAAnimationHostObject,
+    transition_type: id, // NSString*
+    subtype: id,         // NSString*
+    start_progress: f32,
+    end_progress: f32,
+}
+impl_HostObject_with_superclass!(CATransitionHostObject);
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -307,12 +317,93 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation CATransition : CAAnimation
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::<CABasicAnimationHostObject>::default();
+    let host_object = Box::<CATransitionHostObject>::default();
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
+- (())dealloc {
+    let &CATransitionHostObject {
+        transition_type,
+        subtype,
+        ..
+    } = env.objc.borrow(this);
+
+    if transition_type != nil {
+        release(env, transition_type);
+    }
+    if subtype != nil {
+        release(env, subtype);
+    }
+
+    msg_super![env; this dealloc]
+}
+
+
+- (())setStartProgress:(f32)value {
+    env.objc.borrow_mut::<CATransitionHostObject>(this).start_progress = value;
+}
+
+- (f32)startProgress {
+    env.objc.borrow::<CATransitionHostObject>(this).start_progress
+}
+
+- (())setEndProgress:(f32)value {
+    env.objc.borrow_mut::<CATransitionHostObject>(this).end_progress = value;
+}
+
+- (f32)endProgress {
+    env.objc.borrow::<CATransitionHostObject>(this).end_progress
+}
+
 - (())setType:(CATransitionType)transitionType {
-    log!("TODO: [(CATransition*){:?} setType:{:?} ({:?})]", this, transitionType, to_rust_string(env, transitionType));
+    log_dbg!(
+        "[(CATransition*){:?} setType:{:?} ({})]",
+        this,
+        transitionType,
+        to_rust_string(env, transitionType)
+    );
+    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
+    retain(env, transitionType);
+    host.transition_type = transitionType;
+}
+
+- (CATransitionType)type {
+    env.objc.borrow::<CATransitionHostObject>(this).transition_type
+}
+
+- (())setSubtype:(id)subtype { // NSString*
+    log_dbg!(
+        "[(CATransition*){:?} setSubtype:{:?} ({})]",
+        this,
+        subtype,
+        to_rust_string(env, subtype)
+    );
+    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
+    retain(env, subtype);
+    host.subtype = subtype;
+}
+
+- (id)subtype {
+    env.objc.borrow::<CATransitionHostObject>(this).subtype
+}
+
+- (())setFromValue:(id)value {
+    log_dbg!(
+        "[(CATransition*){:?} setFromValue:{:?} ({})]",
+        this,
+        value,
+        to_rust_string(env, value)
+    );
+    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
+    if host.superclass.delegate != nil {
+        // no-op, just clarity
+    }
+    retain(env, value);
+    host.transition_type = value;
+}
+
+- (id)fromValue {
+    env.objc.borrow::<CATransitionHostObject>(this).transition_type
 }
 
 @end
