@@ -65,6 +65,7 @@ type CGFontRef = CFTypeRef;
 type CGPathDrawingMode = i32;
 type CGGlyph = u16;
 type CGTextEncoding = i32;
+type CGTextDrawingMode = i32;
 
 pub fn CGContextRelease(env: &mut Environment, c: CGContextRef) {
     if !c.is_null() {
@@ -558,6 +559,135 @@ fn CGContextSetLineDash(
     );
 }
 
+fn CGContextSetTextDrawingMode(
+    _env: &mut Environment,
+    context: CGContextRef,
+    mode: CGTextDrawingMode,
+) {
+    log!(
+        "TODO: CGContextSetTextDrawingMode({:?}, mode={})",
+        context,
+        mode
+    );
+}
+
+fn CGContextShowText(
+    _env: &mut Environment,
+    context: CGContextRef,
+    _string: *const u8,
+    length: usize,
+) {
+    log!(
+        "TODO: CGContextShowText({:?}, length={})",
+        context,
+        length
+    );
+}
+
+fn CGContextAddArcToPoint(
+    _env: &mut Environment,
+    context: CGContextRef,
+    x1: CGFloat,
+    y1: CGFloat,
+    x2: CGFloat,
+    y2: CGFloat,
+    radius: CGFloat,
+) {
+    log!(
+        "TODO: CGContextAddArcToPoint({:?}, p1=({}, {}), p2=({}, {}), r={})",
+        context,
+        x1,
+        y1,
+        x2,
+        y2,
+        radius
+    );
+}
+
+fn CGContextSetFlatness(
+    _env: &mut Environment,
+    context: CGContextRef,
+    flatness: CGFloat,
+) {
+    log!(
+        "TODO: CGContextSetFlatness({:?}, {})",
+        context,
+        flatness
+    );
+}
+
+fn CGContextEOFillPath(
+    _env: &mut Environment,
+    context: CGContextRef,
+) {
+    log!(
+        "TODO: CGContextEOFillPath({:?})",
+        context
+    );
+}
+
+fn CGContextReplacePathWithStrokedPath(
+    _env: &mut Environment,
+    context: CGContextRef,
+) {
+    log!(
+        "TODO: CGContextReplacePathWithStrokedPath({:?})",
+        context
+    );
+}
+
+fn CGContextMoveToPoint(
+    _env: &mut Environment,
+    context: CGContextRef,
+    x: CGFloat,
+    y: CGFloat,
+) {
+    log!(
+        "TODO: CGContextMoveToPoint({:?}, {}, {})",
+        context,
+        x,
+        y
+    );
+}
+
+fn CGContextAddLineToPoint(
+    _env: &mut Environment,
+    context: CGContextRef,
+    x: CGFloat,
+    y: CGFloat,
+) {
+    log!(
+        "TODO: CGContextAddLineToPoint({:?}, {}, {})",
+        context,
+        x,
+        y
+    );
+}
+
+fn CGContextSetStrokeColorWithColor(
+    _env: &mut Environment,
+    context: CGContextRef,
+    color: CFTypeRef, // CGColorRef
+) {
+    log!(
+        "TODO: CGContextSetStrokeColorWithColor({:?}, {:?})",
+        context,
+        color
+    );
+}
+
+fn CGContextSetFillColorWithColor(
+    _env: &mut Environment,
+    context: CGContextRef,
+    color: CFTypeRef, // CGColorRef
+) {
+    log!(
+        "TODO: CGContextSetFillColorWithColor({:?}, {:?})",
+        context,
+        color
+    );
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -605,4 +735,15 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextAddCurveToPoint(_, _, _, _, _, _, _)),
     export_c_func!(CGContextSetLineDash(_, _, _, _)),
     export_c_func!(CGContextDrawLinearGradient(_, _, _, _, _)),
+    export_c_func!(CGContextSetTextDrawingMode(_, _)),
+    export_c_func!(CGContextShowText(_, _, _)),
+    export_c_func!(CGContextAddArcToPoint(_, _, _, _, _, _)),
+    export_c_func!(CGContextSetFlatness(_, _)),
+    export_c_func!(CGContextEOFillPath(_)),
+    export_c_func!(CGContextReplacePathWithStrokedPath(_)),
+    export_c_func!(CGContextMoveToPoint(_, _, _)),
+    export_c_func!(CGContextAddLineToPoint(_, _, _)),
+    export_c_func!(CGContextSetStrokeColorWithColor.  (_, _)),
+    export_c_func!(CGContextSetFillColorWithColor(_, _)),
+
 ];
