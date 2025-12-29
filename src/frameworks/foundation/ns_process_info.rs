@@ -85,7 +85,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         .duration_since(env.startup_time)
         .as_nanos();
     let s = format!("touchHLE-{}", uptime);
-    ns_string::from_str(env, &s)
+    ns_string::from_rust_string(env, s)
 }
 
 - (NSUInteger)processorCount {
