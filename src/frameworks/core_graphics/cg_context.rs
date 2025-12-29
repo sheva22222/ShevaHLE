@@ -485,7 +485,13 @@ fn CGContextSetTextMatrix(
     _env: &mut Environment,
     context: CGContextRef,
     matrix: CGAffineTransform,
-)
+) {
+    log!(
+        "TODO: CGContextSetTextMatrix({:?}, {:?})",
+        context,
+        matrix
+    );
+}
 
 fn CGContextSelectFont(
     _env: &mut Environment,
