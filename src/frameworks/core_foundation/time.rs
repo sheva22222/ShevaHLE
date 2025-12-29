@@ -97,21 +97,6 @@ fn CFAbsoluteTimeGetDayOfWeek(env: &mut Environment, at: CFAbsoluteTime, tz: CFT
     CFAbsoluteTimeGetGregorianDate(env, at, tz).day.into()
 }
 
-fn CFAbsoluteTimeAddGregorianUnits(
-    _env: &mut Environment,
-    at: CFAbsoluteTime,
-    _tz: CFTimeZoneRef,
-    units: Ptr<CFGregorianUnits, MUT>,
-) -> CFAbsoluteTime {
-    if units.is_null() {
-        at
-    } else {
-        // Best-effort: seconds only
-        let u = unsafe { *units };
-        at + u.seconds
-    }
-}
-
 fn CFAbsoluteTimeGetDifferenceAsGregorianUnits(
     _env: &mut Environment,
     at1: CFAbsoluteTime,
@@ -172,7 +157,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFAbsoluteTimeGetGregorianDate(_, _)),
     export_c_func!(CFAbsoluteTimeGetDayOfWeek(_, _)),
     export_c_func!(CFAbsoluteTimeGetSecondsSinceReferenceDate(_)),
-    export_c_func!(CFAbsoluteTimeAddGregorianUnits(_, _, _)),
     export_c_func!(CFAbsoluteTimeGetDifferenceAsGregorianUnits(_, _, _)),
     export_c_func!(CFTimeZoneGetSecondsFromGMT(_, _)),
     export_c_func!(CFTimeZoneGetName(_)),
