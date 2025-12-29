@@ -14,6 +14,7 @@ use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextGetHeight, CGBitmapContextGetWidth,
 };
 use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
+use crate::mem::Ptr;
 use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
@@ -324,8 +325,8 @@ fn CGContextShowTextAtPoint(
     context: CGContextRef,
     x: CGFloat,
     y: CGFloat,
-    _text: *const u8,
-    length: usize,
+    text: Ptr<u8, true>,
+    length: u32,
 ) {
     log!(
         "TODO: CGContextShowTextAtPoint({:?}, {}, {}, len={})",
@@ -422,17 +423,9 @@ fn CGContextShowGlyphsAtPoint(
     context: CGContextRef,
     x: CGFloat,
     y: CGFloat,
-    _glyphs: *const CGGlyph,
-    count: usize,
-) {
-    log!(
-        "TODO: CGContextShowGlyphsAtPoint({:?}, {}, {}, count={})",
-        context,
-        x,
-        y,
-        count
-    );
-}
+    glyphs: Ptr<CGGlyph, true>,
+    count: u32,
+)
 
 fn CGContextAddArc(
     _env: &mut Environment,
@@ -484,13 +477,7 @@ fn CGContextSetTextMatrix(
     _env: &mut Environment,
     context: CGContextRef,
     matrix: CGAffineTransform,
-) {
-    log!(
-        "TODO: CGContextSetTextMatrix({:?}, {:?})",
-        context,
-        matrix
-    );
-}
+)
 
 fn CGContextSelectFont(
     _env: &mut Environment,
@@ -510,15 +497,10 @@ fn CGContextSelectFont(
 fn CGContextAddLines(
     _env: &mut Environment,
     context: CGContextRef,
-    _points: *const CGPointZero,
-    count: usize,
-) {
-    log!(
-        "TODO: CGContextAddLines({:?}, count={})",
-        context,
-        count
-    );
-}
+    points: Ptr<CGPointZero, true>,
+    count: u32,
+)
+
 
 fn CGContextAddCurveToPoint(
     _env: &mut Environment,
@@ -546,16 +528,9 @@ fn CGContextSetLineDash(
     _env: &mut Environment,
     context: CGContextRef,
     phase: CGFloat,
-    _lengths: *const CGFloat,
-    count: usize,
-) {
-    log!(
-        "TODO: CGContextSetLineDash({:?}, phase={}, count={})",
-        context,
-        phase,
-        count
-    );
-}
+    lengths: Ptr<CGFloat, true>,
+    count: u32,
+)
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
@@ -588,7 +563,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextFlush(_)),
     export_c_func!(CGContextSetTextPosition(_, _, _)),
     export_c_func!(CGContextShowTextAtPoint(_, _, _, _, _)),
-    export_c_func!(CGContextDrawLinearGradient(_, _, _, _)),
     export_c_func!(CGContextClip(_)),
     export_c_func!(CGContextAddEllipseInRect(_, _)),
     export_c_func!(CGContextSetLineCap(_, _)),
@@ -599,9 +573,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextAddArc(_, _, _, _, _, _, _)),
     export_c_func!(CGContextFillEllipseInRect(_, _)),
     export_c_func!(CGContextDrawPath(_, _)),
-    export_c_func!(CGContextSetTextMatrix(_)),
+    export_c_func!(CGContextSetTextMatrix(_, _)),
     export_c_func!(CGContextSelectFont(_, _, _, _)),
     export_c_func!(CGContextAddLines(_, _, _)),
     export_c_func!(CGContextAddCurveToPoint(_, _, _, _, _, _, _)),
     export_c_func!(CGContextSetLineDash(_, _, _, _)),
+    export_c_func!(CGContextDrawLinearGradient(_, _, _, _, _)),
 ];
