@@ -91,29 +91,6 @@ fn CFLocaleGetIdentifier(
     locale
 }
 
-fn CFLocaleCopyAvailableLocaleIdentifiers(env: &mut Environment) -> CFArrayRef {
-    // Early iOS returns a small fixed list
-    let ids = [
-        "en",
-        "fr",
-        "de",
-        "es",
-        "it",
-        "ja",
-    ];
-
-    let mut strings = Vec::new();
-    for id_str in ids {
-        let s: id = msg_class![env; NSString alloc];
-        let s: id = msg![env; s initWithUTF8String:id_str];
-        strings.push(s);
-    }
-
-    let arr: id = msg_class![env; NSArray alloc];
-    let count: NSUInteger = strings.len() as NSUInteger;
-    msg![env; arr initWithObjects:&strings count:count]
-}
-
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFLocaleCopyCurrent()),
     export_c_func!(CFLocaleCopyPreferredLanguages()),
@@ -122,5 +99,4 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFLocaleGetSystem()),
     export_c_func!(CFLocaleGetValue(_, _)),
     export_c_func!(CFLocaleGetIdentifier(_)),
-    export_c_func!(CFLocaleCopyAvailableLocaleIdentifiers()),
 ];
