@@ -161,10 +161,10 @@ pub fn CGBitmapContextGetColorSpace(
 
     match bitmap_data.color_space {
         kCGColorSpaceGenericRGB => {
-            super::cg_color_space::CGColorSpaceCreateDeviceRGB(env)
+            CGColorSpaceCreateDeviceRGB
         }
         kCGColorSpaceGenericGray => {
-            super::cg_color_space::CGColorSpaceCreateDeviceGray(env)
+            CGColorSpaceCreateDeviceGray
         }
         _ => {
             panic!("unsupported bitmap colorspace");
