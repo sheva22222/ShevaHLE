@@ -37,6 +37,19 @@ pub struct CFGregorianDate {
     pub seconds: f64, // double
 }
 unsafe impl SafeRead for CFGregorianDate {}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct CFGregorianUnits {
+    pub years: i32,
+    pub months: i32,
+    pub days: i32,
+    pub hours: i32,
+    pub minutes: i32,
+    pub seconds: f64,
+}
+unsafe impl SafeRead for CFGregorianUnits {}
+
 impl_GuestRet_for_large_struct!(CFGregorianDate);
 
 /// Absolute time is measured in seconds relative to the absolute reference date
