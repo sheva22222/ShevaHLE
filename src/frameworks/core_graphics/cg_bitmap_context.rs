@@ -143,6 +143,53 @@ pub fn CGBitmapContextCreateImage(env: &mut Environment, context: CGContextRef) 
     )
 }
 
+pub fn CGBitmapContextGetBitsPerComponent(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> GuestUSize {
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    bitmap_data.bits_per_component
+}
+
+pub fn CGBitmapContextGetColorSpace(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGColorSpaceRef {
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+
+    match bitmap_data.color_space {
+        kCGColorSpaceGenericRGB => {
+            super::cg_color_space::CGColorSpaceCreateDeviceRGB(env)
+        }
+        kCGColorSpaceGenericGray => {
+            super::cg_color_space::CGColorSpaceCreateDeviceGray(env)
+        }
+        _ => {
+            panic!("unsupported bitmap colorspace");
+        }
+    }
+}
+
+pub fn CGBitmapContextGetAlphaInfo(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGImageAlphaInfo {
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    bitmap_data.alpha_info
+}
+
+pub fn CGBitmapContextGetBitmapInfo(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGBitmapInfo {
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    let CGContextSubclass::CGBitmapContext(bitmap_data) = host_obj.subclass;
+    bitmap_data.alpha_info
+}
+
 fn components_for_rgb(bitmap_info: CGBitmapInfo) -> Result<GuestUSize, ()> {
     let byte_order = bitmap_info & kCGBitmapByteOrderMask;
     if byte_order != kCGImageByteOrderDefault && byte_order != kCGImageByteOrder32Big {
@@ -646,4 +693,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGBitmapContextGetWidth(_)),
     export_c_func!(CGBitmapContextGetHeight(_)),
     export_c_func!(CGBitmapContextGetBytesPerRow(_)),
+    export_c_func!(CGBitmapContextGetBitsPerComponent(_)),
+    export_c_func!(CGBitmapContextGetColorSpace(_)),
+    export_c_func!(CGBitmapContextGetAlphaInfo(_)),
+    export_c_func!(CGBitmapContextGetBitmapInfo(_)),
 ];
