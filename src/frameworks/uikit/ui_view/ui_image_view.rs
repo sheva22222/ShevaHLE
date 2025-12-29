@@ -125,7 +125,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // Optional: display first frame
     if host.animation_images != nil {
-        let first: id = msg![env; host.animation_images objectAtIndex:0u32];
+        let first: id = msg![env; images objectAtIndex:0u32];
         () = msg![env; this setImage:first];
     }
 }
