@@ -530,13 +530,15 @@ pub fn ExtAudioFileOpenURL(
 ) -> OSStatus {
     let mut audio_file_id: AudioFileID = MutPtr::null();
 
+    let audio_file_id_ptr = env.mem.alloc_and_write(audio_file_id);
+
     let status = AudioFileOpenURL(
-        env,
-        in_url,
-        kAudioFileReadPermission,
-        0,
-        env.mem.alloc_and_write(audio_file_id),
-    );
+    env,
+    in_url,
+    kAudioFileReadPermission,
+    0,
+    audio_file_id_ptr,
+);
 
     if status != 0 {
         return status;
@@ -565,11 +567,13 @@ pub fn ExtAudioFileGetProperty(
     io_data_size: MutPtr<u32>,
     out_property_data: MutVoidPtr,
 ) -> OSStatus {
+    let audio_file_id = {
     let host = State::get(&mut env.framework_state)
         .ext_audio_files
-        .files
-        .get(&in_ext_audio_file)
+        .get(&ext_audio_file)
         .unwrap();
+    host.audio_file_id
+};
 
     match in_property_id {
         kExtAudioFileProperty_FileDataFormat
@@ -587,13 +591,14 @@ pub fn ExtAudioFileGetProperty(
             let mut size = guest_size_of::<u64>() as u32;
             env.mem.write(io_data_size, size);
 
-            AudioFileGetProperty(
-                env,
-                host.audio_file_id,
-                kAudioFilePropertyAudioDataPacketCount,
-                io_data_size,
-                out_property_data,
-            )
+            let status = AudioFileGetProperty(
+                    env,
+                    audio_file_id,
+                    property_id,
+                    io_data_size,
+                    out_data,
+           );
+
         }
 
         _ => kAudioFileUnsupportedProperty,
