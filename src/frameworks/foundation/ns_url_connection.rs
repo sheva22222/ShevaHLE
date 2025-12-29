@@ -5,7 +5,7 @@
  */
 //! `NSURLConnection`.
 
-use crate::objc::{autorelease, id, msg, nil, objc_classes, release, ClassExports};
+use crate::objc::{autorelease, id, msg, msg_super, nil, objc_classes, release, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -82,7 +82,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)description {
-    msg![env; super description]
+    msg_super![env; this description]
 }
 
 - (id)currentRequest {
