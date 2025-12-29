@@ -30,7 +30,7 @@ const UIButtonTypeInfoDark: UIButtonType = 4;
 const UIButtonTypeContactAdd: UIButtonType = 5;
 
 pub type UIControlContentVerticalAlignment = NSInteger;
-pub type UIControlContentHorizontalAlignment
+pub type UIControlContentHorizontalAlignment = NSInteger;
 
 // Host object for an intermediate object
 // used for decoding of UIButton from a NIB
