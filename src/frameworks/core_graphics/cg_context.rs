@@ -507,8 +507,13 @@ fn CGContextAddLines(
     context: CGContextRef,
     points: Ptr<CGPointZero, true>,
     count: u32,
-)
-
+) {
+    log!(
+        "TODO: CGContextAddLines({:?}, count={})",
+        context,
+        count
+    );
+}
 
 fn CGContextAddCurveToPoint(
     _env: &mut Environment,
@@ -538,7 +543,14 @@ fn CGContextSetLineDash(
     phase: CGFloat,
     lengths: Ptr<CGFloat, true>,
     count: u32,
-)
+) {
+    log!(
+        "TODO: CGContextSetLineDash({:?}, phase={}, count={})",
+        context,
+        phase,
+        count
+    );
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
