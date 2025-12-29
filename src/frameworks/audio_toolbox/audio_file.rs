@@ -626,19 +626,24 @@ pub fn ExtAudioFileRead(
     host.audio_file_id
 }; // <- borrow ENDS HERE
 
-    let out_num_bytes = env.mem.alloc_and_write(0u32);
-    let num_packets_ptr = env.mem.alloc_and_write(num_packets);
+let num_packets = env.mem.read(io_num_frames);
+let num_packets_ptr = env.mem.alloc_and_write(num_packets);
 
-    AudioFileReadPackets(
-         env,
-         audio_file_id,
-         false,
-         out_num_bytes,
-         null_mut(),
-         starting_packet,
-         num_packets_ptr,
-         io_data,
-    )
+let starting_packet: i64 = 0;
+
+let out_num_bytes_ptr = env.mem.alloc_and_write(0u32);
+
+let status = AudioFileReadPackets(
+    env,
+    audio_file_id,
+    false,
+    out_num_bytes_ptr,
+    MutVoidPtr::null(),
+    starting_packet,
+    num_packets_ptr,
+    io_data,
+);
+
 }
 
 pub fn ExtAudioFileDispose(
