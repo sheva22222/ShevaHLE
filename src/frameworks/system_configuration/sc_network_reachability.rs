@@ -165,9 +165,74 @@ fn SCNetworkReachabilitySetCallback(
     false
 }
 
+fn SCNetworkReachabilityScheduleWithRunLoop(
+    env: &mut Environment,
+    target: SCNetworkReachabilityRef,
+    run_loop: CFTypeRef, // CFRunLoopRef
+    mode: CFTypeRef,     // CFStringRef
+) -> bool {
+    let target_class: Class = msg![env; target class];
+    assert_eq!(
+        target_class,
+        env.objc
+            .get_known_class("_touchHLE_SCNetworkReachability", &mut env.mem)
+    );
+
+    log_dbg!(
+        "SCNetworkReachabilityScheduleWithRunLoop({:?}, {:?}, {:?}) -> true (stub)",
+        target,
+        run_loop,
+        mode
+    );
+    true
+}
+
+fn SCNetworkReachabilityUnscheduleFromRunLoop(
+    env: &mut Environment,
+    target: SCNetworkReachabilityRef,
+    run_loop: CFTypeRef,
+    mode: CFTypeRef,
+) -> bool {
+    let target_class: Class = msg![env; target class];
+    assert_eq!(
+        target_class,
+        env.objc
+            .get_known_class("_touchHLE_SCNetworkReachability", &mut env.mem)
+    );
+
+    log_dbg!(
+        "SCNetworkReachabilityUnscheduleFromRunLoop({:?}, {:?}, {:?}) -> true (stub)",
+        target,
+        run_loop,
+        mode
+    );
+    true
+}
+
+fn SCNetworkReachabilityGetReachabilityFlags(
+    env: &mut Environment,
+    target: SCNetworkReachabilityRef,
+    flags: MutPtr<SCNetworkReachabilityFlags>,
+) -> bool {
+    SCNetworkReachabilityGetFlags(env, target, flags)
+}
+
+fn SCNetworkReachabilitySetDispatchQueue(
+    _env: &mut Environment,
+    _target: SCNetworkReachabilityRef,
+    _queue: MutVoidPtr, // dispatch_queue_t
+) -> bool {
+    log_dbg!("SCNetworkReachabilitySetDispatchQueue -> false (unsupported)");
+    false
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(SCNetworkReachabilityCreateWithName(_, _)),
     export_c_func!(SCNetworkReachabilityCreateWithAddress(_, _)),
     export_c_func!(SCNetworkReachabilityGetFlags(_, _)),
+    export_c_func!(SCNetworkReachabilityGetReachabilityFlags(_, _)),
     export_c_func!(SCNetworkReachabilitySetCallback(_, _, _)),
+    export_c_func!(SCNetworkReachabilityScheduleWithRunLoop(_, _, _)),
+    export_c_func!(SCNetworkReachabilityUnscheduleFromRunLoop(_, _, _)),
+    export_c_func!(SCNetworkReachabilitySetDispatchQueue(_, _)),
 ];
