@@ -416,23 +416,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setToValue:(id)value {
-    log_dbg!(
-        "[(CATransition*){:?} setToValue:{:?} ({})]",
-        this,
-        value,
-        if value != nil { to_rust_string(env, value) } else { "<nil>".into() }
-    );
+    let old_value = {
+        let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
+        let old = host.to_value;
+        host.to_value = value;
+        old
+    };
 
-    // ✅ retain NAJPIERW
-    retain(env, value);
-
-    let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
-
-    if host.to_value != nil {
-        release(env, host.to_value);
+    if old_value != nil {
+        release(env, old_value);
     }
-
-    host.to_value = value;
+    if value != nil {
+        retain(env, value);
+    }
 }
 
 - (id)toValue {
