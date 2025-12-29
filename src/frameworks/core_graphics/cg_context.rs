@@ -743,7 +743,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextReplacePathWithStrokedPath(_)),
     export_c_func!(CGContextMoveToPoint(_, _, _)),
     export_c_func!(CGContextAddLineToPoint(_, _, _)),
-    export_c_func!(CGContextSetStrokeColorWithColor.  (_, _)),
+    export_c_func!(CGContextSetStrokeColorWithColor(_, _)),
     export_c_func!(CGContextSetFillColorWithColor(_, _)),
 
 ];
