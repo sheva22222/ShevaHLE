@@ -93,6 +93,10 @@ fn CGPointEqualToPoint(_env: &mut Environment, a: CGPoint, b: CGPoint) -> bool {
     a == b
 }
 
+fn CGPointMake(_env: &mut Environment, x: CGFloat, y: CGFloat) -> CGPoint {
+    CGPoint { x, y }
+}
+
 pub const CGPointZero: CGPoint = CGPoint { x: 0.0, y: 0.0 };
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -169,6 +173,10 @@ impl Sub<CGSize> for CGSize {
 // This function is rare because it is usually inlined.
 fn CGSizeEqualToSize(_env: &mut Environment, a: CGSize, b: CGSize) -> bool {
     a == b
+}
+
+fn CGSizeMake(_env: &mut Environment, width: CGFloat, height: CGFloat) -> CGSize {
+    CGSize { width, height }
 }
 
 pub const CGSizeZero: CGSize = CGSize {
@@ -293,12 +301,53 @@ fn CGRectGetMaxY(_env: &mut Environment, rect: CGRect) -> CGFloat {
     rect.origin.y + rect.size.height
 }
 
+fn CGRectGetMidX(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.origin.x + rect.size.width * 0.5
+}
+
+fn CGRectGetMidY(_env: &mut Environment, rect: CGRect) -> CGFloat {
+    rect.origin.y + rect.size.height * 0.5
+}
+
 fn CGRectGetHeight(_env: &mut Environment, rect: CGRect) -> CGFloat {
     rect.size.height
 }
 
 fn CGRectGetWidth(_env: &mut Environment, rect: CGRect) -> CGFloat {
     rect.size.width
+}
+
+fn CGRectInset(
+    _env: &mut Environment,
+    rect: CGRect,
+    dx: CGFloat,
+    dy: CGFloat,
+) -> CGRect {
+    CGRect {
+        origin: CGPoint {
+            x: rect.origin.x + dx,
+            y: rect.origin.y + dy,
+        },
+        size: CGSize {
+            width: rect.size.width - dx * 2.0,
+            height: rect.size.height - dy * 2.0,
+        },
+    }
+}
+
+fn CGRectOffset(
+    _env: &mut Environment,
+    rect: CGRect,
+    dx: CGFloat,
+    dy: CGFloat,
+) -> CGRect {
+    CGRect {
+        origin: CGPoint {
+            x: rect.origin.x + dx,
+            y: rect.origin.y + dy,
+        },
+        size: rect.size,
+    }
 }
 
 fn CGRectMake(
@@ -311,6 +360,40 @@ fn CGRectMake(
     CGRect {
         origin: CGPoint { x, y },
         size: CGSize { width, height },
+    }
+}
+
+fn CGRectUnion(_env: &mut Environment, a: CGRect, b: CGRect) -> CGRect {
+    let min_x = a.origin.x.min(b.origin.x);
+    let min_y = a.origin.y.min(b.origin.y);
+    let max_x = (a.origin.x + a.size.width).max(b.origin.x + b.size.width);
+    let max_y = (a.origin.y + a.size.height).max(b.origin.y + b.size.height);
+
+    CGRect {
+        origin: CGPoint { x: min_x, y: min_y },
+        size: CGSize {
+            width: max_x - min_x,
+            height: max_y - min_y,
+        },
+    }
+}
+
+fn CGRectIntersection(_env: &mut Environment, a: CGRect, b: CGRect) -> CGRect {
+    let min_x = a.origin.x.max(b.origin.x);
+    let min_y = a.origin.y.max(b.origin.y);
+    let max_x = (a.origin.x + a.size.width).min(b.origin.x + b.size.width);
+    let max_y = (a.origin.y + a.size.height).min(b.origin.y + b.size.height);
+
+    if max_x <= min_x || max_y <= min_y {
+        CGRectNull
+    } else {
+        CGRect {
+            origin: CGPoint { x: min_x, y: min_y },
+            size: CGSize {
+                width: max_x - min_x,
+                height: max_y - min_y,
+            },
+        }
     }
 }
 
@@ -328,19 +411,28 @@ fn CGRectIsNull(_env: &mut Environment, rect: CGRect) -> bool {
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPointEqualToPoint(_, _)),
+    export_c_func!(CGPointMake(_, _)),
     export_c_func!(CGSizeEqualToSize(_, _)),
+    export_c_func!(CGSizeMake(_, _)),
     export_c_func!(CGRectEqualToRect(_, _)),
     export_c_func!(CGRectContainsPoint(_, _)),
     export_c_func!(CGRectIntersectsRect(_, _)),
     export_c_func!(CGRectGetMinX(_)),
+    export_c_func!(CGRectGetMidX(_)),
     export_c_func!(CGRectGetMaxX(_)),
     export_c_func!(CGRectGetMinY(_)),
+    export_c_func!(CGRectGetMidY(_)),
     export_c_func!(CGRectGetMaxY(_)),
     export_c_func!(CGRectGetHeight(_)),
     export_c_func!(CGRectGetWidth(_)),
     export_c_func!(CGRectMake(_, _, _, _)),
+    export_c_func!(CGRectInset(_, _, _)),
+    export_c_func!(CGRectOffset(_, _, _)),
+    export_c_func!(CGRectUnion(_, _)),
+    export_c_func!(CGRectIntersection(_, _)),
     export_c_func!(CGRectIsNull(_)),
 ];
+
 
 pub const CONSTANTS: ConstantExports = &[
     (
