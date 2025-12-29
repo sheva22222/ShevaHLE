@@ -34,8 +34,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (id)sendSynchronousRequest:(id)_request
-           returningResponse:(id *)_response
-                       error:(id *)_error {
+           returningResponse:(id)_response
+                       error:(id)_error {
     log!("TODO: NSURLConnection sendSynchronousRequest");
     nil
 }
