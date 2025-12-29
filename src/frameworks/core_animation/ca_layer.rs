@@ -256,6 +256,36 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<CALayerHostObject>(this).affine_transform = affine_transform;
 }
 
+- (id)presentationLayer {
+    this
+}
+
+- (id)modelLayer {
+    this
+}
+
+- (())setMasksToBounds:(bool)_mask {
+    // Clipping not implemented yet
+}
+
+- (bool)masksToBounds {
+    false
+}
+
+- (CGFloat)zPosition {
+    0.0
+}
+
+- (())setZPosition:(CGFloat)_z {
+    // No 3D compositing yet
+}
+
+- (id)actionForKey:(id)key {
+    let key_str = to_rust_string(env, key);
+    log_dbg!("[(CALayer*){:?} actionForKey:{:?} ({})]", this, key, key_str);
+    nil
+}
+
 - (CGRect)frame {
     let host_obj @ &CALayerHostObject {
         bounds,
@@ -343,12 +373,39 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<CALayerHostObject>(this).corner_radius = corner_radius;
 }
 
+- (CGSize)preferredFrameSize {
+    env.objc.borrow::<CALayerHostObject>(this).bounds.size
+}
+
+- (CGRect)boundsOfSublayer:(id)sublayer {
+    let sub_bounds: CGRect = msg![env; sublayer bounds];
+    sub_bounds
+}
+
 - (bool)needsDisplay {
     env.objc.borrow::<CALayerHostObject>(this).needs_display
 }
 - (())setNeedsDisplay {
     env.objc.borrow_mut::<CALayerHostObject>(this).needs_display = true;
 }
+
+- (())setNeedsDisplayInRect:(CGRect)_rect {
+    // touchHLE currently does full redraws only
+    env.objc.borrow_mut::<CALayerHostObject>(this).needs_display = true;
+}
+
+- (bool)needsDisplayOnBoundsChange {
+    false
+}
+
+- (())setNeedsLayout {
+    // Layout is driven by UIKit, so no-op for now
+}
+
+- (())layoutIfNeeded {
+    // UIKit handles layout
+}
+
 // TODO: support setNeedsDisplayInRect:
 - (())displayIfNeeded {
     let &mut CALayerHostObject {
@@ -422,6 +479,51 @@ pub const CLASSES: ClassExports = objc_classes! {
     CGContextClearRect(env, cg_context, CGRect { origin, size });
     () = msg![env; delegate drawLayer:this inContext:cg_context];
     CGContextTranslateCTM(env, cg_context, origin.x, origin.y);
+}
+
+- (id)sublayers {
+    let subs = &env.objc.borrow::<CALayerHostObject>(this).sublayers;
+    ns_string::array_from_ids(env, subs)
+}
+
+- (())setSublayers:(id)array {
+    log!("TODO: setSublayers: {:?}", array);
+}
+
+- (CGFloat)contentsScale {
+    1.0
+}
+
+- (())setContentsScale:(CGFloat)_scale {
+    // Ignored for now
+}
+
+- (CGRect)contentsRect {
+    CGRect {
+        origin: CGPoint { x: 0.0, y: 0.0 },
+        size: CGSize { width: 1.0, height: 1.0 },
+    }
+}
+
+- (())setContentsRect:(CGRect)_rect {
+    // Sub-image rendering not supported yet
+}
+
+- (id)hitTest:(CGPoint)point {
+    if !msg![env; this containsPoint:point] {
+        return nil;
+    }
+
+    let sublayers = env.objc.borrow::<CALayerHostObject>(this).sublayers.clone();
+    for &sublayer in sublayers.iter().rev() {
+        let converted: CGPoint = msg![env; sublayer convertPoint:point fromLayer:this];
+        let hit: id = msg![env; sublayer hitTest:converted];
+        if hit != nil {
+            return hit;
+        }
+    }
+
+    this
 }
 
 // CGImageRef*
