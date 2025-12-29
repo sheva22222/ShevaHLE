@@ -19,10 +19,20 @@ type CFLocaleIdentifier = CFStringRef;
 pub(super) type CFLocaleRef = CFTypeRef;
 type CFLocaleKey = CFStringRef;
 
+pub const kCFLocaleIdentifier: &str = "kCFLocaleIdentifier";
+pub const kCFLocaleCurrencySymbol: &str = "kCFLocaleCurrencySymbol";
 pub const kCFLocaleCountryCode: &str = "kCFLocaleCountryCodeKey";
 pub const kCFLocaleLanguageCode: &str = "kCFLocaleLanguageCode";
 
 pub const CONSTANTS: ConstantExports = &[
+    (
+        "_kCFLocaleIdentifier",
+        HostConstant::NSString(kCFLocaleIdentifier),
+    ),
+    (
+        "_kCFLocaleCurrencySymbol",
+        HostConstant::NSString(kCFLocaleIdentifier),
+    ),
     (
         "_kCFLocaleCountryCode",
         HostConstant::NSString(kCFLocaleCountryCode),
@@ -74,6 +84,35 @@ fn CFLocaleGetValue(env: &mut Environment, locale: CFLocaleRef, key: CFLocaleKey
     msg![env; locale objectForKey:key]
 }
 
+fn CFLocaleGetIdentifier(
+    _env: &mut Environment,
+    locale: CFLocaleRef,
+) -> CFLocaleIdentifier {
+    locale
+}
+
+fn CFLocaleCopyAvailableLocaleIdentifiers(env: &mut Environment) -> CFArrayRef {
+    // Early iOS returns a small fixed list
+    let ids = [
+        "en",
+        "fr",
+        "de",
+        "es",
+        "it",
+        "ja",
+    ];
+
+    let mut strings = Vec::new();
+    for id_str in ids {
+        let s: id = msg_class![env; NSString alloc];
+        let s: id = msg![env; s initWithUTF8String:id_str];
+        strings.push(s);
+    }
+
+    let arr: id = msg_class![env; NSArray alloc];
+    msg![env; arr initWithObjects:&strings count:strings.len() as NSUInteger]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFLocaleCopyCurrent()),
     export_c_func!(CFLocaleCopyPreferredLanguages()),
@@ -81,4 +120,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFLocaleCreateCanonicalLocaleIdentifierFromString(_, _)),
     export_c_func!(CFLocaleGetSystem()),
     export_c_func!(CFLocaleGetValue(_, _)),
+    export_c_func!(CFLocaleGetIdentifier(_)),
+    export_c_func!(CFLocaleCopyAvailableLocaleIdentifiers()),
 ];
