@@ -6,6 +6,7 @@
 //! `CGContext.h`
 
 use super::cg_affine_transform::CGAffineTransform;
+use super::cg_geometry::CGPointZero;
 use super::cg_image::CGImageRef;
 use super::{cg_bitmap_context, CGFloat, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
@@ -496,7 +497,7 @@ fn CGContextSetTextMatrix(
 fn CGContextSelectFont(
     _env: &mut Environment,
     context: CGContextRef,
-    _name: *const u8,
+    name: Ptr<u8, true>,
     size: CGFloat,
     encoding: CGTextEncoding,
 ) {
