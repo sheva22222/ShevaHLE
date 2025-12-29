@@ -616,17 +616,21 @@ pub fn ExtAudioFileRead(
     io_num_frames: MutPtr<u32>,
     io_data: MutVoidPtr,
 ) -> OSStatus {
+    let audio_file_id = {
     let host = State::get(&mut env.framework_state)
         .ext_audio_files
         .files
         .get(&in_ext_audio_file)
         .unwrap();
 
+    host.audio_file_id
+}; // <- borrow ENDS HERE
+
     let mut num_packets = env.mem.read(io_num_frames);
 
     AudioFileReadPackets(
         env,
-        host.audio_file_id,
+        audio_file_id,
         false,
         env.mem.alloc_and_write(0u32),
         MutVoidPtr::null(),
