@@ -40,10 +40,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this timeZoneWithName:tz_name]
 }
 
++ (id)systemTimeZone {
+    msg![env; this localTimeZone]
+}
+
++ (id)defaultTimeZone {
+    msg![env; this systemTimeZone]
+}
+
 - (())dealloc {
     let tz_name = env.objc.borrow_mut::<NSTimeZoneHostObject>(this).time_zone;
     release(env, tz_name);
     env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (id)name {
+    env.objc.borrow::<NSTimeZoneHostObject>(this).time_zone
 }
 
 - (id)initWithName:(id)tz_name { // NSString *
@@ -53,8 +65,43 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (bool)isEqualToTimeZone:(id)other {
+    if other == nil {
+        return false;
+    }
+    let a = env.objc.borrow::<NSTimeZoneHostObject>(this).time_zone;
+    let b = env.objc.borrow::<NSTimeZoneHostObject>(other).time_zone;
+    msg![env; a isEqual:b]
+}
+
+- (NSInteger)secondsFromGMTForDate:(id)_date {
+    // TODO: real timezone handling
+    0
+}
+
 - (NSInteger)secondsFromGMT {
     // TODO: respect timezone
+    0
+}
+
+- (id)abbreviation {
+    // Not accurate, but acceptable for now
+    env.objc.borrow::<NSTimeZoneHostObject>(this).time_zone
+}
+
+- (id)abbreviationForDate:(id)_date {
+    msg![env; this abbreviation]
+}
+
+- (id)description {
+    env.objc.borrow::<NSTimeZoneHostObject>(this).time_zone
+}
+
+- (bool)isDaylightSavingTime {
+    false
+}
+
+- (NSInteger)daylightSavingTimeOffset {
     0
 }
 
