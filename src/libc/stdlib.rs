@@ -524,6 +524,39 @@ fn div(env: &mut Environment, numer: i32, denom: i32) -> div_t {
     }
 }
 
+fn initstate(
+    env: &mut Environment,
+    seed: u32,
+    state: MutPtr<u8>,
+    _n: GuestUSize,
+) -> MutPtr<u8> {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    // Save old state (Darwin returns previous state pointer)
+    let old_state = state;
+
+    // Seed the BSD random() generator
+    env.libc_state.stdlib.random = seed;
+
+    // We ignore the provided state buffer for now
+    // This matches what many lightweight libc shims do
+    old_state
+}
+
+fn unsetenv(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
+    set_errno(env, 0);
+    let key = env.mem.cstr_at(name).to_vec();
+    if let Some(val) = env.env_vars.remove(&key) {
+        env.mem.free(val.cast());
+    }
+    0
+}
+
+fn abort(_env: &mut Environment) -> ! {
+    panic!("abort()");
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(malloc_size(_)),
@@ -554,6 +587,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcstombs(_, _, _)),
     export_c_func!(system(_)),
     export_c_func!(div(_, _)),
+    export_c_func!(initstate(_, _, _)),
+    export_c_func!(unsetenv(_)),
+    export_c_func!(abort()),
+
 ];
 
 /// A simple wrapper around [atof_inner_generic] for the case of C string.
