@@ -9,7 +9,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::CFTypeRef;
 use crate::frameworks::foundation::NSTimeInterval;
 use crate::libc::time::{time_t, timestamp_to_calendar_date};
-use crate::mem::SafeRead;
+use crate::mem::{Ptr, SafeRead};
 use crate::objc::nil;
 use crate::{impl_GuestRet_for_large_struct, Environment};
 use std::ops::Add;
@@ -101,10 +101,15 @@ fn CFAbsoluteTimeAddGregorianUnits(
     _env: &mut Environment,
     at: CFAbsoluteTime,
     _tz: CFTimeZoneRef,
-    units: CFGregorianUnits,
+    units: Ptr<CFGregorianUnits>,
 ) -> CFAbsoluteTime {
-    // Best-effort: add seconds only (safe, predictable)
-    at + units.seconds
+    if units.is_null() {
+        at
+    } else {
+        // Best-effort: seconds only
+        let u = unsafe { *units };
+        at + u.seconds
+    }
 }
 
 fn CFAbsoluteTimeGetDifferenceAsGregorianUnits(
