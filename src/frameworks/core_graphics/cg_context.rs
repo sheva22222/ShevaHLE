@@ -425,7 +425,15 @@ fn CGContextShowGlyphsAtPoint(
     y: CGFloat,
     glyphs: Ptr<CGGlyph, true>,
     count: u32,
-)
+) {
+    log!(
+        "TODO: CGContextShowGlyphsAtPoint({:?}, {}, {}, count={})",
+        context,
+        x,
+        y,
+        count
+    );
+}
 
 fn CGContextAddArc(
     _env: &mut Environment,
