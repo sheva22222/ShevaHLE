@@ -482,9 +482,13 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)sublayers {
-    let subs = &env.objc.borrow::<CALayerHostObject>(this).sublayers;
-    ns_string::array_from_ids(env, subs)
+    let subs: Vec<id> = {
+    let host = env.objc.borrow::<CALayerHostObject>(this);
+    host.sublayers.clone()
+};
+    ns_string::array_from_ids(env, &subs)
 }
+
 
 - (())setSublayers:(id)array {
     log!("TODO: setSublayers: {:?}", array);
