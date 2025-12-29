@@ -110,7 +110,7 @@ fn CFLocaleCopyAvailableLocaleIdentifiers(env: &mut Environment) -> CFArrayRef {
     }
 
     let arr: id = msg_class![env; NSArray alloc];
-    msg![env; arr initWithObjects:&strings count:strings.len() as NSUInteger]
+    msg![env; arr initWithObjects: &strings count: (strings.len() as NSUInteger)]
 }
 
 pub const FUNCTIONS: FunctionExports = &[
