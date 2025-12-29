@@ -6,7 +6,7 @@
 //! `NSProcessInfo`.
 
 use super::NSTimeInterval;
-use crate::frameworks::foundation::ns_string;
+use crate::frameworks::foundation::{ns_string, NSUInteger};
 use crate::libc::mach::host::PHYSICAL_MEMORY;
 use crate::objc::{id, msg, msg_class, objc_classes, ClassExports};
 use crate::Environment;
@@ -50,9 +50,52 @@ pub const CLASSES: ClassExports = objc_classes! {
     Instant::now().duration_since(env.startup_time).as_secs_f64()
 }
 
+- (id)arguments {
+    assert_process_info_singleton(env, this);
+    msg_class![env; NSArray array]
+}
+
 - (u64)physicalMemory {
     assert_process_info_singleton(env, this); // TODO
     PHYSICAL_MEMORY.into()
+}
+
+- (id)environment {
+    assert_process_info_singleton(env, this);
+    msg_class![env; NSDictionary dictionary]
+}
+
+- (id)hostName {
+    assert_process_info_singleton(env, this);
+    ns_string::get_static_str(env, "localhost")
+}
+
+- (id)operatingSystemVersionString {
+    assert_process_info_singleton(env, this);
+    ns_string::get_static_str(env, "Version 2.0")
+}
+
+- (())operatingSystemVersion {
+    // iOS 2.x compatibility stub
+}
+
+- (id)globallyUniqueString {
+    assert_process_info_singleton(env, this);
+    let uptime = Instant::now()
+        .duration_since(env.startup_time)
+        .as_nanos();
+    let s = format!("touchHLE-{}", uptime);
+    ns_string::from_str(env, &s)
+}
+
+- (NSUInteger)processorCount {
+    assert_process_info_singleton(env, this);
+    1
+}
+
+- (NSUInteger)activeProcessorCount {
+    assert_process_info_singleton(env, this);
+    1
 }
 
 - (id)processName {
@@ -62,6 +105,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     let main_bundle: id = msg_class![env; NSBundle mainBundle];
     let name_key: id = ns_string::get_static_str(env, "CFBundleName");
     msg![env; main_bundle objectForInfoDictionaryKey:name_key]
+}
+
+- (bool)isLowPowerModeEnabled {
+    false
 }
 
 @end
