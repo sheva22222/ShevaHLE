@@ -17,7 +17,7 @@ use crate::frameworks::core_foundation::cf_url::CFURLRef;
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::NSUInteger;
-use crate::mem::{ConstVoidPtr, GuestUSize, MutVoidPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutVoidPtr, Ptr};
 use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
@@ -204,19 +204,19 @@ fn CGDataProviderCreateWithCFData(env: &mut Environment, data: CFDataRef) -> CGD
 
 fn CGDataProviderCreateWithFilename(
     env: &mut Environment,
-    filename: *const u8,
+    filename: ConstPtr<u8>,
 ) -> CGDataProviderRef {
     if filename.is_null() {
         return Ptr::null();
     }
 
-    let path = unsafe { std::ffi::CStr::from_ptr(filename as *const i8) }
-        .to_string_lossy()
-        .into_owned();
-
-    log_dbg!("CGDataProviderCreateWithFilename {}", path);
-
+    // NSString handles UTF-8 decoding from guest memory
     let ns_string: id = msg_class![env; NSString stringWithUTF8String:filename];
+
+    if ns_string.is_null() {
+        return Ptr::null();
+    }
+
     let data: id = msg_class![env; NSData dataWithContentsOfFile:ns_string];
 
     if data.is_null() {
