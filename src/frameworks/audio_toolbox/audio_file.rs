@@ -67,6 +67,17 @@ const kAudioFilePropertyMagicCookieData: AudioFilePropertyID = fourcc(b"mgic");
 const kAudioFilePropertyChannelLayout: AudioFilePropertyID = fourcc(b"cmap");
 const kAudioFilePropertyEstimatedDuration: AudioFilePropertyID = fourcc(b"edur");
 
+#[derive(Default)]
+pub struct State {
+    pub ext_audio_files: HashMap<ExtAudioFileRef, ExtAudioFileHostObject>,
+}
+
+impl State {
+    pub fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
+        &mut framework_state.audio_toolbox.ext_audio_file
+    }
+}
+
 #[repr(C, packed)]
 pub struct OpaqueExtAudioFile {
     _filler: u8,
