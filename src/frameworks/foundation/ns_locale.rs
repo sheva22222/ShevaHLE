@@ -225,17 +225,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
-- (id)localeIdentifier {
-    let host = env.objc.borrow::<NSLocaleHostObject>(this);
-    if host.language_code != nil && host.country_code != nil {
-        let lang = ns_string::to_rust_string(env, host.language_code);
-        let country = ns_string::to_rust_string(env, host.country_code);
-        ns_string::from_rust_string(env, format!("{}_{}", lang, country))
-    } else if host.language_code != nil {
-        retain(env, host.language_code)
-    } else {
-        ns_string::get_static_str(env, "en")
-    }
+- (id)localeIdentifier }
+    nil
 }
 
 - (id)languageCode {
