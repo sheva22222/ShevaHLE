@@ -225,7 +225,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
-- (id)localeIdentifier }
+- (id)localeIdentifier {
     nil
 }
 
