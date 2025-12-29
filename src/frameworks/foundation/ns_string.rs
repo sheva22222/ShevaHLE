@@ -209,7 +209,8 @@ pub fn array_from_ids(env: &mut Environment, objects: &[id]) -> id {
     let ptr = objects.as_ptr();
     let len = objects.len();
 
-    let array: id = msg![env; NSArray alloc];
+    let array_class: id = msg_class![env; NSArray];
+    let array: id = msg![env; array_class alloc];
     let array: id = msg![env; array initWithObjects:ptr count:len];
     msg![env; array autorelease]
 }
