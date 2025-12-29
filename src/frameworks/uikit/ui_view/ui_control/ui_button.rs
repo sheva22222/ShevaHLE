@@ -30,7 +30,9 @@ const UIButtonTypeInfoDark: UIButtonType = 4;
 const UIButtonTypeContactAdd: UIButtonType = 5;
 
 pub type UIControlContentVerticalAlignment = NSInteger;
+pub const UIControlContentVerticalAlignmentCenter: UIControlContentVerticalAlignment = 0;
 pub type UIControlContentHorizontalAlignment = NSInteger;
+pub const UIControlContentHorizontalAlignmentCenter: UIControlContentHorizontalAlignment = 0;
 
 // Host object for an intermediate object
 // used for decoding of UIButton from a NIB
@@ -76,8 +78,8 @@ impl Default for UIButtonHostObject {
             title_colors_for_states: HashMap::new(),
             images_for_states: HashMap::new(),
             background_images_for_states: HashMap::new(),
-            content_vertical_alignment: nil,
-            content_horizontal_alignment: nil,
+            content_vertical_alignment: UIControlContentVerticalAlignmentCenter,
+            content_horizontal_alignment: UIControlContentHorizontalAlignmentCenter,
         }
     }
 }
