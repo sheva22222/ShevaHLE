@@ -200,6 +200,18 @@ impl StringHostObject {
     }
 }
 
+/// Create an autoreleased NSArray from a slice of Objective-C object IDs.
+pub fn array_from_ids(env: &mut Environment, objects: &[id]) -> id {
+    if objects.is_empty() {
+        return msg![env; NSArray array];
+    }
+
+    let array: id = msg![env; NSArray alloc];
+    let array: id = msg![env; array initWithObjects:objects.as_ptr()
+                                             count:objects.len()];
+    msg![env; array autorelease]
+}
+
 enum CodeUnitIterator<'a> {
     Utf8(std::str::EncodeUtf16<'a>),
     Utf16(std::slice::Iter<'a, u16>),
