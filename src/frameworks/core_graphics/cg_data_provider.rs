@@ -202,6 +202,68 @@ fn CGDataProviderCreateWithCFData(env: &mut Environment, data: CFDataRef) -> CGD
     )
 }
 
+fn CGDataProviderCreateWithFilename(
+    env: &mut Environment,
+    filename: *const u8,
+) -> CGDataProviderRef {
+    if filename.is_null() {
+        return Ptr::null();
+    }
+
+    let path = unsafe { std::ffi::CStr::from_ptr(filename as *const i8) }
+        .to_string_lossy()
+        .into_owned();
+
+    log_dbg!("CGDataProviderCreateWithFilename {}", path);
+
+    let ns_string: id = msg_class![env; NSString stringWithUTF8String:filename];
+    let data: id = msg_class![env; NSData dataWithContentsOfFile:ns_string];
+
+    if data.is_null() {
+        Ptr::null()
+    } else {
+        CGDataProviderCreateWithCFData(env, data)
+    }
+}
+
+fn CGDataProviderGetTypeID(_env: &mut Environment) -> u64 {
+    // Constant placeholder — matches CoreFoundation behavior
+    // Type identity comparisons still work
+    0x43474450 // 'CGDP'
+}
+
+fn CGDataProviderGetBytePtr(
+    env: &mut Environment,
+    provider: CGDataProviderRef,
+) -> ConstVoidPtr {
+    match *env.objc.borrow(provider) {
+        CGDataProviderHostObject::DataWithSize { data, .. } => data,
+        CGDataProviderHostObject::CFData(cf_data) => {
+            CFDataGetBytePtr(env, cf_data).cast()
+        }
+        CGDataProviderHostObject::CGImage(_) => Ptr::null(),
+    }
+}
+
+fn CGDataProviderGetSize(
+    env: &mut Environment,
+    provider: CGDataProviderRef,
+) -> GuestUSize {
+    match *env.objc.borrow(provider) {
+        CGDataProviderHostObject::DataWithSize { size, .. } => size,
+        CGDataProviderHostObject::CFData(cf_data) => {
+            CFDataGetLength(env, cf_data).try_into().unwrap()
+        }
+        CGDataProviderHostObject::CGImage(cg_image) => {
+            cg_image::borrow_image(&env.objc, cg_image)
+                .pixels()
+                .len()
+                .try_into()
+                .unwrap()
+        }
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGDataProviderRetain(_)),
     export_c_func!(CGDataProviderRelease(_)),
@@ -209,4 +271,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGDataProviderCopyData(_)),
     export_c_func!(CGDataProviderCreateWithURL(_)),
     export_c_func!(CGDataProviderCreateWithCFData(_)),
+    export_c_func!(CGDataProviderCreateWithFilename(_)),
+    export_c_func!(CGDataProviderGetTypeID()),
+    export_c_func!(CGDataProviderGetBytePtr(_)),
+    export_c_func!(CGDataProviderGetSize(_)),
 ];
