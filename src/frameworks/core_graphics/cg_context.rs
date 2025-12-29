@@ -14,7 +14,7 @@ use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextGetHeight, CGBitmapContextGetWidth,
 };
 use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
-use crate::mem::Ptr;
+use crate::mem::{ConstPtr, GuestUSize, Ptr};
 use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
 
@@ -574,12 +574,13 @@ fn CGContextSetTextDrawingMode(
 fn CGContextShowText(
     _env: &mut Environment,
     context: CGContextRef,
-    _string: *const u8,
-    length: usize,
+    string: ConstPtr<u8>,
+    length: GuestUSize,
 ) {
     log!(
-        "TODO: CGContextShowText({:?}, length={})",
+        "TODO: CGContextShowText({:?}, string={:?}, length={})",
         context,
+        string,
         length
     );
 }
