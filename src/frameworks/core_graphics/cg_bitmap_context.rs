@@ -7,7 +7,7 @@
 
 use super::cg_affine_transform::{CGAffineTransform, CGAffineTransformIdentity};
 use super::cg_color_space::{
-    kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
+    kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceCreateDeviceRGB, CGColorSpaceCreateDeviceGray, CGColorSpaceHostObject, CGColorSpaceRef,
 };
 use super::cg_context::{CGContextHostObject, CGContextRef, CGContextSubclass};
 use super::cg_image::{
