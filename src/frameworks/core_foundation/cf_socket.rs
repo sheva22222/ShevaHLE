@@ -34,4 +34,95 @@ fn CFSocketCreate(
     Ptr::null()
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(CFSocketCreate(_, _, _, _, _, _, _))];
+fn CFSocketInvalidate(_env: &mut Environment, socket: CFTypeRef) {
+    log!("TODO: CFSocketInvalidate({:?})", socket);
+}
+
+fn CFSocketIsValid(_env: &mut Environment, socket: CFTypeRef) -> bool {
+    // NULL sockets are invalid; others are assumed valid for now
+    !socket.is_null()
+}
+
+fn CFSocketGetNative(_env: &mut Environment, _socket: CFTypeRef) -> i32 {
+    // No real socket backing yet
+    -1
+}
+
+fn CFSocketSetAddress(
+    _env: &mut Environment,
+    socket: CFTypeRef,
+    address: CFTypeRef,
+) -> i32 {
+    log!(
+        "TODO: CFSocketSetAddress({:?}, {:?}) -> success",
+        socket,
+        address
+    );
+    0 // success
+}
+
+fn CFSocketSendData(
+    _env: &mut Environment,
+    socket: CFTypeRef,
+    address: CFTypeRef,
+    data: CFTypeRef,
+    _timeout: f64,
+) -> i32 {
+    log!(
+        "TODO: CFSocketSendData({:?}, {:?}, {:?}) -> success",
+        socket,
+        address,
+        data
+    );
+    0 // success
+}
+
+fn CFSocketDisableCallBacks(
+    _env: &mut Environment,
+    socket: CFTypeRef,
+    callback_types: u32,
+) {
+    log!(
+        "TODO: CFSocketDisableCallBacks({:?}, {})",
+        socket,
+        callback_types
+    );
+}
+
+fn CFSocketEnableCallBacks(
+    _env: &mut Environment,
+    socket: CFTypeRef,
+    callback_types: u32,
+) {
+    log!(
+        "TODO: CFSocketEnableCallBacks({:?}, {})",
+        socket,
+        callback_types
+    );
+}
+
+fn CFSocketCopyAddress(_env: &mut Environment, socket: CFTypeRef) -> CFTypeRef {
+    log!("TODO: CFSocketCopyAddress({:?}) -> NULL", socket);
+    Ptr::null()
+}
+
+fn CFSocketCopyPeerAddress(_env: &mut Environment, socket: CFTypeRef) -> CFTypeRef {
+    log!(
+        "TODO: CFSocketCopyPeerAddress({:?}) -> NULL",
+        socket
+    );
+    Ptr::null()
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(CFSocketCreate(_, _, _, _, _, _, _)),
+    export_c_func!(CFSocketInvalidate(_)),
+    export_c_func!(CFSocketIsValid(_)),
+    export_c_func!(CFSocketGetNative(_)),
+    export_c_func!(CFSocketSetAddress(_, _)),
+    export_c_func!(CFSocketSendData(_, _, _, _)),
+    export_c_func!(CFSocketDisableCallBacks(_, _)),
+    export_c_func!(CFSocketEnableCallBacks(_, _)),
+    export_c_func!(CFSocketCopyAddress(_)),
+    export_c_func!(CFSocketCopyPeerAddress(_)),
+];
