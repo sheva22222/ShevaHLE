@@ -550,6 +550,7 @@ pub fn ExtAudioFileOpenURL(
 
     State::get(&mut env.framework_state)
         .ext_audio_files
+        .files
         .insert(
             ext_ref,
             ExtAudioFileHostObject { audio_file_id },
@@ -572,6 +573,7 @@ pub fn ExtAudioFileGetProperty(
     let audio_file_id = {
         let host = State::get(&mut env.framework_state)
             .ext_audio_files
+            .files
             .get(&in_ext_audio_file)
             .unwrap();
         host.audio_file_id
@@ -662,6 +664,7 @@ let status = AudioFileReadPackets(
     num_packets_ptr,
     io_data,
 );
+status
 
 }
 
