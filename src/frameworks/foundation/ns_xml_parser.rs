@@ -83,7 +83,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (bool)parse {
     let data = env.objc.borrow::<NSXMLParserHostObject>(this).data;
-    assert_ne!(data, nil);
+    // assert_ne!(data, nil);
     let bytes: ConstVoidPtr = msg![env; data bytes];
     let length: NSUInteger = msg![env; data length];
     log_dbg!("Parsing {:?}", env.mem.cstr_at_utf8(bytes.cast()));
