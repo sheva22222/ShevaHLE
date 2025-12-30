@@ -24,7 +24,6 @@ use std::collections::HashMap;
 #[derive(Default)]
 pub struct State {
     pub audio_files: HashMap<AudioFileID, AudioFileHostObject>,
-    pub ext_audio_files: ExtAudioFileState,
 }
 impl State {
     pub fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
@@ -43,6 +42,7 @@ pub struct OpaqueAudioFileID {
 unsafe impl SafeRead for OpaqueAudioFileID {}
 
 pub type AudioFileID = MutPtr<OpaqueAudioFileID>;
+pub type ExtAudioFileRef = MutPtr<OpaqueAudioFileID>;
 
 #[allow(dead_code)]
 const kAudioFileFileNotFoundError: OSStatus = -43;
@@ -67,28 +67,6 @@ pub const kAudioFilePropertyPacketSizeUpperBound: AudioFilePropertyID = fourcc(b
 const kAudioFilePropertyMagicCookieData: AudioFilePropertyID = fourcc(b"mgic");
 const kAudioFilePropertyChannelLayout: AudioFilePropertyID = fourcc(b"cmap");
 const kAudioFilePropertyEstimatedDuration: AudioFilePropertyID = fourcc(b"edur");
-
-#[repr(C, packed)]
-pub struct OpaqueExtAudioFile {
-    _filler: u8,
-}
-unsafe impl SafeRead for OpaqueExtAudioFile {}
-
-pub type ExtAudioFileRef = MutPtr<OpaqueExtAudioFile>;
-
-#[allow(dead_code)]
-const kExtAudioFileProperty_FileDataFormat: u32 = fourcc(b"ffmt");
-const kExtAudioFileProperty_ClientDataFormat: u32 = fourcc(b"cfmt");
-const kExtAudioFileProperty_FileLengthFrames: u32 = fourcc(b"#frm");
-
-pub struct ExtAudioFileHostObject {
-    pub audio_file_id: AudioFileID,
-}
-
-#[derive(Default)]
-pub struct ExtAudioFileState {
-    pub files: HashMap<ExtAudioFileRef, ExtAudioFileHostObject>,
-}
 
 pub fn AudioFileOpenURL(
     env: &mut Environment,
@@ -524,101 +502,23 @@ fn AudioFileStreamOpen(
 }
 
 pub fn ExtAudioFileOpenURL(
-    env: &mut Environment,
-    in_url: CFURLRef,
-    out_ext_audio_file: MutPtr<ExtAudioFileRef>,
+    _env: &mut Environment,
+    _in_ext_audio_file: ExtAudioFileRef,
+    _in_property_id: u32,
+    _in_data_size: u32,
+    _in_property_data: MutVoidPtr,
 ) -> OSStatus {
-    let audio_file_id: AudioFileID = MutPtr::null();
-    let audio_file_id_ptr = env.mem.alloc_and_write(audio_file_id);
-
-    let status = AudioFileOpenURL(
-        env,
-        in_url,
-        kAudioFileReadPermission,
-        0,
-        audio_file_id_ptr,
-    );
-
-    if status != 0 {
-        return status;
-    }
-
-    // ✅ czytamy WYNIK
-    let audio_file_id = env.mem.read(audio_file_id_ptr);
-
-    let ext_ref = env.mem.alloc_and_write(OpaqueExtAudioFile { _filler: 0 });
-
-    State::get(&mut env.framework_state)
-        .ext_audio_files
-        .files
-        .insert(
-            ext_ref,
-            ExtAudioFileHostObject { audio_file_id },
-        );
-
-    env.mem.write(out_ext_audio_file, ext_ref);
     0
 }
 
 pub fn ExtAudioFileGetProperty(
-    env: &mut Environment,
-    in_ext_audio_file: ExtAudioFileRef,
-    in_property_id: u32,
-    io_data_size: MutPtr<u32>,
-    out_property_data: MutVoidPtr,
+    _env: &mut Environment,
+    _in_ext_audio_file: ExtAudioFileRef,
+    _in_property_id: u32,
+    _in_data_size: u32,
+    _in_property_data: MutVoidPtr,
 ) -> OSStatus {
-    return_if_null!(in_ext_audio_file);
-
-    // ✅ WYCIĄGAMY audio_file_id BEZ trzymania borrow
-    let audio_file_id = {
-        let host = State::get(&mut env.framework_state)
-            .ext_audio_files
-            .files
-            .get(&in_ext_audio_file)
-            .unwrap();
-        host.audio_file_id
-    };
-
-    match in_property_id {
-        kExtAudioFileProperty_FileDataFormat
-        | kExtAudioFileProperty_ClientDataFormat => {
-            AudioFileGetProperty(
-                env,
-                audio_file_id,
-                kAudioFilePropertyDataFormat,
-                io_data_size,
-                out_property_data,
-            )
-        }
-
-        kExtAudioFileProperty_FileLengthFrames => {
-            // FileLengthFrames = packet_count * frames_per_packet
-            let mut size = guest_size_of::<u64>() as u32;
-            env.mem.write(io_data_size, size);
-
-            let mut packet_count: u64 = 0;
-            let packet_count_ptr = env.mem.alloc_and_write(packet_count);
-
-            let status = AudioFileGetProperty(
-                env,
-                audio_file_id,
-                kAudioFilePropertyAudioDataPacketCount,
-                io_data_size,
-                packet_count_ptr.cast(),
-            );
-
-            if status != 0 {
-                return status;
-            }
-
-            packet_count = env.mem.read(packet_count_ptr);
-            env.mem.write(out_property_data.cast(), packet_count);
-
-            0
-        }
-
-        _ => kAudioFileUnsupportedProperty,
-    }
+    0
 }
 
 pub fn ExtAudioFileSetProperty(
@@ -632,104 +532,33 @@ pub fn ExtAudioFileSetProperty(
 }
 
 pub fn ExtAudioFileRead(
-    env: &mut Environment,
-    in_ext_audio_file: ExtAudioFileRef,
-    io_num_frames: MutPtr<u32>,
-    io_data: MutVoidPtr,
+    _env: &mut Environment,
+    _in_ext_audio_file: ExtAudioFileRef,
+    _in_property_id: u32,
+    _in_data_size: u32,
+    _in_property_data: MutVoidPtr,
 ) -> OSStatus {
-    let audio_file_id = {
-    let host = State::get(&mut env.framework_state)
-        .ext_audio_files
-        .files
-        .get(&in_ext_audio_file)
-        .unwrap();
-
-    host.audio_file_id
-}; // <- borrow ENDS HERE
-
-let num_packets = env.mem.read(io_num_frames);
-let num_packets_ptr = env.mem.alloc_and_write(num_packets);
-
-let starting_packet: i64 = 0;
-
-let out_num_bytes_ptr = env.mem.alloc_and_write(0u32);
-
-let status = AudioFileReadPackets(
-    env,
-    audio_file_id,
-    false,
-    out_num_bytes_ptr,
-    MutVoidPtr::null(),
-    starting_packet,
-    num_packets_ptr,
-    io_data,
-);
-status
-
+    0
 }
 
 pub fn ExtAudioFileDispose(
-    env: &mut Environment,
-    in_ext_audio_file: ExtAudioFileRef,
+    _env: &mut Environment,
+    _in_ext_audio_file: ExtAudioFileRef,
+    _in_property_id: u32,
+    _in_data_size: u32,
+    _in_property_data: MutVoidPtr,
 ) -> OSStatus {
-    let Some(host) = State::get(&mut env.framework_state)
-        .ext_audio_files
-        .files
-        .remove(&in_ext_audio_file)
-    else {
-        return kAudioFileUnspecifiedError;
-    };
-
-    AudioFileClose(env, host.audio_file_id);
-    env.mem.free(in_ext_audio_file.cast());
     0
 }
 
 pub fn ExtAudioFileWrapAudioFileID(
-    env: &mut Environment,
-    in_audio_file: AudioFileID,
-    _in_for_writing: bool,
-    out_ext_audio_file: MutPtr<ExtAudioFileRef>,
+    _env: &mut Environment,
+    _in_ext_audio_file: ExtAudioFileRef,
+    _in_property_id: u32,
+    _in_data_size: u32,
+    _in_property_data: MutVoidPtr,
 ) -> OSStatus {
-    return_if_null!(in_audio_file);
-
-    // Ensure the AudioFileID is valid
-    if !State::get(&mut env.framework_state)
-        .audio_files
-        .contains_key(&in_audio_file)
-    {
-        log!(
-            "ExtAudioFileWrapAudioFileID() called with invalid AudioFileID {:?}",
-            in_audio_file
-        );
-        return kAudioFileUnspecifiedError;
-    }
-
-    // Allocate ExtAudioFileRef
-    let ext_ref = env
-        .mem
-        .alloc_and_write(OpaqueExtAudioFile { _filler: 0 });
-
-    // Store wrapper
-    State::get(&mut env.framework_state)
-        .ext_audio_files
-        .files
-        .insert(
-            ext_ref,
-            ExtAudioFileHostObject {
-                audio_file_id: in_audio_file,
-            },
-        );
-
-    env.mem.write(out_ext_audio_file, ext_ref);
-
-    log_dbg!(
-        "ExtAudioFileWrapAudioFileID() wrapped {:?} -> {:?}",
-        in_audio_file,
-        ext_ref
-    );
-
-    0 // success
+    0
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -742,10 +571,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioFileOpenWithCallbacks(_, _, _, _, _, _, _)),
     export_c_func!(AudioFileClose(_)),
     export_c_func!(AudioFileStreamOpen(_, _, _, _, _)),
-    export_c_func!(ExtAudioFileOpenURL(_, _)),
+    export_c_func!(ExtAudioFileOpenURL(_, _, _, _)),
     export_c_func!(ExtAudioFileGetProperty(_, _, _, _)),
     export_c_func!(ExtAudioFileSetProperty(_, _, _, _)),
-    export_c_func!(ExtAudioFileRead(_, _, _)),
-    export_c_func!(ExtAudioFileDispose(_)),
-    export_c_func!(ExtAudioFileWrapAudioFileID(_, _, _)),
+    export_c_func!(ExtAudioFileRead(_, _, _, _)),
+    export_c_func!(ExtAudioFileDispose(_, _, _, _)),
+    export_c_func!(ExtAudioFileWrapAudioFileID(_, _, _, _)),
 ];
