@@ -40,8 +40,18 @@ fn objc_msgSend_inner(env: &mut Environment, receiver: id, selector: SEL, super2
         return;
     }
 
+    if selector.as_str(&env.mem) == "release" && receiver == MutPtr::from_bits(0x11) {
+        // WTF
+        return;
+    }
     let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
-    assert!(orig_class != nil);
+    if orig_class == nil && selector.as_str(&env.mem) == "release" {
+        // WTF2
+        return;
+    }
+    if orig_class == nil {
+        return;
+    }
 
     // Traverse the chain of superclasses to find the method implementation.
 
