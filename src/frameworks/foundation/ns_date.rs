@@ -108,18 +108,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (bool)isEqual:(id)other {
-    if other.is_null() {
-        return false;
-    }
-    let nsdate_class: id = msg_class![env; NSDate class];
-    if msg![env; other isKindOfClass:nsdate_class] == false {
-         return false;
-    }
-
-    msg![env; this isEqualToDate:other]
-}
-
 - (bool)isEqualToDate:(id)other {
     let a = env.objc.borrow::<NSDateHostObject>(this).time_interval;
     let b = env.objc.borrow::<NSDateHostObject>(other).time_interval;
