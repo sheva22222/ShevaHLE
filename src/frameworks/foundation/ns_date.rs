@@ -111,7 +111,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)description {
     let secs = self.timeIntervalSince1970;
     let s = format!("NSDate({})", secs);
-    let ns: id = msg_class![env; NSString stringWithUTF8String:s.as_ptr()];
+    let c_str = s.as_ptr();
+    let ns: id = msg_class![env; NSString stringWithUTF8String:c_str];
     autorelease(env, ns)
 }
 
@@ -119,9 +120,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     if other.is_null() {
         return false;
     }
-    if msg![env; other isKindOfClass:msg_class![env; NSDate class]] == false {
-        return false;
+    let nsdate_class: id = msg_class![env; NSDate class];
+    if msg![env; other isKindOfClass:nsdate_class] == false {
+         return false;
     }
+
     msg![env; this isEqualToDate:other]
 }
 
