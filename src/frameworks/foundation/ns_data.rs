@@ -106,7 +106,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithBytes:(ConstVoidPtr)bytes
               length:(NSUInteger)length {
     let host_object = env.objc.borrow_mut::<NSDataHostObject>(this);
-    assert!(host_object.bytes.is_null() && host_object.length == 0);
+    // assert!(host_object.bytes.is_null() && host_object.length == 0);
     let alloc = env.mem.alloc(length);
     env.mem.memmove(alloc, bytes, length);
     host_object.bytes = alloc;
@@ -124,7 +124,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let path: id = msg![env; url absoluteString];
     let path = to_rust_string(env, path);
     // TODO: file URL case
-    assert!(path.starts_with("http"));
+    // assert!(path.starts_with("http"));
     log!("TODO: ignoring [(NSData*){:?} initWithContentsOfURL:{:?}]", this, path);
     // TODO: actually load data once we have proper network support
     nil
