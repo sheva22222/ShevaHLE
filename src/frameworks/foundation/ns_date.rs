@@ -98,6 +98,60 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)dateWithTimeIntervalSinceReferenceDate:(NSTimeInterval)secs {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithTimeIntervalSinceReferenceDate:secs];
+    autorelease(env, new)
+}
+
+- (id)copyWithZone:(NSZonePtr)_zone {
+    this
+}
+
+- (id)description {
+    let secs = self.timeIntervalSince1970;
+    let s = format!("NSDate({})", secs);
+    let ns: id = msg_class![env; NSString stringWithUTF8String:s.as_ptr()];
+    autorelease(env, ns)
+}
+
+- (bool)isEqual:(id)other {
+    if other.is_null() {
+        return false;
+    }
+    if msg![env; other isKindOfClass:msg_class![env; NSDate class]] == false {
+        return false;
+    }
+    msg![env; this isEqualToDate:other]
+}
+
+- (bool)isEqualToDate:(id)other {
+    let a = env.objc.borrow::<NSDateHostObject>(this).time_interval;
+    let b = env.objc.borrow::<NSDateHostObject>(other).time_interval;
+    a == b
+}
+
+- (id)earlierDate:(id)other {
+    if msg![env; this compare:other] == NSComparisonResult::NSOrderedAscending {
+        this
+    } else {
+        other
+    }
+}
+
+- (id)laterDate:(id)other {
+    if msg![env; this compare:other] == NSComparisonResult::NSOrderedDescending {
+        this
+    } else {
+        other
+    }
+}
+
+- (u64)hash {
+    let t = env.objc.borrow::<NSDateHostObject>(this).time_interval;
+    t.to_bits() as u64
+}
+
 - (id)init {
     // "Date objects are immutable, representing an invariant time interval
     // relative to an absolute reference date (00:00:00 UTC on 1 January 2001)."
@@ -133,6 +187,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithTimeIntervalSince1970:(NSTimeInterval)secs {
     let time_interval = -(SECS_FROM_UNIX_TO_APPLE_EPOCHS as f64) + secs;
     env.objc.borrow_mut::<NSDateHostObject>(this).time_interval = time_interval;
+    this
+}
+
+- (id)initWithTimeInterval:(NSTimeInterval)secs
+                 sinceNow:(id)_unused {
+    let now = SystemTime::now()
+        .duration_since(apple_epoch())
+        .unwrap()
+        .as_secs_f64();
+    env.objc.borrow_mut::<NSDateHostObject>(this).time_interval = now + secs;
     this
 }
 
