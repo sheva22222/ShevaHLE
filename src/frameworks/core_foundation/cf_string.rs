@@ -21,6 +21,7 @@ use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 
 pub type CFStringRef = super::CFTypeRef;
+pub const kCFStringTypeID: usize = 7;
 pub type CFMutableStringRef = CFStringRef;
 
 pub type CFStringEncoding = u32;
@@ -444,6 +445,108 @@ fn CFStringCreateByCombiningStrings(
     msg![env; string copy]
 }
 
+fn CFStringGetTypeID(_env: &mut Environment) -> u8 {
+    // NSString CFTypeID
+    // stała wartość w Apple CF, u nas wystarczy stabilny fake
+    super::cf_type::kCFStringTypeID
+}
+
+fn CFStringGetSystemEncoding(_env: &mut Environment) -> CFStringEncoding {
+    kCFStringEncodingUTF8
+}
+
+fn CFStringGetFastestEncoding(
+    _env: &mut Environment,
+    _string: CFStringRef,
+) -> CFStringEncoding {
+    kCFStringEncodingUTF8
+}
+
+fn CFStringGetSmallestEncoding(
+    _env: &mut Environment,
+    _string: CFStringRef,
+) -> CFStringEncoding {
+    kCFStringEncodingUTF8
+}
+
+fn CFStringIsEncodingAvailable(
+    _env: &mut Environment,
+    encoding: CFStringEncoding,
+) -> bool {
+    matches!(
+        encoding,
+        kCFStringEncodingUTF8
+            | kCFStringEncodingASCII
+            | kCFStringEncodingUTF16
+            | kCFStringEncodingUTF16BE
+            | kCFStringEncodingUTF16LE
+            | kCFStringEncodingISOLatin1
+            | kCFStringEncodingMacRoman
+    )
+}
+
+fn CFStringGetRangeOfComposedCharactersAtIndex(
+    _env: &mut Environment,
+    _string: CFStringRef,
+    index: CFIndex,
+) -> CFRange {
+    CFRange {
+        location: index,
+        length: 1,
+    }
+}
+
+fn CFStringFindWithOptions(
+    env: &mut Environment,
+    string: CFStringRef,
+    to_find: CFStringRef,
+    options: CFStringCompareFlags,
+    range: CFRange,
+    result: MutPtr<CFRange>,
+) -> bool {
+    let sub = CFStringCompareWithOptions(env, string, to_find, range, options);
+    if sub == 0 {
+        env.mem.write(
+            result,
+            CFRange {
+                location: range.location,
+                length: CFStringGetLength(env, to_find),
+            },
+        );
+        true
+    } else {
+        false
+    }
+}
+
+fn CFStringCreateExternalRepresentation(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    string: CFStringRef,
+    encoding: CFStringEncoding,
+    _loss_byte: u8,
+) -> super::cf_data::CFDataRef {
+    // assert_eq!(allocator, kCFAllocatorDefault);
+
+    let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
+    let data: id = msg![env; string dataUsingEncoding:encoding];
+    msg![env; data copy]
+}
+
+fn CFStringCreateFromExternalRepresentation(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    data: super::cf_data::CFDataRef,
+    encoding: CFStringEncoding,
+) -> CFStringRef {
+    assert_eq!(allocator, kCFAllocatorDefault);
+
+    let encoding = CFStringConvertEncodingToNSStringEncoding(env, encoding);
+    let string: id =
+        msg_class![env; NSString alloc];
+    msg![env; string initWithData:data encoding:encoding]
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringAppend(_, _)),
     export_c_func!(CFStringAppendCString(_, _, _)),
@@ -479,4 +582,13 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringGetBytes(_, _, _, _, _, _, _, _)),
     export_c_func!(CFStringCreateArrayBySeparatingStrings(_, _, _)),
     export_c_func!(CFStringCreateByCombiningStrings(_, _, _)),
+    export_c_func!(CFStringGetTypeID()),
+    export_c_func!(CFStringGetSystemEncoding()),
+    export_c_func!(CFStringGetFastestEncoding(_)),
+    export_c_func!(CFStringGetSmallestEncoding(_)),
+    export_c_func!(CFStringIsEncodingAvailable(_)),
+    export_c_func!(CFStringGetRangeOfComposedCharactersAtIndex(_, _)),
+    export_c_func!(CFStringFindWithOptions(_, _, _, _, _)),
+    export_c_func!(CFStringCreateExternalRepresentation(_, _, _, _)),
+    export_c_func!(CFStringCreateFromExternalRepresentation(_, _, _, _)),
 ];
