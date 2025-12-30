@@ -444,12 +444,6 @@ fn CFStringCreateByCombiningStrings(
     msg![env; string copy]
 }
 
-fn CFStringGetTypeID(_env: &mut Environment) -> usize {
-    // Unikalna, stabilna wartość dla CFString
-    7
-}
-
-
 fn CFStringGetSystemEncoding(_env: &mut Environment) -> CFStringEncoding {
     kCFStringEncodingUTF8
 }
@@ -584,7 +578,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringGetBytes(_, _, _, _, _, _, _, _)),
     export_c_func!(CFStringCreateArrayBySeparatingStrings(_, _, _)),
     export_c_func!(CFStringCreateByCombiningStrings(_, _, _)),
-    export_c_func!(CFStringGetTypeID()),
     export_c_func!(CFStringGetSystemEncoding()),
     export_c_func!(CFStringGetFastestEncoding(_)),
     export_c_func!(CFStringGetSmallestEncoding(_)),
