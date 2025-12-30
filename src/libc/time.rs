@@ -529,118 +529,26 @@ fn difftime(_env: &mut Environment, time1: time_t, time0: time_t) -> f64 {
     (time1 - time0) as f64
 }
 
-fn asctime_r(
-    env: &mut Environment,
-    tm: ConstPtr<tm>,
-    buf: MutPtr<u8>,
-) -> MutPtr<u8> {
-    let tm = env.mem.read(tm);
-
-    const WDAYS: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const MONTHS: [&str; 12] = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ];
-
-    let wday = WDAYS.get(tm.tm_wday as usize).unwrap_or(&"???");
-    let mon = MONTHS.get(tm.tm_mon as usize).unwrap_or(&"???");
-
-    let s = format!(
-        "{wday} {mon} {:2} {:02}:{:02}:{:02} {:04}\n",
-        tm.tm_mday,
-        tm.tm_hour,
-        tm.tm_min,
-        tm.tm_sec,
-        tm.tm_year + 1900
-    );
-
-    let bytes = s.as_bytes();
-    for (i, &b) in bytes.iter().enumerate() {
-        env.mem.write(buf.add(i as u32), b);
-    }
-    env.mem.write(buf.add(bytes.len() as u32), 0u8);
-
-    buf
+fn asctime_r(_env: &mut Environment, time1: time_t, time0: time_t) -> f64 {
+    (time1 - time0) as f64
 }
 
-fn asctime(env: &mut Environment, tm: ConstPtr<tm>) -> MutPtr<u8> {
-    let tmp: MutPtr<u8> = *env
-        .libc_state
-        .time
-        .gmtime_tmp
-        .get_or_insert_with(|| env.mem.alloc(26).cast::<u8>());
-
-    asctime_r(env, tm, tmp)
+fn asctime(_env: &mut Environment, time1: time_t, time0: time_t) -> f64 {
+    (time1 - time0) as f64
 }
 
 
-fn ctime_r(
-    env: &mut Environment,
-    timep: ConstPtr<time_t>,
-    buf: MutPtr<u8>,
-) -> MutPtr<u8> {
-    let t = env.mem.read(timep);
-
-    let mut tm_buf = tm::default();
-    let tm_ptr = env.mem.alloc(guest_size_of::<tm>()).cast::<tm>();
-    env.mem.write(tm_ptr, timestamp_to_calendar_date(t));
-
-    asctime_r(env, tm_ptr.cast_const(), buf)
+fn ctime_r(_env: &mut Environment, time1: time_t, time0: time_t) -> f64 {
+    (time1 - time0) as f64
 }
 
 
-fn ctime(env: &mut Environment, timep: ConstPtr<time_t>) -> MutPtr<u8> {
-    let tmp = env.mem.alloc(64);
-    ctime_r(env, timep, tmp)
+fn ctime(_env: &mut Environment, time1: time_t, time0: time_t) -> f64 {
+    (time1 - time0) as f64
 }
 
-fn strftime(
-    env: &mut Environment,
-    buf: MutPtr<u8>,
-    max: u32,
-    format: ConstPtr<u8>,
-    tm_ptr: ConstPtr<tm>,
-) -> u32 {
-    let max = max as usize;
-
-    let fmt = env.mem.read_cstr(format);
-    let tm = env.mem.read(tm_ptr);
-
-    let mut out = String::new();
-    let mut chars = fmt.chars();
-
-    while let Some(c) = chars.next() {
-        if c != '%' {
-            out.push(c);
-            continue;
-        }
-        match chars.next().unwrap_or('%') {
-            'Y' => out.push_str(&(tm.tm_year + 1900).to_string()),
-            'm' => out.push_str(&format!("{:02}", tm.tm_mon + 1)),
-            'd' => out.push_str(&format!("{:02}", tm.tm_mday)),
-            'H' => out.push_str(&format!("{:02}", tm.tm_hour)),
-            'M' => out.push_str(&format!("{:02}", tm.tm_min)),
-            'S' => out.push_str(&format!("{:02}", tm.tm_sec)),
-            other => {
-                out.push('%');
-                out.push(other);
-            }
-        }
-    }
-
-    if max == 0 {
-        return 0;
-    }
-
-    let bytes = out.as_bytes();
-    let len = bytes.len().min(max - 1);
-
-    for i in 0..len {
-        env.mem.write(buf.add(i as u32), bytes[i]);
-    }
-    env.mem.write(buf.add(len as u32), 0u8);
-
-    len as u32
+fn strftime(_env: &mut Environment, time1: time_t, time0: time_t) -> f64 {
+    (time1 - time0) as f64
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -656,8 +564,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(nanosleep(_, _)),
     export_c_func!(difftime(_, _)),
     export_c_func!(asctime_r(_, _)),
-    export_c_func!(asctime(_)),
+    export_c_func!(asctime(_, _)),
     export_c_func!(ctime_r(_, _)),
-    export_c_func!(ctime(_)),
-    export_c_func!(strftime(_, _, _, _)),
+    export_c_func!(ctime(_, _)),
+    export_c_func!(strftime(_, _)),
 ];
