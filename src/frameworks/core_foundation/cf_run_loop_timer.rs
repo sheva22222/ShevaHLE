@@ -100,10 +100,73 @@ fn CFRunLoopTimerInvalidate(env: &mut Environment, timer: CFRunLoopTimerRef) {
     () = msg![env; timer invalidate];
 }
 
+fn CFRunLoopTimerGetNextFireDate(
+    env: &mut Environment,
+    timer: CFRunLoopTimerRef,
+) -> CFAbsoluteTime {
+    // NSTimer: -fireDate returns NSDate*
+    let fire_date: id = msg![env; timer fireDate];
+
+    // NSDate: -timeIntervalSinceReferenceDate
+    msg![env; fire_date timeIntervalSinceReferenceDate]
+}
+
+fn CFRunLoopTimerSetNextFireDate(
+    env: &mut Environment,
+    timer: CFRunLoopTimerRef,
+    fire_date: CFAbsoluteTime,
+) {
+    let date: id = msg_class![env; NSDate dateWithTimeIntervalSinceReferenceDate:fire_date];
+    () = msg![env; timer setFireDate:date];
+}
+
+fn CFRunLoopTimerGetInterval(
+    env: &mut Environment,
+    timer: CFRunLoopTimerRef,
+) -> CFTimeInterval {
+    msg![env; timer timeInterval]
+}
+
+fn CFRunLoopTimerIsValid(
+    env: &mut Environment,
+    timer: CFRunLoopTimerRef,
+) -> bool {
+    let valid: bool = msg![env; timer isValid];
+    valid
+}
+
+fn CFRunLoopTimerGetContext(
+    env: &mut Environment,
+    timer: CFRunLoopTimerRef,
+    context: MutPtr<CFRunLoopTimerContext>,
+) {
+    if context.is_null() {
+        return;
+    }
+
+    let target: id = msg![env; timer target];
+    let host: &CFTimerTargetHostObject = env.objc.borrow(target);
+
+    let ctx = CFRunLoopTimerContext {
+        version: 0,
+        info: host.info,
+        retain_callback: GuestFunction::null_ptr(),
+        release_callback: GuestFunction::null_ptr(),
+        copy_desc_callback: GuestFunction::null_ptr(),
+    };
+
+    env.mem.write(context, ctx);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFRunLoopTimerCreate(_, _, _, _, _, _, _)),
     export_c_func!(CFRunLoopAddTimer(_, _, _)),
     export_c_func!(CFRunLoopTimerInvalidate(_)),
+    export_c_func!(CFRunLoopTimerGetNextFireDate(_)),
+    export_c_func!(CFRunLoopTimerSetNextFireDate(_, _)),
+    export_c_func!(CFRunLoopTimerGetInterval(_)),
+    export_c_func!(CFRunLoopTimerIsValid(_)),
+    export_c_func!(CFRunLoopTimerGetContext(_, _)),
 ];
 
 /// Belongs to _touchHLE_CFTimerTarget
