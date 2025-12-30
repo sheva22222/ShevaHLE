@@ -13,7 +13,7 @@
 
 use super::{id, nil, Class, ObjC, IMP, SEL};
 use crate::abi::{CallFromHost, GuestRet};
-use crate::mem::{ConstPtr, MutVoidPtr, SafeRead};
+use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
 use crate::Environment;
 use std::any::TypeId;
 
