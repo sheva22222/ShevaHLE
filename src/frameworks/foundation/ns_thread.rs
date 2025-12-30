@@ -238,10 +238,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setName:(id)name {
-    let ho = env.objc.borrow_mut::<NSThreadHostObject>(this);
-    release(env, ho.name);
-    ho.name = name;
-    retain(env, name);
 }
 
 - (())dealloc {
