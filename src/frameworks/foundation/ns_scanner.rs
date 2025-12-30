@@ -240,6 +240,142 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+- (bool)scanInteger:(MutPtr<isize>)result {
+    skip_characters(env, this);
+
+    let NSScannerHostObject { to_be_skipped, string, len, pos } =
+        std::mem::take(env.objc.borrow_mut::<NSScannerHostObject>(this));
+
+    let left: id = msg![env; string substringFromIndex:pos];
+    let st = to_rust_string(env, left);
+
+    let mut cutoff = 0;
+    for (i, c) in st.char_indices() {
+        if i == 0 && (c == '+' || c == '-') {
+            cutoff = 1;
+            continue;
+        }
+        if c.is_ascii_digit() {
+            cutoff = i + c.len_utf8();
+        } else {
+            break;
+        }
+    }
+
+    if cutoff == 0 {
+        *env.objc.borrow_mut(this) = NSScannerHostObject { to_be_skipped, string, len, pos };
+        return false;
+    }
+
+    if !result.is_null() {
+        let v = st[..cutoff].parse::<isize>().unwrap_or(0);
+        env.mem.write(result, v);
+    }
+
+    *env.objc.borrow_mut(this) = NSScannerHostObject {
+        to_be_skipped,
+        string,
+        len,
+        pos: pos + cutoff as NSUInteger,
+    };
+    true
+}
+
+- (bool)scanUnsignedInt:(MutPtr<u32>)result {
+    skip_characters(env, this);
+
+    let NSScannerHostObject { to_be_skipped, string, len, pos } =
+        std::mem::take(env.objc.borrow_mut::<NSScannerHostObject>(this));
+
+    let left: id = msg![env; string substringFromIndex:pos];
+    let st = to_rust_string(env, left);
+
+    let mut cutoff = 0;
+    for (i, c) in st.char_indices() {
+        if c.is_ascii_digit() {
+            cutoff = i + c.len_utf8();
+        } else {
+            break;
+        }
+    }
+
+    if cutoff == 0 {
+        *env.objc.borrow_mut(this) = NSScannerHostObject { to_be_skipped, string, len, pos };
+        return false;
+    }
+
+    if !result.is_null() {
+        let v = st[..cutoff].parse::<u32>().unwrap_or(0);
+        env.mem.write(result, v);
+    }
+
+    *env.objc.borrow_mut(this) = NSScannerHostObject {
+        to_be_skipped,
+        string,
+        len,
+        pos: pos + cutoff as NSUInteger,
+    };
+    true
+}
+
+- (bool)scanDouble:(MutPtr<f64>)result {
+    skip_characters(env, this);
+
+    let NSScannerHostObject { to_be_skipped, string, len, pos } =
+        std::mem::take(env.objc.borrow_mut::<NSScannerHostObject>(this));
+
+    let left: id = msg![env; string substringFromIndex:pos];
+    let st = to_rust_string(env, left);
+
+    let mut cutoff = 0;
+    for (i, c) in st.char_indices() {
+        if c.is_ascii_digit() || c == '.' || c == '-' || c == '+' || c == 'e' || c == 'E' {
+            cutoff = i + c.len_utf8();
+        } else {
+            break;
+        }
+    }
+
+    if cutoff == 0 {
+        *env.objc.borrow_mut(this) = NSScannerHostObject { to_be_skipped, string, len, pos };
+        return false;
+    }
+
+    if !result.is_null() {
+        let v = st[..cutoff].parse::<f64>().unwrap_or(0.0);
+        env.mem.write(result, v);
+    }
+
+    *env.objc.borrow_mut(this) = NSScannerHostObject {
+        to_be_skipped,
+        string,
+        len,
+        pos: pos + cutoff as NSUInteger,
+    };
+    true
+}
+
+- (NSUInteger)scanLocation {
+    env.objc.borrow::<NSScannerHostObject>(this).pos
+}
+
+- (())setScanLocation:(NSUInteger)pos {
+    let mut ho = env.objc.borrow_mut::<NSScannerHostObject>(this);
+    ho.pos = pos.min(ho.len);
+}
+
+- (id)string {
+    env.objc.borrow::<NSScannerHostObject>(this).string
+}
+
+- (id)locale {
+    nil
+}
+
+- (())setLocale:(id)_locale {
+    // intentionally ignored
+}
+
 @end
 
 };
