@@ -49,6 +49,60 @@ fn CFRunLoopRunInMode(
     1 // kCFRunLoopRunFinished
 }
 
+fn CFRunLoopRun(env: &mut Environment) {
+    let run_loop = CFRunLoopGetCurrent(env);
+    loop {
+        run_run_loop_single_iteration(env, run_loop);
+    }
+}
+
+fn CFRunLoopStop(_env: &mut Environment, _run_loop: CFRunLoopRef) {
+    // No-op for now
+    // NSRunLoop backend nie ma explicit stop flag
+}
+
+fn CFRunLoopWakeUp(_env: &mut Environment, _run_loop: CFRunLoopRef) {
+    // No-op — run loop is always "awake" in this model
+}
+
+fn CFRunLoopIsWaiting(_env: &mut Environment, _run_loop: CFRunLoopRef) -> bool {
+    false
+}
+
+fn CFRunLoopCopyCurrentMode(env: &mut Environment, _run_loop: CFRunLoopRef) -> CFRunLoopMode {
+    ns_string::get_static_str(env, kCFRunLoopDefaultMode)
+}
+
+fn CFRunLoopAddCommonMode(
+    _env: &mut Environment,
+    _run_loop: CFRunLoopRef,
+    _mode: CFRunLoopMode,
+) {
+    // No-op
+}
+
+fn CFRunLoopRunUntilDate(env: &mut Environment, limit_date: id) {
+    let run_loop = CFRunLoopGetCurrent(env);
+    () = msg![env; run_loop runUntilDate:limit_date];
+}
+
+fn CFRunLoopGetNextTimerFireDate(
+    _env: &mut Environment,
+    _run_loop: CFRunLoopRef,
+    _mode: CFRunLoopMode,
+) -> CFTimeInterval {
+    0.0
+}
+
+fn CFRunLoopContainsSource(
+    _env: &mut Environment,
+    _run_loop: CFRunLoopRef,
+    _source: super::CFTypeRef,
+    _mode: CFRunLoopMode,
+) -> bool {
+    false
+}
+
 pub const kCFRunLoopCommonModes: &str = "kCFRunLoopCommonModes";
 pub const kCFRunLoopDefaultMode: &str = "kCFRunLoopDefaultMode";
 
@@ -66,5 +120,15 @@ pub const CONSTANTS: ConstantExports = &[
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFRunLoopGetCurrent()),
     export_c_func!(CFRunLoopGetMain()),
+    export_c_func!(CFRunLoopRun()),
+    export_c_func!(CFRunLoopStop(_)),
+    export_c_func!(CFRunLoopWakeUp(_)),
+    export_c_func!(CFRunLoopIsWaiting(_)),
+    export_c_func!(CFRunLoopCopyCurrentMode(_)),
+    export_c_func!(CFRunLoopAddCommonMode(_, _)),
+    export_c_func!(CFRunLoopRunUntilDate(_)),
+    export_c_func!(CFRunLoopGetNextTimerFireDate(_, _)),
+    export_c_func!(CFRunLoopContainsSource(_, _, _)),
     export_c_func!(CFRunLoopRunInMode(_, _, _)),
 ];
+
