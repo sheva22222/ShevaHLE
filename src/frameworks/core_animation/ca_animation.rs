@@ -435,6 +435,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<CATransitionHostObject>(this).to_value
 }
 
+- (())setByValue:(id)value {
+    log_dbg!("[(CABasicAnimation*){:?} setByValue:{:?}]", this, value);
+    env.objc.borrow_mut::<CABasicAnimationHostObject>(this).by_value = value;
+    retain(env, value);
+}
+- (id)byValue {
+    env.objc.borrow::<CABasicAnimationHostObject>(this).by_value
+}
+
 @end
 
 };
