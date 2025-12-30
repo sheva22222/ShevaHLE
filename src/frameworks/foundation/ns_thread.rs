@@ -136,7 +136,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; new start]
 }
 
-+ (bool)isMainThread }
++ (bool)isMainThread {
     // Note: this doesn't account for non-Cocoa APIs,
     // only for `detachNewThreadSelector:toTarget:withObject:` and
     // `start` methods (according to the docs)
