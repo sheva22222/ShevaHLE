@@ -21,7 +21,6 @@ use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 
 pub type CFStringRef = super::CFTypeRef;
-pub const kCFStringTypeID: usize = 7;
 pub type CFMutableStringRef = CFStringRef;
 
 pub type CFStringEncoding = u32;
@@ -445,11 +444,11 @@ fn CFStringCreateByCombiningStrings(
     msg![env; string copy]
 }
 
-fn CFStringGetTypeID(_env: &mut Environment) -> u8 {
-    // NSString CFTypeID
-    // stała wartość w Apple CF, u nas wystarczy stabilny fake
-    super::cf_type::kCFStringTypeID
+fn CFStringGetTypeID(_env: &mut Environment) -> usize {
+    // Unikalna, stabilna wartość dla CFString
+    7
 }
+
 
 fn CFStringGetSystemEncoding(_env: &mut Environment) -> CFStringEncoding {
     kCFStringEncodingUTF8
@@ -505,12 +504,15 @@ fn CFStringFindWithOptions(
     result: MutPtr<CFRange>,
 ) -> bool {
     let sub = CFStringCompareWithOptions(env, string, to_find, range, options);
+
     if sub == 0 {
+        let length = CFStringGetLength(env, to_find);
+
         env.mem.write(
             result,
             CFRange {
                 location: range.location,
-                length: CFStringGetLength(env, to_find),
+                length,
             },
         );
         true
@@ -590,5 +592,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringGetRangeOfComposedCharactersAtIndex(_, _)),
     export_c_func!(CFStringFindWithOptions(_, _, _, _, _)),
     export_c_func!(CFStringCreateExternalRepresentation(_, _, _, _)),
-    export_c_func!(CFStringCreateFromExternalRepresentation(_, _, _, _)),
+    export_c_func!(CFStringCreateFromExternalRepresentation(__, _, _)),
 ];
