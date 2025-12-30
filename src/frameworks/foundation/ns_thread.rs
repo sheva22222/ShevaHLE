@@ -138,17 +138,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (bool)isMainThread {
     let pthread = pthread_self(env);
-    pthread == env.framework_state.foundation.main_thread
+    pthread == env.framework_state.foundation.ns_thread.main_thread
 }
 
 + (id)mainThread {
-    let pthread = env.framework_state.foundation.main_thread;
+    let pthread = env.framework_state.foundation.ns_thread.main_thread;
     *State::get(env).ns_threads.get(&pthread).unwrap()
 }
 
 - (bool)isMainThread {
     let pthread = pthread_self(env);
-    pthread == env.framework_state.foundation.main_thread
+    pthread == env.framework_state.foundation.ns_thread.main_thread
 }
 
 - (id)initWithTarget:(id)target
