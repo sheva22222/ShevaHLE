@@ -507,6 +507,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<ArrayHostObject>(this).array = array;
 }
 
+- (bool)writeToFile:(id)path atomically:(bool)atomically {
+    use crate::ns_array::serialize_plist_to_file;
+
+    let path = ns_string::to_rust_string(env, path);
+    let guest_path = GuestPath::new(&path);
+
+    serialize_plist_to_file(
+        env,
+        guest_path,
+        this,
+        atomically,
+    )
+}
+
 - (())sortUsingSelector:(SEL)comparator {
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let mut array = std::mem::take(&mut host_object.array);
@@ -724,3 +738,12 @@ fn mutable_copy_inner(env: &mut Environment, arr: id) -> id {
     env.objc.borrow_mut::<ArrayHostObject>(mut_arr).array = array;
     mut_arr
 }
+
+pub fn serialize_plist_to_file(
+    env: &mut Environment,
+    path: GuestPath,
+    object: id,
+    atomically: bool,
+) -> bool {
+}
+
