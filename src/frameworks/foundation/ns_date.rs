@@ -108,14 +108,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (id)description {
-    let secs = self.timeIntervalSince1970;
-    let s = format!("NSDate({})", secs);
-    let c_str = s.as_ptr();
-    let ns: id = msg_class![env; NSString stringWithUTF8String:c_str];
-    autorelease(env, ns)
-}
-
 - (bool)isEqual:(id)other {
     if other.is_null() {
         return false;
@@ -132,22 +124,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     let a = env.objc.borrow::<NSDateHostObject>(this).time_interval;
     let b = env.objc.borrow::<NSDateHostObject>(other).time_interval;
     a == b
-}
-
-- (id)earlierDate:(id)other {
-    if msg![env; this compare:other] == NSComparisonResult::NSOrderedAscending {
-        this
-    } else {
-        other
-    }
-}
-
-- (id)laterDate:(id)other {
-    if msg![env; this compare:other] == NSComparisonResult::NSOrderedDescending {
-        this
-    } else {
-        other
-    }
 }
 
 - (u64)hash {
