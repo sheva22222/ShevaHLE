@@ -136,20 +136,25 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; new start]
 }
 
-+ (bool)isMainThread {
-    let pthread = pthread_self(env);
-    pthread == env.framework_state.foundation.ns_thread.main_thread
++ (id)mainThread {
+    let pthread = State::get(env).main_thread;
+    *State::get(env)
+        .ns_threads
+        .get(&pthread)
+        .expect("main thread NSThread not initialized")
 }
 
-+ (id)mainThread {
-    let pthread = env.framework_state.foundation.ns_thread.main_thread;
-    *State::get(env).ns_threads.get(&pthread).unwrap()
+
++ (bool)isMainThread {
+    let pthread = pthread_self(env);
+    pthread == State::get(env).main_thread
 }
 
 - (bool)isMainThread {
     let pthread = pthread_self(env);
-    pthread == env.framework_state.foundation.ns_thread.main_thread
+    pthread == State::get(env).main_thread
 }
+
 
 - (id)initWithTarget:(id)target
             selector:(SEL)selector
