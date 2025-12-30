@@ -508,7 +508,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)writeToFile:(id)path atomically:(bool)atomically {
-    use crate::ns_array::serialize_plist_to_file;
+    use crate::frameworks::foundation::ns_array::serialize_plist_to_file;
 
     let path = ns_string::to_rust_string(env, path);
     let guest_path = GuestPath::new(&path);
@@ -741,9 +741,10 @@ fn mutable_copy_inner(env: &mut Environment, arr: id) -> id {
 
 pub fn serialize_plist_to_file(
     env: &mut Environment,
-    path: GuestPath,
+    path: &GuestPath,
     object: id,
     atomically: bool,
 ) -> bool {
+    atomically
 }
 
