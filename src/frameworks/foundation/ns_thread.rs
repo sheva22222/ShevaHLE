@@ -136,23 +136,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; new start]
 }
 
-+ (id)mainThread {
-    let pthread = State::get(env).main_thread;
-    *State::get(env)
-        .ns_threads
-        .get(&pthread)
-        .expect("main thread NSThread not initialized")
-}
-
-
-+ (bool)isMainThread {
-    let pthread = pthread_self(env);
-    pthread == State::get(env).main_thread
-}
-
-- (bool)isMainThread {
-    let pthread = pthread_self(env);
-    pthread == State::get(env).main_thread
++ (bool)isMainThread }
+    // Note: this doesn't account for non-Cocoa APIs,
+    // only for `detachNewThreadSelector:toTarget:withObject:` and
+    // `start` methods (according to the docs)
+    env.framework_state.foundation.ns_thread.main_thread
 }
 
 
