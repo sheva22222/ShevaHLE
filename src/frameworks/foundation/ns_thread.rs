@@ -183,6 +183,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     State::get(env).ns_threads.insert(pthread, this);
 
     env.framework_state.foundation.ns_thread.is_multi_threaded = true;
+    env.framework_state.foundation.ns_thread.main_thread = true;
     // TODO: post NSWillBecomeMultiThreadedNotification
 }
 
