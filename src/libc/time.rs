@@ -10,6 +10,7 @@ use crate::libc::errno::set_errno;
 use crate::mem::{guest_size_of, ConstPtr, MutPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::time::{Duration, Instant, SystemTime};
+use std::ops::Add;
 
 #[derive(Default)]
 pub struct State {
