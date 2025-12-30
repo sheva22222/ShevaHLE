@@ -592,5 +592,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringGetRangeOfComposedCharactersAtIndex(_, _)),
     export_c_func!(CFStringFindWithOptions(_, _, _, _, _)),
     export_c_func!(CFStringCreateExternalRepresentation(_, _, _, _)),
-    export_c_func!(CFStringCreateFromExternalRepresentation(__, _, _)),
+    export_c_func!(CFStringCreateFromExternalRepresentation(_, _, _)),
 ];
