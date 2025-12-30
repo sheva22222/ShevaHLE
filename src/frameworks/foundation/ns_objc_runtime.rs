@@ -41,9 +41,16 @@ fn NSClassFromString(env: &mut Environment, string: id) -> Class {
     env.objc.get_known_class(&string, &mut env.mem)
 }
 
+fn NSFullUserName(env: &mut Environment) -> id {
+    // Cocoa normally returns the "full name" of the user.
+    // In an emulated environment, return a stable placeholder.
+    ns_string::from_rust_string(env, "User".to_string())
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(NSStringFromSelector(_)),
     export_c_func!(NSSelectorFromString(_)),
     export_c_func!(NSClassFromString(_)),
     export_c_func!(NSStringFromClass(_)),
+    export_c_func!(NSFullUserName()),
 ];
