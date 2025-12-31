@@ -96,14 +96,24 @@ pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
 }
 
 impl Image {
-    pub fn from_rgba_bytes(..) -> Image {
-    let img = Image::new(..);
-    img
+pub fn from_rgba_bytes(
+    _width: u32,
+    _height: u32,
+    _stride: usize,
+    _bytes: &[u8],
+) -> Image {
+    unimplemented!()
 }
-    pub fn from_alpha_mask(..) -> Image {
-    let img = Image::new(..);
-    img
+
+pub fn from_alpha_mask(
+    _width: u32,
+    _height: u32,
+    _stride: usize,
+    _bytes: &[u8],
+) -> Image {
+    unimplemented!()
 }
+
     pub fn apply_alpha_mask(&self, mask: &Image) -> Image {
         let mut out = self.clone();
         for i in 0..out.pixels.len() {
