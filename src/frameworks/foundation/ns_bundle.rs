@@ -236,7 +236,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
         let full_path: id =
             msg![env; search_path stringByAppendingPathComponent:filename];
-        msg![env; array addObject:full_path];
+        let _: () = msg![env; array addObject:full_path];
     }
 
     array
