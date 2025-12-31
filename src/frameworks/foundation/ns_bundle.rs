@@ -201,8 +201,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         return nil;
     }
 
-    let name = ns_string::to_rust_string(env, className);
-    env.objc.get_class(&name).unwrap_or(nil)
+    msg_class![env; NSObject classNamed:className]
 }
 
 - (id)pathsForResourcesOfType:(id)extension
