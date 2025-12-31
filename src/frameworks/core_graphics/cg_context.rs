@@ -7,7 +7,7 @@
 
 use super::cg_affine_transform::CGAffineTransform;
 use super::cg_image::CGImageRef;
-use super::{cg_bitmap_context, CGFloat, CGPoint, CGRect};
+use super::{cg_bitmap_context, CGFloat, CGPoint, CGRect, CGSize};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::core_graphics::cg_bitmap_context::{
@@ -48,6 +48,7 @@ pub(super) struct CGContextHostObject {
     pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
     /// Current transform.
     pub(super) transform: CGAffineTransform,
+    pub(super) text_position: CGPoint,
     // TODO: keep more states saved once they are implemented
     pub(super) state_stack: Vec<((CGFloat, CGFloat, CGFloat, CGFloat), CGAffineTransform)>,
 }
@@ -176,17 +177,23 @@ pub fn CGContextDrawImage(
 
 fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
-    host_obj
-        .state_stack
-        .push((host_obj.rgb_fill_color, host_obj.transform));
+    host_obj.state_stack.push((
+        host_obj.rgb_fill_color,
+        host_obj.transform,
+        host_obj.text_position,
+    ));
 }
+
 
 fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
-    let state = host_obj.state_stack.pop().unwrap();
-    host_obj.rgb_fill_color = state.0;
-    host_obj.transform = state.1;
+    let (color, transform, text_pos) = host_obj.state_stack.pop().unwrap();
+    host_obj.rgb_fill_color = color;
+    host_obj.transform = transform;
+    host_obj.text_position = text_pos;
 }
+
+
 
 fn CGContextSetInterpolationQuality(
     _env: &mut Environment,
@@ -308,18 +315,15 @@ fn CGContextFlush(_env: &mut Environment, context: CGContextRef) {
 }
 
 fn CGContextSetTextPosition(
-    _env: &mut Environment,
+    env: &mut Environment,
     context: CGContextRef,
     x: CGFloat,
     y: CGFloat,
 ) {
-    log!(
-        "TODO: CGContextSetTextPosition({:?}, {}, {})",
-        context,
-        x,
-        y
-    );
+    env.objc.borrow_mut::<CGContextHostObject>(context).text_position =
+        CGPoint { x, y };
 }
+
 
 fn CGContextShowTextAtPoint(
     _env: &mut Environment,
@@ -689,6 +693,157 @@ fn CGContextSetFillColorWithColor(
     );
 }
 
+fn CGContextGetInterpolationQuality(
+    _env: &mut Environment,
+    _context: CGContextRef,
+) -> CGInterpolationQuality {
+    // Default per Apple docs
+    1 // kCGInterpolationDefault
+}
+
+fn CGContextGetAlpha(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGFloat {
+    env.objc.borrow::<CGContextHostObject>(context).rgb_fill_color.3
+}
+
+fn CGContextIsPathEmpty(
+    _env: &mut Environment,
+    _context: CGContextRef,
+) -> bool {
+    // Path system not implemented yet → treat as empty
+    true
+}
+
+fn CGContextFillRects(
+    env: &mut Environment,
+    context: CGContextRef,
+    rects: Ptr<CGRect, true>,
+    count: u32,
+) {
+    for i in 0..count {
+        let rect = unsafe { *rects.add(i) };
+        CGContextFillRect(env, context, rect);
+    }
+}
+
+fn CGContextStrokeRects(
+    _env: &mut Environment,
+    context: CGContextRef,
+    rects: Ptr<CGRect, true>,
+    count: u32,
+) {
+    log!(
+        "TODO: CGContextStrokeRects({:?}, count={})",
+        context,
+        count
+    );
+}
+
+fn CGContextGetClipBoundingBox(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGRect {
+    let w = CGBitmapContextGetWidth(env, context) as f32;
+    let h = CGBitmapContextGetHeight(env, context) as f32;
+    CGRect {
+        origin: CGPointZero,
+        size: super::CGSize { width: w, height: h },
+    }
+}
+
+fn CGContextGetPathBoundingBox(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGRect {
+    // No paths yet → same as clip
+    CGContextGetClipBoundingBox(env, context)
+}
+
+fn CGContextSetCharacterSpacing(
+    _env: &mut Environment,
+    context: CGContextRef,
+    spacing: CGFloat,
+) {
+    log!(
+        "TODO: CGContextSetCharacterSpacing({:?}, {})",
+        context,
+        spacing
+    );
+}
+
+fn CGContextSetTextRise(
+    _env: &mut Environment,
+    context: CGContextRef,
+    rise: CGFloat,
+) {
+    log!(
+        "TODO: CGContextSetTextRise({:?}, {})",
+        context,
+        rise
+    );
+}
+
+fn CGContextResetClip(
+    _env: &mut Environment,
+    context: CGContextRef,
+) {
+    log!("TODO: CGContextResetClip({:?})", context);
+}
+
+fn CGContextConvertRectToDeviceSpace(
+    env: &mut Environment,
+    context: CGContextRef,
+    rect: CGRect,
+) -> CGRect {
+    let ctm = env.objc.borrow::<CGContextHostObject>(context).transform;
+
+    if ctm.is_identity() {
+        return rect;
+    }
+
+    ctm.apply_to_rect(rect)
+}
+
+fn CGContextConvertPointToDeviceSpace(
+    env: &mut Environment,
+    context: CGContextRef,
+    point: CGPoint,
+) -> CGPoint {
+    let ctm = env.objc.borrow::<CGContextHostObject>(context).transform;
+    if ctm.is_identity() { point } else { ctm.apply_to_point(point) }
+}
+
+fn CGContextConvertSizeToDeviceSpace(
+    env: &mut Environment,
+    context: CGContextRef,
+    size: CGSize,
+) -> CGSize {
+    let ctm = env.objc.borrow::<CGContextHostObject>(context).transform;
+
+    if ctm.is_identity() {
+        return size;
+    }
+
+    let v1 = ctm.apply_to_point(CGPoint { x: size.width, y: 0.0 });
+    let v2 = ctm.apply_to_point(CGPoint { x: 0.0, y: size.height });
+
+    super::CGSize {
+        width: (v1.x.powi(2) + v1.y.powi(2)).sqrt(),
+        height: (v2.x.powi(2) + v2.y.powi(2)).sqrt(),
+    }
+}
+
+fn CGContextGetTextPosition(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGPoint {
+    env.objc.borrow::<CGContextHostObject>(context).text_position
+}
+
+
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -746,5 +901,18 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextAddLineToPoint(_, _, _)),
     export_c_func!(CGContextSetStrokeColorWithColor(_, _)),
     export_c_func!(CGContextSetFillColorWithColor(_, _)),
-
+    export_c_func!(CGContextGetInterpolationQuality(_)),
+    export_c_func!(CGContextGetAlpha(_)),
+    export_c_func!(CGContextIsPathEmpty(_)),
+    export_c_func!(CGContextFillRects(_, _, _)),
+    export_c_func!(CGContextStrokeRects(_, _, _)),
+    export_c_func!(CGContextGetClipBoundingBox(_)),
+    export_c_func!(CGContextGetPathBoundingBox(_)),
+    export_c_func!(CGContextSetCharacterSpacing(_, _)),
+    export_c_func!(CGContextSetTextRise(_, _)),
+    export_c_func!(CGContextResetClip(_)),
+    export_c_func!(CGContextConvertRectToUserSpace(_, _)),
+    export_c_func!(CGContextConvertPointToUserSpace(_, _)),
+    export_c_func!(CGContextConvertSizeToUserSpace(_, _)),
+    export_c_func!(CGContextGetTextPosition(_)),
 ];
