@@ -114,6 +114,24 @@ impl Image {
         unimplemented!()
     }
 
+    pub fn crop(&self, x: u32, y: u32, w: u32, h: u32) -> Image {
+        let (src_w, src_h) = self.dimensions();
+        assert!(x + w <= src_w);
+        assert!(y + h <= src_h);
+
+        let src_pixels = self.pixels();
+        let mut out = Vec::with_capacity((w * h * 4) as usize);
+
+        for row in 0..h {
+            let src_row =
+                ((y + row) * src_w * 4 + x * 4) as usize;
+            let len = (w * 4) as usize;
+            out.extend_from_slice(&src_pixels[src_row..src_row + len]);
+        }
+
+        Image::from_pixel_vec(out, (w, h))
+    }
+}
     pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
         let mask_pixels = mask.pixels();
         let pixels = self.pixels_mut();
