@@ -10,7 +10,7 @@ use super::ns_property_list_serialization::{
     deserialize_plist_from_file, NSPropertyListBinaryFormat_v1_0,
 };
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
-use super::{ns_array, ns_keyed_unarchiver, ns_string, ns_url, NSUInteger};
+use super::{ns_array, ns_keyed_unarchiver, ns_string, ns_url, NSInteger, NSUInteger};
 use crate::abi::{CallFromHost, GuestFunction, VaList};
 use crate::frameworks::core_foundation::{CFHashCode, CFIndex};
 use crate::frameworks::foundation::ns_enumerator::{
@@ -844,6 +844,55 @@ pub const CLASSES: ClassExports = objc_classes! {
     let array: id = msg_class![env; _touchHLE_NSArray_non_retaining alloc];
     env.objc.borrow_mut::<ArrayHostObject>(array).array = keys;
     array
+}
+
+@end
+
+@implementation NSInputStream: NSObject
+
++ (id)inputStreamWithFileAtPath:(NSUInteger)_path {
+    msg![env; this init]
+}
+
++ (id)hasBytesAvailable {
+    nil
+}
+
++ (id)open {
+    nil
+}
+
++ (id)close {
+    nil
+}
+
++ (())read:(NSInteger)read maxLength:(bool)_length {
+    // TODO
+}
+
+@end
+
+@implementation CMMotionManager: NSMutableDictionary
+@end
+
+@implementation NSCondition: NSMutableDictionary
+@end
+
+@implementation NSNetServiceBrowser: NSMutableDictionary
+@end
+
+@implementation NSNotificationQueue: NSNotification
+
++ (id)defaultQueue {
+    nil
+}
+
+@end
+
+@implementation NSIndexPath: NSObject
+
++ (())indexPathForRow:(NSInteger)_row inSection:(bool)_section {
+    // TODO
 }
 
 @end
