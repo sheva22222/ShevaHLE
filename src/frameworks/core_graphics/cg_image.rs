@@ -324,26 +324,39 @@ fn CGImageCreate(
     bits_per_component: GuestUSize,
     bits_per_pixel: GuestUSize,
     bytes_per_row: GuestUSize,
-    _color_space: CGColorSpaceRef,
+    color_space: CGColorSpaceRef,
     bitmap_info: CGBitmapInfo,
     provider: CGDataProviderRef,
-    _decode: ConstPtr<CGFloat>,
+    decode: ConstPtr<CGFloat>,
     _should_interpolate: bool,
     _intent: i32,
 ) -> CGImageRef {
-    assert!(bits_per_component == 8);
-    assert!(bits_per_pixel == 32);
-    assert!(
-        bitmap_info & kCGBitmapAlphaInfoMask == kCGImageAlphaPremultipliedLast
-    );
+    // Validate supported format
+    if bits_per_component != 8 || bits_per_pixel != 32 {
+        return nil;
+    }
+    if !decode.is_null() {
+        return nil;
+    }
 
-    let bytes = cg_data_provider::borrow_bytes(env, provider);
+    let model = CGColorSpaceGetModel(env, color_space);
+    if model != super::cg_color_space::kCGColorSpaceModelRGB {
+        return nil;
+    }
 
+    // Load bytes
+    let data = cg_data_provider::borrow_bytes(env, provider);
+    let expected = (height * bytes_per_row) as usize;
+    if data.len() < expected {
+        return nil;
+    }
+
+    // Convert to Image
     let image = Image::from_rgba_bytes(
         width as u32,
         height as u32,
         bytes_per_row as usize,
-        bytes,
+        &data[..expected],
     );
 
     from_image(env, image)
@@ -377,20 +390,32 @@ fn CGImageCreateWithMask(
     image: CGImageRef,
     mask: CGImageRef,
 ) -> CGImageRef {
-    let src = env
-        .objc
-        .borrow::<CGImageHostObject>(image)
-        .image
-        .clone();
+    if image.is_null() || mask.is_null() {
+        return nil;
+    }
 
-    let mask_img = env
-        .objc
-        .borrow::<CGImageHostObject>(mask)
-        .image
-        .clone();
+    let src = borrow_image(env.objc(), image);
+    let mask_img = borrow_image(env.objc(), mask);
 
-    let masked = src.apply_alpha_mask(&mask_img);
-    from_image(env, masked)
+    let (w, h) = src.dimensions();
+    if mask_img.dimensions() != (w, h) {
+        return nil;
+    }
+
+    let src_pixels = src.pixels();
+    let mask_pixels = mask_img.pixels();
+
+    let mut out_pixels = Vec::with_capacity(src_pixels.len());
+
+    for i in 0..src_pixels.len() {
+        let mut p = src_pixels[i];
+        let ma = mask_pixels[i].a as u16;
+        p.a = (p.a as u16 * ma / 255) as u8;
+        out_pixels.push(p);
+    }
+
+    let out = Image::from_pixels(w, h, out_pixels);
+    from_image(env, out)
 }
 
 pub const FUNCTIONS: FunctionExports = &[
