@@ -93,7 +93,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)bundleForClass:(id)cls {
     // iOS usually returns mainBundle for app classes
-    msg![env; NSBundle mainBundle]
+    msg_class![env; NSBundle mainBundle]
 }
 
 + (id)bundleWithPath:(id)path {
@@ -106,13 +106,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     // Best-effort bundle identifier:
     // lastPathComponent without ".bundle" / ".app"
     let last: id = msg![env; path lastPathComponent];
-    let mut ident = ns_string::to_rust_string(env, last);
+    let mut ident = ns_string::to_rust_string(env, last).into_owned();
+
     for suffix in [".bundle", ".app"] {
         if ident.ends_with(suffix) {
             ident.truncate(ident.len() - suffix.len());
         }
     }
-    let bundle_identifier = ns_string::from_rust_string(env, ident);
+
+    let bundle_identifier = ns_string::from_rust_string(env, ident.to_string());
 
     let host_object = NSBundleHostObject {
         bundle: None,
@@ -133,7 +135,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allBundles {
     let array: id = msg_class![env; NSMutableArray array];
-    let main = msg![env; NSBundle mainBundle];
+    let main = msg_class![env; NSBundle mainBundle];
     msg![env; array addObject:main];
     array
 }
