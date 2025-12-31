@@ -439,6 +439,48 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+@implementation NSNumberFormatter: NSNumber
++ (())setDefaultFormatterBehavior:(bool)behavior {
+    log!("TODO: setDefaultFormatterBehavior:{}", behavior);
+}
+
+- (())setNumberStyle:(bool)style {
+    log!("TODO: setNumberStyle:{}", style);
+}
+
+- (())setPositiveFormat:(bool)format {
+    log!("TODO: setPositiveFormat:{}", format);
+}
+
+- (())setFormatWidth:(bool)width {
+    log!("TODO: setFormatWidth:{}", width);
+}
+
+- (())setPaddingCharacter:(bool)character {
+    log!("TODO: setPaddingCharacter:{}", character);
+}
+
+- (())setFormatterBehavior:(bool)behavior {
+    log!("TODO: setFormatterBehavior:{}", behavior);
+}
+
+- (())setUsesGroupingSeparator:(bool)separator {
+    log!("TODO: setUsesGroupingSeparator:{}", separator);
+}
+
+- (())setGroupingSeparator:(bool)separator {
+    log!("TODO: setGroupingSeparator:{}", separator);
+}
+
+@end
+
+@implementation NSDecimalNumber: NSNumber
++ (id)decimalNumberWithString:(NSUInteger)_string {
+    msg![env; this init]
+}
+
+@end
+
 };
 
 pub fn is_conversion_lossless(env: &mut Environment, this: id, type_: CFNumberType) -> bool {
