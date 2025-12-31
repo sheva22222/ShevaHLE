@@ -68,7 +68,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let class_name = to_rust_string(env, name);
     env.objc.get_known_class(&class_name, &mut env.mem)
-        .unwrap_or(Class::null())
 }
 
 + (bool)instancesRespondToSelector:(SEL)selector {
@@ -250,7 +249,7 @@ forUndefinedKey:(id)key { // NSString*
 - (())performSelectorInBackground:(SEL)sel
                        withObject:(id)arg
 {
-    // assert!(!sel.is_null());
+    assert!(!sel.is_null());
 
     log_dbg!(
         "performSelectorInBackground:{} withObject:{:?}",
@@ -258,26 +257,10 @@ forUndefinedKey:(id)key { // NSString*
         arg
     );
 
-    // Spawn a detached background thread
-    env.objc.spawn_thread(move |env| {
-        // Each thread needs its own autorelease pool
-        let pool: id = msg_class![env; NSAutoreleasePool new];
-
-        if sel.as_str(&env.mem).ends_with(':') {
-            () = msg_send(env, (this, sel, arg));
-        } else {
-            if !arg.is_null() {
-                log_dbg!(
-                    "Warning: performSelectorInBackground:{} ignoring argument {:?}",
-                    sel.as_str(&env.mem),
-                    arg
-                );
-            }
-            () = msg_send(env, (this, sel));
-        }
-
-        () = msg![env; pool drain];
-    });
+    // No real background threads exist in this runtime.
+    // Cocoa apps typically only rely on async behavior, not true parallelism.
+    // We therefore enqueue the selector to run asynchronously via the run loop.
+    msg![env; this performSelector:sel withObject:arg afterDelay:0.0]
 }
     
 - (())performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay {
