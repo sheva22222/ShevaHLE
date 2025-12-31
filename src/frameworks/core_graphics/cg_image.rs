@@ -95,7 +95,7 @@ pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
     &mut objc.borrow_mut::<CGImageHostObject>(image).image
 }
 
-impl Image {
+impl Image2 {
     pub fn from_rgba_bytes(
         _width: u32,
         _height: u32,
@@ -116,7 +116,7 @@ impl Image {
 
     pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
         let mask_pixels = mask.pixels();
-        let pixels = self.pixels();
+        let pixels: &mut [u8] = self.pixels();
 
         for i in 0..(pixels.len() / 4) {
             let sa = pixels[i * 4 + 3] as u16;
@@ -376,7 +376,7 @@ fn CGImageCreate(
     }
 
     // Convert to Image
-    let image = Image::from_rgba_bytes(
+    let image = Image2::from_rgba_bytes(
         width as u32,
         height as u32,
         bytes_per_row as usize,
@@ -399,7 +399,7 @@ fn CGImageCreateMask(
 ) -> CGImageRef {
     let bytes = cg_data_provider::borrow_bytes(env, provider);
 
-    let image = Image::from_alpha_mask(
+    let image = Image2::from_alpha_mask(
         width as u32,
         height as u32,
         bytes_per_row as usize,
