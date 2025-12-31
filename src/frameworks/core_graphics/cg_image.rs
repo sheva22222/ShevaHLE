@@ -114,15 +114,17 @@ pub fn from_alpha_mask(
     unimplemented!()
 }
 
-    pub fn apply_alpha_mask(&self, mask: &Image) -> Image {
-        let mut out = self.clone();
-        for i in 0..out.pixels.len() {
-            out.pixels[i].a =
-                (out.pixels[i].a as u16 * mask.pixels[i].a as u16 / 255) as u8;
-        }
-        out
+pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
+    let mask_pixels = mask.pixels();
+    let pixels = self.pixels_mut();
+
+    for i in 0..(pixels.len() / 4) {
+        let sa = pixels[i * 4 + 3] as u16;
+        let ma = mask_pixels[i * 4 + 3] as u16;
+        pixels[i * 4 + 3] = (sa * ma / 255) as u8;
     }
 }
+
 
 // TODO: More create methods.
 
