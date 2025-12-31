@@ -142,7 +142,6 @@ impl Image {
             pixels[i * 4 + 3] = (sa * ma / 255) as u8;
         }
     }
-} // ✅ closes impl Image
 
 
 
