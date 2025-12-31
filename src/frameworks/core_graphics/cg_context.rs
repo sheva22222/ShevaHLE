@@ -197,8 +197,9 @@ fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
         host_obj.text_position = text_pos;
     } else {
         // Quartz behavior: restoring without a saved state is a no-op
-        log!("CGContextRestoreGSt
-
+        log!("CGContextRestoreGState called with empty state stack");
+    }
+}
 
 
 
