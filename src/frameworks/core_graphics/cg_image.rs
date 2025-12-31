@@ -96,12 +96,12 @@ pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
 }
 
 impl Image {
-    pub fn from_rgba_bytes(...) -> Image {
-    let img = Image::new(...);
+    pub fn from_rgba_bytes(..) -> Image {
+    let img = Image::new(..);
     img
 }
-    pub fn from_alpha_mask(...) -> Image {
-    let img = Image::new(...);
+    pub fn from_alpha_mask(..) -> Image {
+    let img = Image::new(..);
     img
 }
     pub fn apply_alpha_mask(&self, mask: &Image) -> Image {
@@ -388,8 +388,8 @@ fn CGImageCreateWithMask(
         return nil;
     }
 
-    let src = borrow_image(env.objc(), image);
-    let mask_img = borrow_image(env.objc(), mask);
+    let src = borrow_image(&env.objc, image);
+    let mask_img = borrow_image(&env.objc, mask);
 
     let (w, h) = src.dimensions();
     if mask_img.dimensions() != (w, h) {
@@ -399,17 +399,22 @@ fn CGImageCreateWithMask(
     let src_pixels = src.pixels();
     let mask_pixels = mask_img.pixels();
 
-    let mut out_pixels = Vec::with_capacity(src_pixels.len());
+    let mut out = Vec::with_capacity(src_pixels.len());
 
-    for i in 0..src_pixels.len() {
-        let mut p = src_pixels[i];
-        let ma = mask_pixels[i].a as u16;
-        p.a = (p.a as u16 * ma / 255) as u8;
-        out_pixels.push(p);
+    for i in (0..src_pixels.len()).step_by(4) {
+        let r = src_pixels[i];
+        let g = src_pixels[i + 1];
+        let b = src_pixels[i + 2];
+        let a = src_pixels[i + 3];
+
+        let ma = mask_pixels[i + 3] as u16;
+        let new_a = (a as u16 * ma / 255) as u8;
+
+        out.extend_from_slice(&[r, g, b, new_a]);
     }
 
-    let out = Image::from_pixels(w, h, out_pixels);
-    from_image(env, out)
+    let out_img = Image::from_pixel_vec(out, (w as u32, h as u32));
+    from_image(env, out_img)
 }
 
 pub const FUNCTIONS: FunctionExports = &[
