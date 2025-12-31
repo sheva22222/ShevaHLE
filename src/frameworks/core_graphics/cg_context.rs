@@ -185,14 +185,17 @@ fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
     ));
 }
 
-
 fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
-    let (color, transform, text_pos) = host_obj.state_stack.pop().unwrap();
-    host_obj.rgb_fill_color = color;
-    host_obj.transform = transform;
-    host_obj.text_position = text_pos;
-}
+
+    if let Some((color, transform, text_pos)) = host_obj.state_stack.pop() {
+        host_obj.rgb_fill_color = color;
+        host_obj.transform = transform;
+        host_obj.text_position = text_pos;
+    } else {
+        // Quartz behavior: restoring without a saved state is a no-op
+        log!("CGContextRestoreGSt
+
 
 
 
@@ -724,7 +727,7 @@ fn CGContextFillRects(
     count: u32,
 ) {
     for i in 0..count {
-        let rect = unsafe { *rects.add(i) };
+        let rect = rects.add(i).read();
         CGContextFillRect(env, context, rect);
     }
 }
