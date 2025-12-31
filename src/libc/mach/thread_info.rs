@@ -197,7 +197,6 @@ fn thread_abort_safely(_env: &mut Environment, _thread: thread_t) -> kern_return
 type exception_mask_t = u32;
 type exception_handler_t = mach_port_t;
 type exception_behavior_t = i32;
-type thread_state_flavor_t = natural_t;
 
 fn thread_get_exception_ports(
     _env: &mut Environment,
@@ -213,8 +212,7 @@ fn thread_get_exception_ports(
 }
 
 fn mach_thread_self(env: &mut Environment) -> mach_port_t {
-    // Current thread is already known to the executor
-    env.current_thread().as_u32()
+    env.current_thread as mach_port_t
 }
 
 pub const FUNCTIONS: FunctionExports = &[
