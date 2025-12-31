@@ -216,7 +216,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     let file_manager: id = msg_class![env; NSFileManager defaultManager];
-    let contents: id = msg![env; file_manager contentsOfDirectoryAtPath:search_path error:nil];
+    let contents: id =
+        msg![env; file_manager contentsOfDirectoryAtPath:search_path error:nil];
     if contents == nil {
         return array;
     }
@@ -224,13 +225,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     let count: NSUInteger = msg![env; contents count];
     for i in 0..count {
         let filename: id = msg![env; contents objectAtIndex:i];
+
         if extension != nil {
             let ext: id = msg![env; filename pathExtension];
-            if msg![env; ext isEqualToString:extension] == false {
+            let equal: bool = msg![env; ext isEqualToString:extension];
+            if !equal {
                 continue;
             }
         }
-        let full_path: id = msg![env; search_path stringByAppendingPathComponent:filename];
+
+        let full_path: id =
+            msg![env; search_path stringByAppendingPathComponent:filename];
         msg![env; array addObject:full_path];
     }
 
