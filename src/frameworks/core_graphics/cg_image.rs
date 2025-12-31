@@ -141,6 +141,7 @@ impl Image {
         }
 
         Image::from_pixel_vec(out, (w, h))
+    }
 }
 
 // TODO: More create methods.
