@@ -151,14 +151,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
-- (())drawView:(CGRect)rect {
-    // UIKit compatibility stub.
-    // Some legacy apps call -[UIViewController drawView:]
-    // even though it is undocumented / deprecated.
+- (())drawView:(id)_rect {
+    // Compatibility stub for legacy code.
+    // Some apps incorrectly send drawView: to UIViewController.
     log_dbg!(
-        "[(UIViewController*){:?} drawView:{:?}] (noop)",
-        this,
-        rect
+        "[(UIViewController*){:?} drawView:] (noop)",
+        this
     );
 }
 
