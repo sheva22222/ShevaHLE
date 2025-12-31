@@ -385,12 +385,13 @@ fn pthread_threadid_np(
     thread: pthread_t,
     thread_id: MutPtr<u64>,
 ) -> i32 {
-    let host_object = match State::get(env).threads.get(&thread) {
-        Some(obj) => obj,
+    let tid = match State::get(env).threads.get(&thread) {
+        Some(obj) => obj.thread_id,
         None => return ESRCH,
     };
 
-    env.mem.write(thread_id, host_object.thread_id as u64);
+    // Borrow of State is over here
+    env.mem.write(thread_id, tid as u64);
     0
 }
 
@@ -412,10 +413,15 @@ fn pthread_getname_np(
     let name = host_object.name.as_deref().unwrap_or("");
     let bytes = name.as_bytes();
 
-    let copy_len = bytes.len().min((len - 1) as usize);
+    let max = (len - 1) as usize;
+    let copy_len = bytes.len().min(max);
 
-    env.mem.write_bytes(buf, &bytes[..copy_len]);
-    env.mem.write(buf + copy_len, 0u8); // NUL terminator
+    for i in 0..copy_len {
+        env.mem.write(buf + (i as u32), bytes[i]);
+    }
+
+    // NUL terminator
+    env.mem.write(buf + (copy_len as u32), 0u8);
 
     0
 }
@@ -430,13 +436,26 @@ fn pthread_setname_np(
         None => return ESRCH,
     };
 
-    let name = env.mem.read_c_string(name);
-    let truncated = name
-        .chars()
-        .take(63)
-        .collect::<String>();
+    let mut bytes = Vec::new();
+    let mut offset: u32 = 0;
 
-    host_object.name = Some(truncated);
+    loop {
+        let ch: u8 = env.mem.read(name + offset);
+        if ch == 0 {
+            break;
+        }
+        bytes.push(ch);
+        offset += 1;
+
+        // iOS thread name limit (63 bytes)
+        if bytes.len() >= 63 {
+            break;
+        }
+    }
+
+    let string = String::from_utf8_lossy(&bytes).to_string();
+    host_object.name = Some(string);
+
     0
 }
 
