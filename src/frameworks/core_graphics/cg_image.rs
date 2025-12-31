@@ -95,35 +95,37 @@ pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
     &mut objc.borrow_mut::<CGImageHostObject>(image).image
 }
 
-impl Image
-pub fn from_rgba_bytes(
-    _width: u32,
-    _height: u32,
-    _stride: usize,
-    _bytes: &[u8],
-) -> Image {
-    unimplemented!()
-}
-
-pub fn from_alpha_mask(
-    _width: u32,
-    _height: u32,
-    _stride: usize,
-    _bytes: &[u8],
-) -> Image {
-    unimplemented!()
-}
-
-pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
-    let mask_pixels = mask.pixels();
-    let pixels = self.pixels_mut();
-
-    for i in 0..(pixels.len() / 4) {
-        let sa = pixels[i * 4 + 3] as u16;
-        let ma = mask_pixels[i * 4 + 3] as u16;
-        pixels[i * 4 + 3] = (sa * ma / 255) as u8;
+impl Image {
+    pub fn from_rgba_bytes(
+        _width: u32,
+        _height: u32,
+        _stride: usize,
+        _bytes: &[u8],
+    ) -> Image {
+        unimplemented!()
     }
-}
+
+    pub fn from_alpha_mask(
+        _width: u32,
+        _height: u32,
+        _stride: usize,
+        _bytes: &[u8],
+    ) -> Image {
+        unimplemented!()
+    }
+
+    pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
+        let mask_pixels = mask.pixels();
+        let pixels = self.pixels_mut();
+
+        for i in 0..(pixels.len() / 4) {
+            let sa = pixels[i * 4 + 3] as u16;
+            let ma = mask_pixels[i * 4 + 3] as u16;
+            pixels[i * 4 + 3] = (sa * ma / 255) as u8;
+        }
+    }
+} // ✅ closes impl Image
+
 
 
 // TODO: More create methods.
