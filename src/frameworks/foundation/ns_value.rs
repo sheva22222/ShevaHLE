@@ -43,6 +43,8 @@ macro_rules! impl_AsValue {
                 NSNumberHostObject::Double(x) => *x as _,
                 NSNumberHostObject::Short(x) => *x as _,
                 NSNumberHostObject::Char(x) => *x as _,
+                NSNumberHostObject::UnsignedShort(x) => *x as _, 
+                NSNumberHostObject::UnsignedChar(x) => *x as _,
             }
         }
     };
