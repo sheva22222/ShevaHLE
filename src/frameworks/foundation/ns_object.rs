@@ -61,6 +61,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     // classes are not refcounted
 }
 
++ (Class)classNamed:(id)name { // NSString*
+    if name == nil {
+        return Class::null();
+    }
+
+    let class_name = to_rust_string(env, name);
+    env.objc.get_known_class(&class_name, &mut env.mem)
+        .unwrap_or(Class::null())
+}
+
 + (bool)instancesRespondToSelector:(SEL)selector {
     env.objc.class_has_method(this, selector)
 }
@@ -237,6 +247,39 @@ forUndefinedKey:(id)key { // NSString*
     msg_send(env, (this, sel, o1, o2))
 }
 
+- (())performSelectorInBackground:(SEL)sel
+                       withObject:(id)arg
+{
+    // assert!(!sel.is_null());
+
+    log_dbg!(
+        "performSelectorInBackground:{} withObject:{:?}",
+        sel.as_str(&env.mem),
+        arg
+    );
+
+    // Spawn a detached background thread
+    env.objc.spawn_thread(move |env| {
+        // Each thread needs its own autorelease pool
+        let pool: id = msg_class![env; NSAutoreleasePool new];
+
+        if sel.as_str(&env.mem).ends_with(':') {
+            () = msg_send(env, (this, sel, arg));
+        } else {
+            if !arg.is_null() {
+                log_dbg!(
+                    "Warning: performSelectorInBackground:{} ignoring argument {:?}",
+                    sel.as_str(&env.mem),
+                    arg
+                );
+            }
+            () = msg_send(env, (this, sel));
+        }
+
+        () = msg![env; pool drain];
+    });
+}
+    
 - (())performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay {
     log_dbg!("performSelector:{} withObject:{:?} afterDelay:{}", sel.as_str(&env.mem), arg, delay);
 
