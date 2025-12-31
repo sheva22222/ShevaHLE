@@ -358,16 +358,14 @@ fn pthread_get_stacksize_np(env: &mut Environment, thread: pthread_t) -> GuestUS
 }
 
 fn pthread_get_stackaddr_np(env: &mut Environment, thread: pthread_t) -> MutVoidPtr {
-    let host_object = State::get(env)
-        .threads
-        .get(&thread)
-        .expect("pthread_get_stackaddr_np called with invalid pthread_t");
+    let tid: u32 = match State::get(env).threads.get(&thread) {
+        Some(obj) => obj.thread_id as u32,
+        None => return MutVoidPtr::null(),
+    };
 
-    let thread_id = host_object.thread_id as u64;
-
-    // Synthetic stack top address (stack grows downward).
-    // This is a fake but stable per-thread value.
-    let stack_top = 0x7000_0000u64 + (thread_id * 0x0100_0000);
+    // Force 32-bit arithmetic explicitly
+    let stack_top: u32 =
+        0x7000_0000u32.wrapping_add(tid.wrapping_mul(0x0100_0000u32));
 
     MutVoidPtr::from_bits(stack_top)
 }
@@ -405,14 +403,14 @@ fn pthread_getname_np(
         return EINVAL;
     }
 
-    let host_object = match State::get(env).threads.get(&thread) {
-        Some(obj) => obj,
+    // ---- copy name out, end borrow early ----
+    let name = match State::get(env).threads.get(&thread) {
+        Some(obj) => obj.name.clone().unwrap_or_default(),
         None => return ESRCH,
     };
+    // ---- borrow ended here ----
 
-    let name = host_object.name.as_deref().unwrap_or("");
     let bytes = name.as_bytes();
-
     let max = (len - 1) as usize;
     let copy_len = bytes.len().min(max);
 
@@ -420,9 +418,7 @@ fn pthread_getname_np(
         env.mem.write(buf + (i as u32), bytes[i]);
     }
 
-    // NUL terminator
     env.mem.write(buf + (copy_len as u32), 0u8);
-
     0
 }
 
@@ -431,11 +427,7 @@ fn pthread_setname_np(
     thread: pthread_t,
     name: ConstPtr<u8>,
 ) -> i32 {
-    let host_object = match State::get(env).threads.get_mut(&thread) {
-        Some(obj) => obj,
-        None => return ESRCH,
-    };
-
+    // ---- read string first (no State borrow) ----
     let mut bytes = Vec::new();
     let mut offset: u32 = 0;
 
@@ -447,15 +439,21 @@ fn pthread_setname_np(
         bytes.push(ch);
         offset += 1;
 
-        // iOS thread name limit (63 bytes)
         if bytes.len() >= 63 {
             break;
         }
     }
 
     let string = String::from_utf8_lossy(&bytes).to_string();
-    host_object.name = Some(string);
+    // ---- env.mem borrow ends here ----
 
+    // ---- now mutate State ----
+    let host_object = match State::get(env).threads.get_mut(&thread) {
+        Some(obj) => obj,
+        None => return ESRCH,
+    };
+
+    host_object.name = Some(string);
     0
 }
 
