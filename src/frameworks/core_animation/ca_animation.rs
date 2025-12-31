@@ -111,6 +111,7 @@ struct CATransitionHostObject {
     transition_type: id, // NSString*
     subtype: id,         // NSString*
     to_value: id,        // id (NSString* lub NSNumber*)
+    by_value: id,
     start_progress: f32,
     end_progress: f32,
 }
@@ -436,12 +437,23 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setByValue:(id)value {
-    log_dbg!("[(CABasicAnimation*){:?} setByValue:{:?}]", this, value);
-    env.objc.borrow_mut::<CABasicAnimationHostObject>(this).by_value = value;
-    retain(env, value);
+    let old_value = {
+        let host = env.objc.borrow_mut::<CATransitionHostObject>(this);
+        let old = host.to_value;
+        host.to_value = value;
+        old
+    };
+
+    if old_value != nil {
+        release(env, old_value);
+    }
+    if value != nil {
+        retain(env, value);
+    }
 }
+
 - (id)byValue {
-    env.objc.borrow::<CABasicAnimationHostObject>(this).by_value
+    env.objc.borrow::<CATransitionHostObject>(this).by_value
 }
 
 @end
