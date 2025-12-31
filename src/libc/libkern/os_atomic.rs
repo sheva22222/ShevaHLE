@@ -13,7 +13,7 @@
 
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
-use crate::mem::{MutPtr, MutVoidPtr};
+use crate::mem::{GuestISize, MutPtr, MutVoidPtr};
 use crate::Environment;
 
 type OSSpinLock = i32;
@@ -224,7 +224,7 @@ fn OSAtomicDecrement64Barrier(env: &mut Environment, value: MutPtr<i64>) -> i64 
 
 fn OSAtomicAddPtr(
     env: &mut Environment,
-    amount: isize,
+    amount: GuestISize,
     value: MutPtr<MutVoidPtr>,
 ) -> MutVoidPtr {
     OSAtomicAddPtrBarrier(env, amount, value)
@@ -232,14 +232,17 @@ fn OSAtomicAddPtr(
 
 fn OSAtomicAddPtrBarrier(
     env: &mut Environment,
-    amount: isize,
+    amount: GuestISize, // or i32
     value: MutPtr<MutVoidPtr>,
 ) -> MutVoidPtr {
     let cur = env.mem.read(value);
-    let new = MutVoidPtr::from_bits(cur.to_bits().wrapping_add(amount as usize));
+    let new = MutVoidPtr::from_bits(
+        cur.to_bits().wrapping_add(amount as u32)
+    );
     env.mem.write(value, new);
     new
 }
+
 
 fn OSAtomicCompareAndSwapInt(
     env: &mut Environment,
