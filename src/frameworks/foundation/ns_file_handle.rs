@@ -150,6 +150,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+@implementation NSMutableIndexSet: NSObject
+@end
+
 @implementation NSHost: NSObject
 + (id)currentHost {
     nil
