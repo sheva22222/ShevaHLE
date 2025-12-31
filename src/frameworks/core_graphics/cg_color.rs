@@ -10,7 +10,7 @@ use std::ops::{Add, Mul, Sub};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::core_graphics::cg_color_space::{
-    kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
+    kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceCreateWithName, CGColorSpaceRef,
 };
 use crate::frameworks::core_graphics::CGFloat;
 use crate::mem::{guest_size_of, MutPtr};
@@ -166,11 +166,16 @@ fn CGColorGetColorSpace(
     let space_name =
         env.objc.borrow::<CGColorHostObject>(color).color_space_name;
 
+    // Currently only GenericRGB is supported
     assert_eq!(space_name, kCGColorSpaceGenericRGB);
 
-    // Return a retained color space
-    let space = CGColorSpaceHostObject::get_generic_rgb(env);
-    CFRetain(env, space)
+    // Caller owns the returned object (Create rule)
+    let name = crate::frameworks::foundation::ns_string::get_static_str(
+        env,
+        kCGColorSpaceGenericRGB,
+    );
+
+    CGColorSpaceCreateWithName(env, name)
 }
 
 fn CGColorEqualToColor(
