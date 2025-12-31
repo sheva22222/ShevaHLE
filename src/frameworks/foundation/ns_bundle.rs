@@ -135,7 +135,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allBundles {
     let array: id = msg_class![env; NSMutableArray array];
-    let main = msg_class![env; NSBundle mainBundle];
+    let main: id = msg_class![env; NSBundle mainBundle];
     msg![env; array addObject:main];
     array
 }
