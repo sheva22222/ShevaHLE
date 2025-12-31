@@ -95,55 +95,6 @@ pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
     &mut objc.borrow_mut::<CGImageHostObject>(image).image
 }
 
-impl Image2 {
-    pub fn from_rgba_bytes(
-        _width: u32,
-        _height: u32,
-        _stride: usize,
-        _bytes: &[u8],
-    ) -> Image {
-        unimplemented!()
-    }
-
-    pub fn from_alpha_mask(
-        _width: u32,
-        _height: u32,
-        _stride: usize,
-        _bytes: &[u8],
-    ) -> Image {
-        unimplemented!()
-    }
-
-    pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
-        let mask_pixels = mask.pixels();
-        let pixels: &mut [u8] = self.pixels();
-
-        for i in 0..(pixels.len() / 4) {
-            let sa = pixels[i * 4 + 3] as u16;
-            let ma = mask_pixels[i * 4 + 3] as u16;
-            pixels[i * 4 + 3] = (sa * ma / 255) as u8;
-        }
-    }
-    
-    pub fn crop(&self, x: u32, y: u32, w: u32, h: u32) -> Image {
-        let (src_w, src_h) = self.dimensions();
-        assert!(x + w <= src_w);
-        assert!(y + h <= src_h);
-
-        let src_pixels = self.pixels();
-        let mut out = Vec::with_capacity((w * h * 4) as usize);
-
-        for row in 0..h {
-            let src_row =
-                ((y + row) * src_w * 4 + x * 4) as usize;
-            let len = (w * 4) as usize;
-            out.extend_from_slice(&src_pixels[src_row..src_row + len]);
-        }
-
-        Image::from_pixel_vec(out, (w, h))
-    }
-}
-
 // TODO: More create methods.
 
 fn CGImageCreateCopyWithColorSpace(
@@ -376,7 +327,7 @@ fn CGImageCreate(
     }
 
     // Convert to Image
-    let image = Image2::from_rgba_bytes(
+    let image = Image::from_rgba_bytes(
         width as u32,
         height as u32,
         bytes_per_row as usize,
@@ -399,7 +350,7 @@ fn CGImageCreateMask(
 ) -> CGImageRef {
     let bytes = cg_data_provider::borrow_bytes(env, provider);
 
-    let image = Image2::from_alpha_mask(
+    let image = Image::from_alpha_mask(
         width as u32,
         height as u32,
         bytes_per_row as usize,
