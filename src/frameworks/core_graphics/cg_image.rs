@@ -95,7 +95,7 @@ pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
     &mut objc.borrow_mut::<CGImageHostObject>(image).image
 }
 
-impl Image {
+impl Image
 pub fn from_rgba_bytes(
     _width: u32,
     _height: u32,
