@@ -53,13 +53,16 @@ pub(super) enum NSNumberHostObject {
     Bool(bool),
     UnsignedLongLong(u64),
     UnsignedInt(u32),
-    Int(i32), // Also covers Integer and Long since this is a 32-bit platform.
+    UnsignedShort(u16),
+    UnsignedChar(u8),
+    Int(i32),
     LongLong(i64),
     Float(f32),
     Double(f64),
     Short(i16),
     Char(i8),
 }
+
 impl HostObject for NSNumberHostObject {}
 
 impl NSNumberHostObject {
@@ -91,6 +94,8 @@ impl NSNumberHostObject {
     impl_AsValue!(as_short, i16);
     impl_AsValue!(as_char, i8);
     impl_AsValue!(as_i128, i128);
+    impl_AsValue!(as_unsigned_short, u16);
+    impl_AsValue!(as_unsigned_char, u8);
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -260,6 +265,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)numberWithUnsignedShort:(u16)value {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithUnsignedShort:value];
+    autorelease(env, new)
+}
+
++ (id)numberWithUnsignedChar:(u8)value {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithUnsignedChar:value];
+    autorelease(env, new)
+}
+
 // TODO: types other than booleans and long longs
 
 - (id)initWithBool:(bool)value {
@@ -317,6 +334,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithUnsignedShort:(u16)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::UnsignedShort(value);
+    this
+}
+
+- (id)initWithUnsignedChar:(u8)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::UnsignedChar(value);
+    this
+}
+
 - (bool)boolValue {
     env.objc.borrow::<NSNumberHostObject>(this).as_bool()
 }
@@ -365,6 +392,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<NSNumberHostObject>(this).as_char()
 }
 
+- (u16)unsignedShortValue {
+    env.objc.borrow::<NSNumberHostObject>(this).as_unsigned_short()
+}
+
+- (u8)unsignedCharValue {
+    env.objc.borrow::<NSNumberHostObject>(this).as_unsigned_char()
+}
+
+- (id)stringValue {
+    msg![env; this description]
+}
+
 - (id)description {
     let desc = match env.objc.borrow(this) {
         NSNumberHostObject::Bool(value) => from_rust_string(env, (*value as i32).to_string()),
@@ -376,6 +415,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         NSNumberHostObject::Double(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Short(value) => from_rust_string(env, value.to_string()),
         NSNumberHostObject::Char(value) => from_rust_string(env, value.to_string()),
+        NSNumberHostObject::UnsignedShort(value) => from_rust_string(env, value.to_string()),
+        NSNumberHostObject::UnsignedChar(value) => from_rust_string(env, value.to_string()),
+
     };
     autorelease(env, desc)
 }
@@ -395,6 +437,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         NSNumberHostObject::Double(value) => value.to_bits(),
         NSNumberHostObject::Short(value) => *value as u64,
         NSNumberHostObject::Char(value) => *value as u64,
+        NSNumberHostObject::UnsignedShort(value) => *value as u64,
+        NSNumberHostObject::UnsignedChar(value) => *value as u64,
     };
     super::hash_helper(&value)
 }
