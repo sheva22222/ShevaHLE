@@ -47,11 +47,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub(super) struct CGContextHostObject {
     pub(super) subclass: CGContextSubclass,
     pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
-    /// Current transform.
     pub(super) transform: CGAffineTransform,
     pub(super) text_position: CGPoint,
-    // TODO: keep more states saved once they are implemented
-    pub(super) state_stack: Vec<((CGFloat, CGFloat, CGFloat, CGFloat), CGAffineTransform)>,
+
+    pub(super) state_stack: Vec<(
+        (CGFloat, CGFloat, CGFloat, CGFloat),
+        CGAffineTransform,
+        CGPoint,
+    )>,
 }
 impl HostObject for CGContextHostObject {}
 
