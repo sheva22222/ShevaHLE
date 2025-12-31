@@ -17,6 +17,7 @@ use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
 use crate::mem::{ConstPtr, GuestUSize, Ptr};
 use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
+use std::ops::Add;
 
 type CGInterpolationQuality = i32;
 
@@ -792,6 +793,24 @@ fn CGContextResetClip(
     log!("TODO: CGContextResetClip({:?})", context);
 }
 
+fn CGContextConvertRectToUserSpace(
+    env: &mut Environment,
+    context: CGContextRef,
+    rect: CGRect,
+) -> CGRect {
+    let ctm = env.objc.borrow::<CGContextHostObject>(context).transform;
+
+    // If CTM is identity, return fast
+    if ctm.is_identity() {
+        return rect;
+    }
+
+    // Invert CTM (Core Graphics guarantees invertible CTM here)
+    let inv = ctm.invert();
+
+    inv.apply_to_rect(rect)
+}
+
 fn CGContextConvertRectToDeviceSpace(
     env: &mut Environment,
     context: CGContextRef,
@@ -815,6 +834,43 @@ fn CGContextConvertPointToDeviceSpace(
     if ctm.is_identity() { point } else { ctm.apply_to_point(point) }
 }
 
+fn CGContextConvertPointToUserSpace(
+    env: &mut Environment,
+    context: CGContextRef,
+    point: CGPoint,
+) -> CGPoint {
+    let ctm = env.objc.borrow::<CGContextHostObject>(context).transform;
+
+    if ctm.is_identity() {
+        return point;
+    }
+
+    ctm.invert().apply_to_point(point)
+}
+
+fn CGContextConvertSizeToUserSpace(
+    env: &mut Environment,
+    context: CGContextRef,
+    size: CGSize,
+) -> CGSize {
+    let ctm = env.objc.borrow::<CGContextHostObject>(context).transform;
+
+    if ctm.is_identity() {
+        return size;
+    }
+
+    let inv = ctm.invert();
+
+    // Transform basis vectors (w,0) and (0,h)
+    let v1 = inv.apply_to_point(CGPoint { x: size.width, y: 0.0 });
+    let v2 = inv.apply_to_point(CGPoint { x: 0.0, y: size.height });
+
+    CGSize {
+        width: (v1.x.powi(2) + v1.y.powi(2)).sqrt(),
+        height: (v2.x.powi(2) + v2.y.powi(2)).sqrt(),
+    }
+}
+
 fn CGContextConvertSizeToDeviceSpace(
     env: &mut Environment,
     context: CGContextRef,
@@ -829,7 +885,7 @@ fn CGContextConvertSizeToDeviceSpace(
     let v1 = ctm.apply_to_point(CGPoint { x: size.width, y: 0.0 });
     let v2 = ctm.apply_to_point(CGPoint { x: 0.0, y: size.height });
 
-    super::CGSize {
+    CGSize {
         width: (v1.x.powi(2) + v1.y.powi(2)).sqrt(),
         height: (v2.x.powi(2) + v2.y.powi(2)).sqrt(),
     }
@@ -841,8 +897,6 @@ fn CGContextGetTextPosition(
 ) -> CGPoint {
     env.objc.borrow::<CGContextHostObject>(context).text_position
 }
-
-
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
@@ -912,7 +966,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetTextRise(_, _)),
     export_c_func!(CGContextResetClip(_)),
     export_c_func!(CGContextConvertRectToUserSpace(_, _)),
-    export_c_func!(CGContextConvertPointToUserSpace(_, _)),
+    export_c_func!(CGContextConvertRectToDeviceSpace(_, _)),
+    export_c_func!(CGContextConvertSizeToDeviceSpace(_, _)),
     export_c_func!(CGContextConvertSizeToUserSpace(_, _)),
+    export_c_func!(CGContextConvertPointToDeviceSpace(_, _)),
+    export_c_func!(CGContextConvertPointToUserSpace(_, _)),
     export_c_func!(CGContextGetTextPosition(_)),
 ];
