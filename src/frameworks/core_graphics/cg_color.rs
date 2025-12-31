@@ -124,32 +124,25 @@ fn CGColorGetComponents(
     env: &mut Environment,
     color: CGColorRef,
 ) -> MutPtr<CGFloat> {
-    if color.is_null() {
-        return MutPtr::null();
-    }
+    let (r, g, b, a) = to_rgba(&env.objc, color);
 
-    let &CGColorHostObject { r, g, b, a, .. } =
-        env.objc.borrow::<CGColorHostObject>(color);
+    let ptr: MutPtr<CGFloat> = env.mem
+        .alloc(guest_size_of::<CGFloat>() * 4)
+        .cast();
 
-    // iOS returns a pointer to internal storage.
-    // We emulate this by allocating a small array.
-    let ptr = env.mem.alloc::<CGFloat>(4);
     env.mem.write(ptr + 0, r);
     env.mem.write(ptr + 1, g);
     env.mem.write(ptr + 2, b);
     env.mem.write(ptr + 3, a);
+
     ptr
 }
 
 fn CGColorGetNumberOfComponents(
     _env: &mut Environment,
-    color: CGColorRef,
-) -> usize {
-    if color.is_null() {
-        0
-    } else {
-        4
-    }
+    _color: CGColorRef,
+) -> u32 {
+    4
 }
 
 fn CGColorGetAlpha(
