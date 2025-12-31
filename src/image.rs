@@ -35,7 +35,7 @@ enum PixelStore {
 const PNG_MAGIC_NUMBER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 
 impl Image {
-        pub fn from_rgba_bytes(
+    pub fn from_rgba_bytes(
         _width: u32,
         _height: u32,
         _stride: usize,
@@ -55,7 +55,7 @@ impl Image {
 
     pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
         let mask_pixels = mask.pixels();
-        let pixels: &mut [u8] = self.pixels();
+        let pixels: &mut [u8] = self.pixels_mut();
 
         for i in 0..(pixels.len() / 4) {
             let sa = pixels[i * 4 + 3] as u16;
