@@ -253,7 +253,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         let path: id = msg![env; paths objectAtIndex:i];
         let url: id = msg_class![env; NSURL alloc];
         let url: id = msg![env; url initFileURLWithPath:path];
-        msg![env; urls addObject:url];
+        let _: () = msg![env; urls addObject:url];
         release(env, url);
     }
 
