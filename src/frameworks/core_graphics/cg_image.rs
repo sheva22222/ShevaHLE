@@ -114,6 +114,17 @@ impl Image {
         unimplemented!()
     }
 
+    pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
+        let mask_pixels = mask.pixels();
+        let pixels = self.pixels();
+
+        for i in 0..(pixels.len() / 4) {
+            let sa = pixels[i * 4 + 3] as u16;
+            let ma = mask_pixels[i * 4 + 3] as u16;
+            pixels[i * 4 + 3] = (sa * ma / 255) as u8;
+        }
+    }
+    
     pub fn crop(&self, x: u32, y: u32, w: u32, h: u32) -> Image {
         let (src_w, src_h) = self.dimensions();
         assert!(x + w <= src_w);
@@ -130,20 +141,7 @@ impl Image {
         }
 
         Image::from_pixel_vec(out, (w, h))
-    }
 }
-    pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
-        let mask_pixels = mask.pixels();
-        let pixels = self.pixels_mut();
-
-        for i in 0..(pixels.len() / 4) {
-            let sa = pixels[i * 4 + 3] as u16;
-            let ma = mask_pixels[i * 4 + 3] as u16;
-            pixels[i * 4 + 3] = (sa * ma / 255) as u8;
-        }
-    }
-
-
 
 // TODO: More create methods.
 
