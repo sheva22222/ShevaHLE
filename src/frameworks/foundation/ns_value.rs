@@ -79,6 +79,8 @@ impl NSNumberHostObject {
             NSNumberHostObject::Double(x) => *x != 0.0,
             NSNumberHostObject::Short(x) => *x != 0,
             NSNumberHostObject::Char(x) => *x != 0,
+            NSNumberHostObject::UnsignedShort(x) => *x != 0,
+            NSNumberHostObject::UnsignedChar(x) => *x != 0,
         }
     }
     fn is_float(&self) -> bool {
