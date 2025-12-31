@@ -61,6 +61,7 @@ struct ThreadHostObject {
     thread_id: ThreadId,
     joined_by: Option<ThreadId>,
     attr: pthread_attr_t,
+    name: Option<String>,
 }
 
 /// Arbitrarily-chosen magic number for `pthread_attr_t` (not Apple's).
@@ -161,6 +162,7 @@ pub fn pthread_create(
             thread_id,
             joined_by: None,
             attr,
+            name: None,
         },
     );
 
@@ -198,6 +200,7 @@ pub fn pthread_self(env: &mut Environment) -> pthread_t {
                 thread_id: 0,
                 joined_by: None,
                 attr: DEFAULT_ATTR,
+                name: Some("main".to_string()),
             },
         );
         log_dbg!(
@@ -345,6 +348,98 @@ fn pthread_kill(_env: &mut Environment, _thread: pthread_t, _sig: i32) -> i32 {
     ESRCH
 }
 
+fn pthread_get_stacksize_np(env: &mut Environment, thread: pthread_t) -> GuestUSize {
+    let host_object = State::get(env)
+        .threads
+        .get(&thread)
+        .expect("pthread_get_stacksize_np called with invalid pthread_t");
+
+    host_object.attr.stacksize
+}
+
+fn pthread_get_stackaddr_np(env: &mut Environment, thread: pthread_t) -> MutVoidPtr {
+    let host_object = State::get(env)
+        .threads
+        .get(&thread)
+        .expect("pthread_get_stackaddr_np called with invalid pthread_t");
+
+    let thread_id = host_object.thread_id as u64;
+
+    // Synthetic stack top address (stack grows downward).
+    // This is a fake but stable per-thread value.
+    let stack_top = 0x7000_0000u64 + (thread_id * 0x0100_0000);
+
+    MutVoidPtr::from_bits(stack_top)
+}
+
+fn pthread_main_np(env: &mut Environment) -> i32 {
+    if env.current_thread == 0 {
+        1
+    } else {
+        0
+    }
+}
+
+fn pthread_threadid_np(
+    env: &mut Environment,
+    thread: pthread_t,
+    thread_id: MutPtr<u64>,
+) -> i32 {
+    let host_object = match State::get(env).threads.get(&thread) {
+        Some(obj) => obj,
+        None => return ESRCH,
+    };
+
+    env.mem.write(thread_id, host_object.thread_id as u64);
+    0
+}
+
+fn pthread_getname_np(
+    env: &mut Environment,
+    thread: pthread_t,
+    buf: MutPtr<u8>,
+    len: GuestUSize,
+) -> i32 {
+    if len == 0 {
+        return EINVAL;
+    }
+
+    let host_object = match State::get(env).threads.get(&thread) {
+        Some(obj) => obj,
+        None => return ESRCH,
+    };
+
+    let name = host_object.name.as_deref().unwrap_or("");
+    let bytes = name.as_bytes();
+
+    let copy_len = bytes.len().min((len - 1) as usize);
+
+    env.mem.write_bytes(buf, &bytes[..copy_len]);
+    env.mem.write(buf + copy_len, 0u8); // NUL terminator
+
+    0
+}
+
+fn pthread_setname_np(
+    env: &mut Environment,
+    thread: pthread_t,
+    name: ConstPtr<u8>,
+) -> i32 {
+    let host_object = match State::get(env).threads.get_mut(&thread) {
+        Some(obj) => obj,
+        None => return ESRCH,
+    };
+
+    let name = env.mem.read_c_string(name);
+    let truncated = name
+        .chars()
+        .take(63)
+        .collect::<String>();
+
+    host_object.name = Some(truncated);
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
@@ -364,4 +459,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_exit(_)),
     export_c_func!(pthread_cancel(_)),
     export_c_func!(pthread_kill(_, _)),
+    export_c_func!(pthread_get_stackaddr_np(_)),
+    export_c_func!(pthread_get_stacksize_np(_)),
+    export_c_func!(pthread_main_np()),
+    export_c_func!(pthread_threadid_np(_, _)),
+    export_c_func!(pthread_getname_np(_, _, _)),
+    export_c_func!(pthread_setname_np(_, _)),
 ];
