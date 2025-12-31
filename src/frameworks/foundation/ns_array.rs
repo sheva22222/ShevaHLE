@@ -434,6 +434,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithObjects:(id)firstObj, ...args {
+    let mut objects = Vec::new();
+
+    if firstObj != nil {
+        retain(env, firstObj);
+        objects.push(firstObj);
+
+        let mut varargs = args.start();
+        loop {
+            let next: id = varargs.next(env);
+            if next == nil {
+                break;
+            }
+            retain(env, next);
+            objects.push(next);
+        }
+    }
+
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+    this
+}
+
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
     let objects = ns_keyed_unarchiver::decode_current_array(env, coder);
