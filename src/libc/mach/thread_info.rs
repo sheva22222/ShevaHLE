@@ -150,7 +150,83 @@ fn thread_policy_set(
     KERN_SUCCESS
 }
 
+fn thread_resume(_env: &mut Environment, _thread: thread_t) -> kern_return_t {
+    KERN_SUCCESS
+}
+
+fn thread_suspend(_env: &mut Environment, _thread: thread_t) -> kern_return_t {
+    KERN_SUCCESS
+}
+
+fn thread_terminate(_env: &mut Environment, _thread: thread_t) -> kern_return_t {
+    log!("thread_terminate: ignored");
+    KERN_SUCCESS
+}
+
+type thread_state_flavor_t = natural_t;
+type thread_state_t = MutPtr<integer_t>;
+
+fn thread_get_state(
+    _env: &mut Environment,
+    _thread: thread_t,
+    _flavor: thread_state_flavor_t,
+    _state: thread_state_t,
+    _count: MutPtr<mach_msg_type_number_t>,
+) -> kern_return_t {
+    KERN_SUCCESS
+}
+
+fn thread_set_state(
+    _env: &mut Environment,
+    _thread: thread_t,
+    _flavor: thread_state_flavor_t,
+    _state: thread_state_t,
+    _count: mach_msg_type_number_t,
+) -> kern_return_t {
+    KERN_SUCCESS
+}
+
+fn thread_abort(_env: &mut Environment, _thread: thread_t) -> kern_return_t {
+    KERN_SUCCESS
+}
+
+fn thread_abort_safely(_env: &mut Environment, _thread: thread_t) -> kern_return_t {
+    KERN_SUCCESS
+}
+
+type exception_mask_t = u32;
+type exception_handler_t = mach_port_t;
+type exception_behavior_t = i32;
+type thread_state_flavor_t = natural_t;
+
+fn thread_get_exception_ports(
+    _env: &mut Environment,
+    _thread: thread_t,
+    _mask: exception_mask_t,
+    _masks: MutPtr<exception_mask_t>,
+    _count: MutPtr<mach_msg_type_number_t>,
+    _ports: MutPtr<exception_handler_t>,
+    _behaviors: MutPtr<exception_behavior_t>,
+    _flavors: MutPtr<thread_state_flavor_t>,
+) -> kern_return_t {
+    KERN_SUCCESS
+}
+
+fn mach_thread_self(env: &mut Environment) -> mach_port_t {
+    // Current thread is already known to the executor
+    env.current_thread().as_u32()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
+    export_c_func!(thread_resume(_)),
+    export_c_func!(thread_suspend(_)),
+    export_c_func!(thread_terminate(_)),
+    export_c_func!(thread_get_state(_, _, _, _)),
+    export_c_func!(thread_set_state(_, _, _, _)),
+    export_c_func!(thread_abort(_)),
+    export_c_func!(thread_abort_safely(_)),
+    export_c_func!(thread_get_exception_ports(_, _, _, _, _, _, _)),
+    export_c_func!(mach_thread_self()),
 ];
