@@ -731,7 +731,7 @@ fn CGContextFillRects(
     count: u32,
 ) {
     for i in 0..count {
-        let rect = rects.add(i).read();
+        let rect: CGRect = env.mem.read(rects.add(i));
         CGContextFillRect(env, context, rect);
     }
 }
