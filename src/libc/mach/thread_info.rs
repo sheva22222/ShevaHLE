@@ -1,4 +1,4 @@
-/*
+7/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -120,7 +120,6 @@ pub struct mach_msg_header_t {
     pub msgh_local_port: mach_port_t,
     pub msgh_reserved: u32,
     pub msgh_id: i32,
-    pub _private: u32,
 }
 unsafe impl SafeRead for mach_msg_header_t {}
 
@@ -452,7 +451,6 @@ fn mach_msg(
             msgh_local_port: 0,
             msgh_reserved: 0,
             msgh_id: 0,
-            _private: 0,
         };
         env.mem.write(msg, header);
     }
