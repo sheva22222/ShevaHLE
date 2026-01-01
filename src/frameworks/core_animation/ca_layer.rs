@@ -396,7 +396,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setBackgroundColor:(CGColorRef)new_color_ref {
     let old_color_ref = msg![env; this backgroundColor];
     let new_color = if new_color_ref == nil {
-    let new_color = if new_color == nil {
         None
     } else {
         Some(*env.objc.borrow::<CGColorHostObject>(new_color_ref))
