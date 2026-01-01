@@ -1,12 +1,29 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain};
+use crate::frameworks::core_graphics::CGPoint;
 use crate::mem::Ptr;
-use crate::objc::{objc_classes, ClassExports};
+use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
 use std::ffi::c_void;
 
 pub type CGPathRef = Ptr<c_void, false>;
-pub type CGMutablePathRef = Ptr<c_void, true>
+pub type CGMutablePathRef = Ptr<c_void, true>;
+
+#[derive(Default)]
+pub struct CGPathHostObject {
+    pub elements: Vec<PathElement>,
+}
+
+impl HostObject for CGPathHostObject {}
+
+#[derive(Clone)]
+pub enum PathElement {
+    MoveTo(CGPoint),
+    LineTo(CGPoint),
+    QuadCurveTo(CGPoint, CGPoint),
+    CurveTo(CGPoint, CGPoint, CGPoint),
+    CloseSubpath,
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -14,6 +31,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation _touchHLE_CGPath: NSObject
 @end
+
 };
 
 fn CGPathCreateMutable(env: &mut Environment) -> CGMutablePathRef {
