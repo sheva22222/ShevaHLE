@@ -46,19 +46,20 @@ fn CGPathCreateMutable(env: &mut Environment) -> CGMutablePathRef {
     env.objc
         .alloc_object(class, host_obj, &mut env.mem)
         .cast::<c_void>()
-        .cast_mut()
+        .cast()
 }
 
 pub fn CGPathRetain(env: &mut Environment, path: CGPathRef) -> CGPathRef {
     if !path.is_null() {
-        CFRetain(env, path.cast());
+        CFRetain(env, path.cast().cast_mut());
     }
     path
 }
 
+
 pub fn CGPathRelease(env: &mut Environment, path: CGPathRef) {
     if !path.is_null() {
-        CFRelease(env, path.cast());
+        CFRelease(env, path.cast().cast_mut());
     }
 }
 
