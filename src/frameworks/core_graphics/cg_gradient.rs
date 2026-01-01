@@ -25,8 +25,6 @@ fn CGGradientCreateWithColors(
     colors: CFArrayRef,
     locations: ConstPtr<CGFloat>,
 ) -> CGGradientRef {
-    use crate::objc::objects::objc_object;
-
     let space_name = env
         .objc
         .borrow::<crate::frameworks::core_graphics::cg_color_space::CGColorSpaceHostObject>(space)
@@ -43,7 +41,7 @@ fn CGGradientCreateWithColors(
     for i in 0..count {
         let color_ref: CGColorRef =
             CFArrayGetValueAtIndex(env, colors, i as i32)
-                .cast::<objc_object>()
+                .cast()
                 .cast_mut();
 
         let (r, g, b, a) = to_rgba(&env.objc, color_ref);
