@@ -33,26 +33,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 };
 
 fn CGPathCreateMutable(env: &mut Environment) -> CGMutablePathRef {
-    let host_obj = Box::new(CGPathHostObject::default());
+    let host_obj = Box::new(CGPathHostObject {
+        elements: Vec::new(),
+    });
 
     let class = env
         .objc
         .get_known_class("_touchHLE_CGPath", &mut env.mem);
 
-    env.objc.alloc_object(class, host_obj, &mut env.mem)
+    env.objc
+        .alloc_object(class, host_obj, &mut env.mem)
+        .cast::<c_void>()
+        .cast_mut()
 }
 
 pub fn CGPathRetain(env: &mut Environment, path: CGPathRef) -> CGPathRef {
     if !path.is_null() {
-        CFRetain(env, path)
-    } else {
-        path
+        CFRetain(env, path.cast::<objc_object>().cast_mut());
     }
+    path
 }
 
 pub fn CGPathRelease(env: &mut Environment, path: CGPathRef) {
     if !path.is_null() {
-        CFRelease(env, path);
+        CFRelease(env, path.cast::<objc_object>().cast_mut());
     }
 }
 
