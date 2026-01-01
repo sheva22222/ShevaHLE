@@ -44,8 +44,6 @@ impl State {
             .and_then(|t| t.get_current_transaction_mut())
     }
 
-    // Unused until support for implicit animations is implemented.
-    #[allow(unused)]
     pub fn add_animation(env: &mut Environment, layer: id, animation: id) {
         let layer_class = msg![env; layer class];
         let ca_layer = env.objc.get_known_class("CALayer", &mut env.mem);
@@ -141,8 +139,6 @@ impl Transaction {
         }
     }
 
-    // Unused until support for UIView animations is implemented.
-    #[allow(unused)]
     pub fn get_animations(&self) -> Vec<(id, id)> {
         self.animations.clone()
     }
