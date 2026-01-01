@@ -94,7 +94,7 @@ pub fn CGPathAddLines(
 
     // First point → MoveTo
     let p0 = t.apply_to_point(env.mem.read(points));
-    host.elements.push(PathElement::MoveToPoint {
+    host.elements.push(PathElement::MoveTo { x: p0.x, y: p0.y });
         x: p0.x,
         y: p0.y,
     });
@@ -102,7 +102,7 @@ pub fn CGPathAddLines(
     // Remaining points → LineTo
     for i in 1..count {
         let p = t.apply_to_point(env.mem.read(points + i as u32));
-        host.elements.push(PathElement::AddLineToPoint {
+        host.elements.push(PathElement::LineTo { x: p.x, y: p.y });
             x: p.x,
             y: p.y,
         });
