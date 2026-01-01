@@ -120,7 +120,7 @@ pub struct mach_msg_header_t {
     pub msgh_local_port: mach_port_t,
     pub msgh_reserved: u32,
     pub msgh_id: i32,
-    pub _private: (),
+    pub _private: u32,
 }
 unsafe impl SafeRead for mach_msg_header_t {}
 
