@@ -72,12 +72,12 @@ fn CFArrayCreateCopy(
     copy
 }
 
-fn CFArrayGetCount(env: &mut Environment, array: CFArrayRef) -> CFIndex {
+pub fn CFArrayGetCount(env: &mut Environment, array: CFArrayRef) -> CFIndex {
     let count: NSUInteger = msg![env; array count];
     count.try_into().unwrap()
 }
 
-fn CFArrayGetValueAtIndex(env: &mut Environment, array: CFArrayRef, idx: CFIndex) -> ConstVoidPtr {
+pub fn CFArrayGetValueAtIndex(env: &mut Environment, array: CFArrayRef, idx: CFIndex) -> ConstVoidPtr {
     let idx: NSUInteger = idx.try_into().unwrap();
     let value: id = msg![env; array objectAtIndex:idx];
     value.cast().cast_const()
