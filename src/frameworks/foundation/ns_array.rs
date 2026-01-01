@@ -322,6 +322,44 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithArray:(id)array copyItems:(bool)copy_items {
+    let mut objects = Vec::new();
+    let enumerator: id = msg![env; array objectEnumerator];
+
+    loop {
+        let next: id = msg![env; enumerator nextObject];
+        if next == nil {
+            break;
+        }
+
+        let obj = if copy_items {
+            msg![env; next copy]
+        } else {
+            retain(env, next);
+            next
+        };
+
+        objects.push(obj);
+    }
+
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+    this
+}
+
+- (bool)writeToFile:(id)path atomically:(bool)atomically {
+    use crate::frameworks::foundation::ns_array::serialize_plist_to_file;
+
+    let path = ns_string::to_rust_string(env, path);
+    let guest_path = GuestPath::new(&path);
+
+    serialize_plist_to_file(
+        env,
+        guest_path,
+        this,
+        atomically,
+    )
+}
+
 - (())dealloc {
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let array = std::mem::take(&mut host_object.array);
