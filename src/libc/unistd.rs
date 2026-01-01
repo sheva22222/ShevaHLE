@@ -7,7 +7,7 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
-use crate::libc::errno::set_errno;
+use crate::libc::errno::{set_errno, EINVAL};
 use crate::libc::posix_io::{FileDescriptor, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use crate::mem::{ConstPtr, GuestUSize, MutPtr, PAGE_SIZE};
 use crate::Environment;
@@ -180,6 +180,23 @@ fn get_end(env: &mut Environment) -> u32 {
     927506432
 }
 
+fn pipe(env: &mut Environment, fds: MutPtr<i32>) -> i32 {
+    set_errno(env, 0);
+
+    // Fake pipe: stdin/stdout pair (good enough for many apps)
+    env.mem.write(fds + 0, STDIN_FILENO);
+    env.mem.write(fds + 1, STDOUT_FILENO);
+    0
+}
+
+fn fork(env: &mut Environment) -> pid_t {
+    EINVAL
+
+    // touchHLE does not support process forking
+    set_errno(env, EINVAL);
+    -1
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sleep(_)),
     export_c_func!(usleep(_)),
@@ -194,4 +211,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(readlink(_, _, _)),
     export_c_func!(get_etext()),
     export_c_func!(get_end()),
+    export_c_func!(pipe(_)),
+    export_c_func!(fork()),
 ];
+
