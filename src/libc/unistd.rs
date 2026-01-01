@@ -172,6 +172,14 @@ fn readlink(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<u8>, bufsiz: 
     }
 }
 
+fn get_etext(env: &mut Environment) -> u32 {
+    4096
+}
+
+fn get_end(env: &mut Environment) -> u32 {
+    927506432
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sleep(_)),
     export_c_func!(usleep(_)),
@@ -184,4 +192,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(getpagesize()),
     export_c_func!(getgid()),
     export_c_func!(readlink(_, _, _)),
+    export_c_func!(get_etext()),
+    export_c_func!(get_end()),
 ];
