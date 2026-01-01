@@ -190,7 +190,7 @@ fn pipe(env: &mut Environment, fds: MutPtr<i32>) -> i32 {
 }
 
 fn fork(env: &mut Environment) -> pid_t {
-    EINVAL
+    EINVAL;
 
     // touchHLE does not support process forking
     set_errno(env, EINVAL);
