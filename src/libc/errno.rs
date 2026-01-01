@@ -116,8 +116,7 @@ fn strerror(env: &mut Environment, errnum: i32) -> MutPtr<u8> {
         _ => "Unknown error",
     };
 
-    // Convert to static C string (cached by runtime)
-    env.mem.alloc_and_write_cstr(msg)
+    env.mem.alloc_and_write_cstr(msg.as_bytes())
 }
 
 pub const FUNCTIONS: FunctionExports = &[
