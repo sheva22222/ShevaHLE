@@ -98,9 +98,32 @@ fn herror(env: &mut Environment, s: ConstPtr<u8>) {
     let _ = std::io::stderr().write_all(out.as_bytes());
 }
 
+fn strerror(env: &mut Environment, errnum: i32) -> MutPtr<u8> {
+    let msg = match errnum {
+        EPERM => "Operation not permitted",
+        ENOENT => "No such file or directory",
+        ESRCH => "No such process",
+        EINTR => "Interrupted system call",
+        EIO => "Input/output error",
+        EBADF => "Bad file descriptor",
+        EDEADLK => "Resource deadlock avoided",
+        EBUSY => "Device or resource busy",
+        EEXIST => "File exists",
+        EINVAL => "Invalid argument",
+        ESPIPE => "Illegal seek",
+        ECONNRESET => "Connection reset by peer",
+        EOVERFLOW => "Value too large for defined data type",
+        _ => "Unknown error",
+    };
+
+    // Convert to static C string (cached by runtime)
+    env.mem.alloc_and_write_cstr(msg)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(__error()),
     export_c_func!(perror(_)),
     export_c_func!(herror(_)),
+    export_c_func!(strerror(_)),
 ];
 
