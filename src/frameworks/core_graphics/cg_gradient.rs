@@ -79,6 +79,66 @@ fn CGGradientCreateWithColors(
     env.objc.alloc_object(class, host_obj, &mut env.mem)
 }
 
+fn CGGradientCreateWithColorComponents(
+    env: &mut Environment,
+    space: CGColorSpaceRef,
+    components: ConstPtr<CGFloat>,
+    locations: ConstPtr<CGFloat>,
+    count: u32,
+) -> CGGradientRef {
+    let space_name = env
+        .objc
+        .borrow::<crate::frameworks::core_graphics::cg_color_space::CGColorSpaceHostObject>(space)
+        .name;
+
+    // touchHLE limitation
+    assert_eq!(space_name, kCGColorSpaceGenericRGB);
+    assert!(count > 0);
+    assert!(!components.is_null());
+
+    // Copy colors
+    let mut out_colors = Vec::with_capacity(count);
+    for i in 0..count {
+        let base = (i * 4) as u32;
+
+        let r = env.mem.read(components + base);
+        let g = env.mem.read(components + base + 1);
+        let b = env.mem.read(components + base + 2);
+        let a = env.mem.read(components + base + 3);
+
+        out_colors.push(CGColorHostObject {
+            color_space_name: kCGColorSpaceGenericRGB,
+            r,
+            g,
+            b,
+            a,
+        });
+    }
+
+    // Copy locations if provided
+    let out_locations = if locations.is_null() {
+        None
+    } else {
+        let mut v = Vec::with_capacity(count);
+        for i in 0..count {
+            v.push(env.mem.read(locations + (i as u32)));
+        }
+        Some(v)
+    };
+
+    let host_obj = Box::new(CGGradientHostObject {
+        color_space_name: kCGColorSpaceGenericRGB,
+        colors: out_colors,
+        locations: out_locations,
+    });
+
+    let class = env
+        .objc
+        .get_known_class("_touchHLE_CGGradient", &mut env.mem);
+
+    env.objc.alloc_object(class, host_obj, &mut env.mem)
+}
+
 pub fn CGGradientRelease(env: &mut Environment, gradient: CGGradientRef) {
     if !gradient.is_null() {
         CFRelease(env, gradient);
@@ -95,6 +155,7 @@ pub fn CGGradientRetain(env: &mut Environment, gradient: CGGradientRef) -> CGGra
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGGradientCreateWithColors(_, _, _)),
+    export_c_func!(CGGradientCreateWithColorComponents(_, _, _, _)),
     export_c_func!(CGGradientRetain(_)),
     export_c_func!(CGGradientRelease(_)),
 ];
