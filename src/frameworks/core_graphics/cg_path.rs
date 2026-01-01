@@ -1,7 +1,8 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain};
-use crate::frameworks::core_graphics::CGPoint;
-use crate::mem::Ptr;
+use crate::frameworks::core_graphics::{CGFloat, CGPoint};
+use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
+use crate::mem::{ConstPtr, Ptr};
 use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
 use std::ffi::c_void;
@@ -13,6 +14,9 @@ pub type CGMutablePathRef = Ptr<c_void, true>;
 pub struct CGPathHostObject {
     pub elements: Vec<PathElement>,
 }
+
+fn move_to(&mut self, x: CGFloat, y: CGFloat);
+fn add_line_to(&mut self, x: CGFloat, y: CGFloat);
 
 impl HostObject for CGPathHostObject {}
 
@@ -63,8 +67,44 @@ pub fn CGPathRelease(env: &mut Environment, path: CGPathRef) {
     }
 }
 
+pub fn CGPathAddLines(
+    env: &mut Environment,
+    path: CGMutablePathRef,
+    transform: ConstPtr<CGAffineTransform>,
+    points: ConstPtr<CGPoint>,
+    count: u32,
+) {
+    if path.is_null() || points.is_null() || count == 0 {
+        return;
+    }
+
+    let host = env
+        .objc
+        .borrow_mut::<CGPathHostObject>(path.cast());
+
+    // Read transform (or identity)
+    let t = if transform.is_null() {
+        CGAffineTransform::identity()
+    } else {
+        env.mem.read(transform)
+    };
+
+    // First point → move
+    let first = env.mem.read(points);
+    let p0 = t.apply_to_point(first);
+    host.move_to(p0.x, p0.y);
+
+    // Remaining points → lines
+    for i in 1..count {
+        let p = env.mem.read(points + i as u32);
+        let p = t.apply_to_point(p);
+        host.add_line_to(p.x, p.y);
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPathCreateMutable()),
     export_c_func!(CGPathRetain(_)),
     export_c_func!(CGPathRelease(_)),
+    export_c_func!(CGPathAddLines(_, _, _, _, _)),
 ];
