@@ -64,6 +64,23 @@ struct policy_timeshare_info {
 }
 unsafe impl SafeRead for policy_timeshare_info {}
 
+type task_flavor_t = natural_t;
+type task_info_t = MutPtr<integer_t>;
+
+const TASK_BASIC_INFO: task_flavor_t = 4;
+
+#[repr(C, packed)]
+struct task_basic_info {
+    virtual_size: u64,
+    resident_size: u64,
+    resident_size_max: u64,
+    user_time: u64,
+    system_time: u64,
+    policy: integer_t,
+    suspend_count: integer_t,
+}
+unsafe impl SafeRead for task_basic_info {}
+
 const TH_STATE_RUNNING: integer_t = 1;
 const TH_STATE_STOPPED: integer_t = 2;
 
@@ -341,6 +358,48 @@ fn vm_allocate(
     KERN_SUCCESS
 }
 
+fn task_info(
+    env: &mut Environment,
+    _task: mach_port_t,
+    flavor: task_flavor_t,
+    task_info_out: task_info_t,
+    task_info_out_count: MutPtr<mach_msg_type_number_t>,
+) -> kern_return_t {
+    let out_count = env.mem.read(task_info_out_count);
+
+    match flavor {
+        TASK_BASIC_INFO => {
+            let expected =
+                guest_size_of::<task_basic_info>() / guest_size_of::<integer_t>();
+
+            if out_count < expected as u32 {
+                return KERN_FAILURE;
+            }
+
+            env.mem.write(
+                task_info_out.cast(),
+                task_basic_info {
+                    virtual_size: 0,
+                    resident_size: 0,
+                    resident_size_max: 0,
+                    user_time: 0,
+                    system_time: 0,
+                    policy: 0,
+                    suspend_count: 0,
+                },
+            );
+
+            env.mem.write(task_info_out_count, expected as u32);
+            KERN_SUCCESS
+        }
+
+        _ => {
+            log!("task_info: unsupported flavor {}", flavor);
+            KERN_FAILURE
+        }
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
@@ -358,4 +417,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(vm_deallocate(_, _, _)),
     export_c_func!(mach_port_allocate(_, _, _)),
     export_c_func!(mach_port_insert_right(_, _, _, _)),
+    export_c_func!(task_info(_, _, _, _)),
 ];
