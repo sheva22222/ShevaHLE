@@ -1,8 +1,10 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain};
 use crate::frameworks::core_graphics::CGPoint;
+use crate::mem::Ptr;
 use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
+use std::ffi::c_void;
 
 pub type CGPathRef = Ptr<c_void, false>;
 pub type CGMutablePathRef = Ptr<c_void, true>;
