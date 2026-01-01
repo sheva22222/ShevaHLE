@@ -19,30 +19,33 @@ impl HostObject for CGGradientHostObject {}
 
 pub type CGGradientRef = CFTypeRef;
 
-fn CGGradientCreateWithColors(
+fnfn CGGradientCreateWithColors(
     env: &mut Environment,
     space: CGColorSpaceRef,
     colors: CFArrayRef,
     locations: ConstPtr<CGFloat>,
 ) -> CGGradientRef {
+    use crate::frameworks::core_foundation::cf_array::CFArrayHostObject;
+    use crate::frameworks::core_graphics::cg_color_space::CGColorSpaceHostObject;
+
+    // Validate color space
     let space_name = env
         .objc
-        .borrow::<crate::frameworks::core_graphics::cg_color_space::CGColorSpaceHostObject>(space)
+        .borrow::<CGColorSpaceHostObject>(space)
         .name;
 
     // touchHLE limitation (same as CGColor)
     assert_eq!(space_name, kCGColorSpaceGenericRGB);
 
-    let count = CFArrayGetCount(env, colors) as usize;
-
+    // CFArray is toll-free bridged to CFArray
+    let array = env.objc.borrow::<CFArrayHostObject>(colors);
+    let count = array.objects.len();
     assert!(count > 0);
 
     // Copy colors
     let mut out_colors = Vec::with_capacity(count);
-    for i in 0..count {
-        let color_ref =
-            CFArrayGetValueAtIndex(env, colors, i as isize) as CGColorRef;
-
+    for &obj in &array.objects {
+        let color_ref = obj as CGColorRef;
         let (r, g, b, a) = to_rgba(&env.objc, color_ref);
 
         out_colors.push(CGColorHostObject {
