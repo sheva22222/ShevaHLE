@@ -86,12 +86,13 @@ fn CGGradientCreateWithColorComponents(
     locations: ConstPtr<CGFloat>,
     count: u32,
 ) -> CGGradientRef {
+    let count: usize = count.try_into().unwrap();
+
     let space_name = env
         .objc
         .borrow::<crate::frameworks::core_graphics::cg_color_space::CGColorSpaceHostObject>(space)
         .name;
 
-    // touchHLE limitation
     assert_eq!(space_name, kCGColorSpaceGenericRGB);
     assert!(count > 0);
     assert!(!components.is_null());
@@ -115,7 +116,6 @@ fn CGGradientCreateWithColorComponents(
         });
     }
 
-    // Copy locations if provided
     let out_locations = if locations.is_null() {
         None
     } else {
