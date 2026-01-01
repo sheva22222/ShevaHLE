@@ -122,6 +122,7 @@ pub struct mach_msg_header_t {
     pub msgh_local_port: mach_port_t,
     pub msgh_reserved: u32,
     pub msgh_id: i32,
+    pub _private: [u8; 0],
 }
 unsafe impl SafeRead for mach_msg_header_t {}
 
@@ -460,6 +461,15 @@ fn mach_msg(
     MACH_MSG_SUCCESS
 }
 
+fn exc_server(
+    _env: &mut Environment,
+    _in_msg: MutPtr<mach_msg_header_t>,
+    _out_msg: MutPtr<mach_msg_header_t>,
+) -> boolean_t {
+    // We do not handle Mach exceptions
+    0 // FALSE
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
@@ -479,4 +489,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mach_port_insert_right(_, _, _, _)),
     export_c_func!(task_info(_, _, _, _)),
     export_c_func!(mach_msg(_, _, _, _, _, _, _)),
+    export_c_func!(exc_server(_, _)),
 ];
