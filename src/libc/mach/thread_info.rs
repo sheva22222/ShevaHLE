@@ -27,6 +27,8 @@ type thread_inspect_t = mach_port_t;
 type thread_flavor_t = natural_t;
 type thread_info_t = MutPtr<integer_t>;
 pub type mach_msg_type_number_t = natural_t;
+pub type mach_msg_return_t = kern_return_t;
+pub type mach_msg_size_t = u32;
 
 type policy_t = i32;
 const POLICY_TIMESHARE: policy_t = 1;
@@ -99,6 +101,29 @@ impl MachState {
 }
 
 static NEXT_MACH_PORT: AtomicU32 = AtomicU32::new(100);
+
+pub const MACH_MSG_SUCCESS: mach_msg_return_t = 0;
+
+/* ---- mach_msg option flags (subset) ---- */
+
+pub type mach_msg_option_t = integer_t;
+
+pub const MACH_SEND_MSG: mach_msg_option_t = 0x00000001;
+pub const MACH_RCV_MSG: mach_msg_option_t  = 0x00000002;
+pub const MACH_RCV_TIMEOUT: mach_msg_option_t = 0x00000100;
+
+/* ---- message header ---- */
+
+#[repr(C, packed)]
+pub struct mach_msg_header_t {
+    pub msgh_bits: u32,
+    pub msgh_size: u32,
+    pub msgh_remote_port: mach_port_t,
+    pub msgh_local_port: mach_port_t,
+    pub msgh_reserved: u32,
+    pub msgh_id: i32,
+}
+unsafe impl SafeRead for mach_msg_header_t {}
 
 /// Undocumented Darwin function that returns information about a thread.
 ///
@@ -400,6 +425,41 @@ fn task_info(
     }
 }
 
+fn mach_msg(
+    env: &mut Environment,
+    msg: MutPtr<mach_msg_header_t>,
+    option: mach_msg_option_t,
+    send_size: mach_msg_size_t,
+    rcv_size: mach_msg_size_t,
+    _rcv_name: mach_port_t,
+    _timeout: natural_t,
+    _notify: mach_port_t,
+) -> mach_msg_return_t {
+    log_dbg!(
+        "mach_msg(msg={:?}, option=0x{:x}, send={}, recv={})",
+        msg,
+        option,
+        send_size,
+        rcv_size
+    );
+
+    /* ---- receive path ---- */
+    if (option & MACH_RCV_MSG) != 0 && !msg.is_null() {
+        // Zero out the receive buffer header at minimum
+        let header = mach_msg_header_t {
+            msgh_bits: 0,
+            msgh_size: rcv_size,
+            msgh_remote_port: 0,
+            msgh_local_port: 0,
+            msgh_reserved: 0,
+            msgh_id: 0,
+        };
+        env.mem.write(msg, header);
+    }
+
+    MACH_MSG_SUCCESS
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
@@ -418,4 +478,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mach_port_allocate(_, _, _)),
     export_c_func!(mach_port_insert_right(_, _, _, _)),
     export_c_func!(task_info(_, _, _, _)),
+    export_c_func!(mach_msg(_, _, _, _, _, _, _)),
 ];
