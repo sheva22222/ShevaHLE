@@ -82,23 +82,33 @@ pub fn CGPathAddLines(
         .objc
         .borrow_mut::<CGPathHostObject>(path.cast());
 
-    // Read transform (or identity)
     let t = if transform.is_null() {
-        CGAffineTransform::identity()
+        CGAffineTransform {
+            a: 1.0,
+            b: 0.0,
+            c: 0.0,
+            d: 1.0,
+            tx: 0.0,
+            ty: 0.0,
+        }
     } else {
         env.mem.read(transform)
     };
 
-    // First point → move
-    let first = env.mem.read(points);
-    let p0 = t.apply_to_point(first);
-    host.move_to(p0.x, p0.y);
+    // First point → MoveTo
+    let p0 = t.apply_to_point(env.mem.read(points));
+    host.elements.push(CGPathElement::MoveToPoint {
+        x: p0.x,
+        y: p0.y,
+    });
 
-    // Remaining points → lines
+    // Remaining points → LineTo
     for i in 1..count {
-        let p = env.mem.read(points + i as u32);
-        let p = t.apply_to_point(p);
-        host.add_line_to(p.x, p.y);
+        let p = t.apply_to_point(env.mem.read(points + i as u32));
+        host.elements.push(CGPathElement::AddLineToPoint {
+            x: p.x,
+            y: p.y,
+        });
     }
 }
 
