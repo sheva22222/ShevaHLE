@@ -112,8 +112,6 @@ pub const MACH_SEND_MSG: mach_msg_option_t = 0x00000001;
 pub const MACH_RCV_MSG: mach_msg_option_t  = 0x00000002;
 pub const MACH_RCV_TIMEOUT: mach_msg_option_t = 0x00000100;
 
-/* ---- message header ---- */
-
 #[repr(C, packed)]
 pub struct mach_msg_header_t {
     pub msgh_bits: u32,
@@ -122,7 +120,7 @@ pub struct mach_msg_header_t {
     pub msgh_local_port: mach_port_t,
     pub msgh_reserved: u32,
     pub msgh_id: i32,
-    _private: (),
+    pub _private: (),
 }
 unsafe impl SafeRead for mach_msg_header_t {}
 
@@ -454,6 +452,7 @@ fn mach_msg(
             msgh_local_port: 0,
             msgh_reserved: 0,
             msgh_id: 0,
+            _private: 0,
         };
         env.mem.write(msg, header);
     }
