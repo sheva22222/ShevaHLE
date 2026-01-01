@@ -250,6 +250,20 @@ fn mach_thread_self(env: &mut Environment) -> mach_port_t {
     env.current_thread as mach_port_t
 }
 
+type ipc_space_t = mach_port_t;
+type mach_port_name_t = mach_port_t;
+
+fn mach_port_deallocate(
+    _env: &mut Environment,
+    _task: ipc_space_t,
+    _name: mach_port_name_t,
+) -> kern_return_t {
+    // Early iOS behavior:
+    // - Always succeeds
+    // - No actual port rights tracking
+    KERN_SUCCESS
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
@@ -263,4 +277,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_get_exception_ports(_, _, _, _, _, _, _)),
     export_c_func!(task_threads(_, _, _)),
     export_c_func!(mach_thread_self()),
+    export_c_func!(mach_port_deallocate(_, _)),
 ];
