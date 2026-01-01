@@ -66,6 +66,20 @@ unsafe impl SafeRead for policy_timeshare_info {}
 const TH_STATE_RUNNING: integer_t = 1;
 const TH_STATE_STOPPED: integer_t = 2;
 
+pub const MACH_PORT_RIGHT_RECEIVE: i32 = 1;
+pub const MACH_MSG_TYPE_MAKE_SEND: i32 = 20;
+
+pub struct MachState {
+    next_port: mach_port_t,
+}
+
+impl MachState {
+    pub fn next_port(&mut self) -> mach_port_t {
+        self.next_port += 1;
+        self.next_port
+    }
+}
+
 /// Undocumented Darwin function that returns information about a thread.
 ///
 /// I swear these are the correct type names, the API is just... like this.
@@ -284,6 +298,48 @@ fn vm_deallocate(
     KERN_SUCCESS
 }
 
+fn mach_port_allocate(
+    env: &mut Environment,
+    _task: ipc_space_t,
+    _right: i32,
+    name: MutPtr<mach_port_t>,
+) -> kern_return_t {
+    // Simple monotonically increasing port namespace
+    let port = env.mach.next_port();
+    env.mem.write(name, port);
+    KERN_SUCCESS
+}
+
+fn mach_port_insert_right(
+    _env: &mut Environment,
+    _task: ipc_space_t,
+    _name: mach_port_t,
+    _poly: mach_port_t,
+    _poly_poly: i32,
+) -> kern_return_t {
+    // Rights are ignored in userland emulation
+    KERN_SUCCESS
+}
+
+pub const VM_FLAGS_ANYWHERE: i32 = 1;
+
+fn vm_allocate(
+    env: &mut Environment,
+    _target_task: vm_map_t,
+    address: MutPtr<MutVoidPtr>,
+    size: vm_size_t,
+    _flags: i32,
+) -> kern_return_t {
+    if size == 0 {
+        return KERN_FAILURE;
+    }
+
+    let ptr = env.mem.alloc(size);
+    env.mem.write(address, ptr);
+
+    KERN_SUCCESS
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
@@ -299,4 +355,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(mach_thread_self()),
     export_c_func!(mach_port_deallocate(_, _)),
     export_c_func!(vm_deallocate(_, _, _)),
+    export_c_func!(mach_port_allocate(_, _, _)),
+    export_c_func!(mach_port_insert_right(_, _, _, _)),
 ];
