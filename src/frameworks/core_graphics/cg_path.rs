@@ -1,36 +1,19 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain};
-use crate::frameworks::core_graphics::{CGFloat, CGPoint};
-use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
-use crate::mem::{ConstPtr, Ptr};
-use crate::objc::{objc_classes, ClassExports, HostObject};
+use crate::mem::Ptr;
+use crate::objc::{objc_classes, ClassExports};
 use crate::Environment;
 use std::ffi::c_void;
 
 pub type CGPathRef = Ptr<c_void, false>;
-pub type CGMutablePathRef = Ptr<c_void, true>;
-
-#[derive(Default)]
-pub struct CGPathHostObject {
-    pub elements: Vec<PathElement>,
-}
-
-impl HostObject for CGPathHostObject {}
-
-#[derive(Clone)]
-pub enum PathElement {
-    MoveTo(CGPoint),
-    LineTo(CGPoint),
-    QuadCurveTo(CGPoint, CGPoint),
-    CurveTo(CGPoint, CGPoint, CGPoint),
-    CloseSubpath,
-}
+pub type CGMutablePathRef = Ptr<c_void, true>
 
 pub const CLASSES: ClassExports = objc_classes! {
-    (env, this, _cmd);
 
-    @implementation _touchHLE_CGPath: NSObject
-    @end
+(env, this, _cmd);
+
+@implementation _touchHLE_CGPath: NSObject
+@end
 };
 
 fn CGPathCreateMutable(env: &mut Environment) -> CGMutablePathRef {
@@ -61,62 +44,8 @@ pub fn CGPathRelease(env: &mut Environment, path: CGPathRef) {
     }
 }
 
-fn CGPathMoveToPoint(
-    env: &mut Environment,
-    path: CGMutablePathRef,
-    _m: ConstPtr<CGAffineTransform>,
-    x: CGFloat,
-    y: CGFloat,
-) {
-    let host = env
-    .objc
-    .borrow_mut::<CGPathHostObject>(path.cast());
-    host.elements.push(PathElement::MoveTo { x, y });
-}
-
-fn CGPathAddLineToPoint(
-    env: &mut Environment,
-    path: CGMutablePathRef,
-    _m: ConstPtr<CGAffineTransform>,
-    x: CGFloat,
-    y: CGFloat,
-) {
-    let host = env
-    .objc
-    .borrow_mut::<CGPathHostObject>(path.cast());
-    host.elements.push(PathElement::LineTo { x, y });
-}
-
-fn CGPathAddCurveToPoint(
-    env: &mut Environment,
-    path: CGMutablePathRef,
-    _m: ConstPtr<CGAffineTransform>,
-    cp1x: CGFloat,
-    cp1y: CGFloat,
-    cp2x: CGFloat,
-    cp2y: CGFloat,
-    x: CGFloat,
-    y: CGFloat,
-) {
-    let host = env
-    .objc
-    .borrow_mut::<CGPathHostObject>(path.cast());
-
-    host.elements.push(PathElement::CurveTo {
-        cp1x,
-        cp1y,
-        cp2x,
-        cp2y,
-        x,
-        y,
-    });
-}
-
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPathCreateMutable()),
     export_c_func!(CGPathRetain(_)),
     export_c_func!(CGPathRelease(_)),
-    export_c_func!(CGPathMoveToPoint(_, _, _, _)),
-    export_c_func!(CGPathAddLineToPoint(_, _, _, _)),
-    export_c_func!(CGPathAddCurveToPoint(_, _, _, _, _, _, _)),
 ];
