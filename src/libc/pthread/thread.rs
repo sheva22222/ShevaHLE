@@ -457,6 +457,23 @@ fn pthread_setname_np(
     0
 }
 
+pub fn pthread_attr_getdetachstate(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    detachstate: MutPtr<DetachState>,
+) -> i32 {
+    if attr.is_null() {
+        return EINVAL;
+    }
+
+    check_magic!(env, attr, MAGIC_ATTR);
+
+    let value = env.mem.read(attr).detachstate;
+    env.mem.write(detachstate, value);
+
+    0 // success
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
@@ -482,4 +499,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_threadid_np(_, _)),
     export_c_func!(pthread_getname_np(_, _, _)),
     export_c_func!(pthread_setname_np(_, _)),
+    export_c_func!(pthread_attr_getdetachstate(_, _)),
 ];
