@@ -47,12 +47,13 @@ fn mmap(
 ) -> MutVoidPtr {
     set_errno(env, 0);
 
+    // POSIX: zero-length mapping is invalid
     if len == 0 {
         set_errno(env, EINVAL);
         return MutVoidPtr::null();
     }
 
-    // addr is a hint — ignore
+    // addr is a hint → ignore
     if !addr.is_null() {
         log_dbg!("mmap: ignoring addr hint {:?}", addr);
     }
@@ -67,19 +68,28 @@ fn mmap(
     let is_shared = (flags & MAP_SHARED) != 0;
     let is_private = (flags & MAP_PRIVATE) != 0;
 
-    // POSIX requires exactly one of SHARED / PRIVATE
-    if !is_shared && !is_private {
+    // Exactly one of SHARED / PRIVATE must be set
+    if is_shared == is_private {
         set_errno(env, EINVAL);
         return MutVoidPtr::null();
     }
 
+    // Allocate memory
     let ptr = env.mem.alloc(len);
-    env.libc_state.mmap.allocations.insert(ptr, len);
 
+    // Track allocation
+    env.libc_state
+        .mmap
+        .allocations
+        .insert(ptr, len);
+
+    // Always operate on bytes
+    let byte_ptr = ptr.cast::<u8>();
+
+    // Anonymous mapping → zero-fill
     if is_anon {
-        // Anonymous mapping: zero-fill
         for i in 0..len {
-            env.mem.write(ptr + i, 0u8);
+            env.mem.write(byte_ptr + i, 0u8);
         }
         return ptr;
     }
@@ -92,21 +102,27 @@ fn mmap(
         return MutVoidPtr::null();
     }
 
-    let old = posix_io::lseek(env, fd, 0, SEEK_SET);
-    posix_io::lseek(env, fd, offset, SEEK_SET);
+    // Save current offset
+    let old_off = posix_io::lseek(env, fd, 0, SEEK_SET);
 
+    // Seek to requested offset
+    let new_off = posix_io::lseek(env, fd, offset, SEEK_SET);
+    assert_eq!(new_off, offset);
+
+    // Read file contents
     let read = posix_io::read(env, fd, ptr, len);
 
-    // Zero-fill tail
-    for i in read as GuestUSize..len {
-        env.mem.write(ptr + i, 0u8);
+    // Zero-fill remainder
+    let read = read as GuestUSize;
+    for i in read..len {
+        env.mem.write(byte_ptr + i, 0u8);
     }
 
-    posix_io::lseek(env, fd, old, SEEK_SET);
+    // Restore fd offset
+    posix_io::lseek(env, fd, old_off, SEEK_SET);
 
-    // 🔑 IMPORTANT:
-    // MAP_SHARED behaves the same as MAP_PRIVATE for now.
-    // Writes affect memory only; msync is a no-op.
+    // MAP_SHARED currently behaves like MAP_PRIVATE
+    // (writes affect memory only, msync is a no-op)
 
     ptr
 }
