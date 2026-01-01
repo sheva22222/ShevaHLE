@@ -50,49 +50,47 @@ fn CGPathCreateMutable(env: &mut Environment) -> CGMutablePathRef {
 
 pub fn CGPathRetain(env: &mut Environment, path: CGPathRef) -> CGPathRef {
     if !path.is_null() {
-        CFRetain(env, path.cast::<objc_object>().cast_mut());
+        CFRetain(env, path.cast());
     }
     path
 }
 
 pub fn CGPathRelease(env: &mut Environment, path: CGPathRef) {
     if !path.is_null() {
-        CFRelease(env, path.cast::<objc_object>().cast_mut());
+        CFRelease(env, path.cast());
     }
 }
 
 fn CGPathMoveToPoint(
     env: &mut Environment,
     path: CGMutablePathRef,
-    _transform: ConstPtr<CGAffineTransform>,
+    _m: ConstPtr<CGAffineTransform>,
     x: CGFloat,
     y: CGFloat,
 ) {
     let host = env
         .objc
-        .borrow_mut::<CGPathHostObject>(path);
-
-    host.elements.push(PathElement::MoveTo(CGPoint { x, y }));
+        .borrow_mut::<CGPathHostObject>(path.cast::<objc_object>());
+    host.elements.push(CGPathElement::MoveTo { x, y });
 }
 
 fn CGPathAddLineToPoint(
     env: &mut Environment,
     path: CGMutablePathRef,
-    _transform: ConstPtr<CGAffineTransform>,
+    _m: ConstPtr<CGAffineTransform>,
     x: CGFloat,
     y: CGFloat,
 ) {
     let host = env
         .objc
-        .borrow_mut::<CGPathHostObject>(path);
-
-    host.elements.push(PathElement::LineTo(CGPoint { x, y }));
+        .borrow_mut::<CGPathHostObject>(path.cast::<objc_object>());
+    host.elements.push(CGPathElement::LineTo { x, y });
 }
 
 fn CGPathAddCurveToPoint(
     env: &mut Environment,
     path: CGMutablePathRef,
-    _transform: ConstPtr<CGAffineTransform>,
+    _m: ConstPtr<CGAffineTransform>,
     cp1x: CGFloat,
     cp1y: CGFloat,
     cp2x: CGFloat,
@@ -102,13 +100,16 @@ fn CGPathAddCurveToPoint(
 ) {
     let host = env
         .objc
-        .borrow_mut::<CGPathHostObject>(path);
+        .borrow_mut::<CGPathHostObject>(path.cast::<objc_object>());
 
-    host.elements.push(PathElement::CurveTo(
-        CGPoint { x: cp1x, y: cp1y },
-        CGPoint { x: cp2x, y: cp2y },
-        CGPoint { x, y },
-    ));
+    host.elements.push(CGPathElement::CurveTo {
+        cp1x,
+        cp1y,
+        cp2x,
+        cp2y,
+        x,
+        y,
+    });
 }
 
 pub const FUNCTIONS: FunctionExports = &[
