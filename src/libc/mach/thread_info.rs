@@ -11,12 +11,14 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::mach::core_types::{boolean_t, integer_t, natural_t};
+use crate::libc::mach::init::mach_task_self;
 use crate::mem::{guest_size_of, MutPtr, SafeRead};
 use crate::Environment;
 
 // TODO: Move these common definitions into separate modules
 pub type kern_return_t = i32;
 pub const KERN_SUCCESS: kern_return_t = 0;
+pub const KERN_FAILURE: kern_return_t = 5;
 
 pub type mach_port_t = u32;
 
@@ -221,24 +223,21 @@ fn task_threads(
     thread_count_out: MutPtr<mach_msg_type_number_t>,
 ) -> kern_return_t {
     // Only support current task
-    let self_task = mach_task_self(env);
-    if task != self_task {
+    if task != mach_task_self(env) {
         return KERN_FAILURE;
     }
 
-    let threads: Vec<thread_t> = env
-        .threads
-        .iter()
-        .map(|(id, _)| *id as thread_t)
-        .collect();
+    let count = env.threads.len() as mach_msg_type_number_t;
 
-    let count = threads.len() as mach_msg_type_number_t;
+    // Allocate array manually
+    let array = env
+        .mem
+        .alloc((count as u32 * guest_size_of::<thread_t>()) as u32)
+        .cast::<thread_t>();
 
-    // Allocate array in guest memory
-    let array = env.mem.alloc_array::<thread_t>(count);
-
-    for (i, tid) in threads.iter().enumerate() {
-        env.mem.write(array + (i as u32), *tid);
+    // Write thread ports (index == mach port)
+    for i in 0..count {
+        env.mem.write(array + i, i as thread_t);
     }
 
     env.mem.write(threads_out, array);
