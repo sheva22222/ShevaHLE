@@ -1,6 +1,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint};
+use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::mem::{ConstPtr, Ptr};
 use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
