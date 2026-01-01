@@ -26,6 +26,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation _touchHLE_CGGradient: NSObject
 @end
 
+};
+
 fn CGGradientCreateWithColors(
     env: &mut Environment,
     space: CGColorSpaceRef,
