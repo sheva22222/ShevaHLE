@@ -251,7 +251,6 @@ fn mach_thread_self(env: &mut Environment) -> mach_port_t {
     env.current_thread as mach_port_t
 }
 
-
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
@@ -263,5 +262,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_abort(_)),
     export_c_func!(thread_abort_safely(_)),
     export_c_func!(thread_get_exception_ports(_, _, _, _, _, _, _)),
+    export_c_func!(task_threads(_, _, _)),
     export_c_func!(mach_thread_self()),
 ];
