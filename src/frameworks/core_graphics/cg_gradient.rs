@@ -22,7 +22,7 @@ pub type CGGradientRef = CFTypeRef;
 fn CGGradientCreateWithColors(
     env: &mut Environment,
     space: CGColorSpaceRef,
-    colors: CFArrayRef
+    colors: CFArrayRef,
     locations: ConstPtr<CGFloat>,
 ) -> CGGradientRef {
     let space_name = env
