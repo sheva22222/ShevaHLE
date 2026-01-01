@@ -31,6 +31,8 @@ pub struct UILabelHostObject {
     text_alignment: UITextAlignment,
     line_break_mode: UILineBreakMode,
     number_of_lines: NSInteger,
+
+    adjusts_font_size_to_fit_width: bool,
 }
 impl_HostObject_with_superclass!(UILabelHostObject);
 impl Default for UILabelHostObject {
@@ -43,6 +45,7 @@ impl Default for UILabelHostObject {
             text_alignment: UITextAlignmentLeft,
             line_break_mode: UILineBreakModeTailTruncation,
             number_of_lines: 1,
+            adjusts_font_size_to_fit_width: false,
         }
     }
 }
@@ -109,6 +112,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         text_alignment: _,
         line_break_mode: _,
         number_of_lines: _,
+        adjusts_font_size_to_fit_width: _,
     } = env.objc.borrow(this);
     release(env, text);
     release(env, font);
@@ -155,10 +159,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)adjustsFontSizeToFitWidth {
-    false // default value
+    env.objc
+        .borrow::<UILabelHostObject>(this)
+        .adjusts_font_size_to_fit_width
 }
+
 - (())setAdjustsFontSizeToFitWidth:(bool)adjusts {
-    assert!(!adjusts); // TODO
+    let host = &mut env.objc.borrow_mut::<UILabelHostObject>(this);
+    host.adjusts_font_size_to_fit_width = adjusts;
+
+    // UIKit automatically switches to tail truncation for single-line labels
+    if adjusts {
+        host.number_of_lines = 1;
+        host.line_break_mode = UILineBreakModeTailTruncation;
+    }
+
+    () = msg![env; this setNeedsDisplay];
 }
 
 - (id)textColor {
@@ -245,6 +261,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         text_alignment,
         line_break_mode,
         number_of_lines,
+        adjusts_font_size_to_fit_width,
     } = env.objc.borrow_mut(this);
 
     let (r, g, b, a) = ui_color::get_rgba(&env.objc, text_color);
