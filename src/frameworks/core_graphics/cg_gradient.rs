@@ -25,12 +25,22 @@ fn CGGradientCreateWithColors(
     colors: CFArrayRef,
     locations: ConstPtr<CGFloat>,
 ) -> CGGradientRef {
-    // Validate color space
+    use crate::frameworks::core_graphics::cg_color::{
+        CGColorHostObject, CGColorRef, to_rgba,
+    };
+    use crate::frameworks::core_graphics::cg_color_space::{
+        CGColorSpaceHostObject, kCGColorSpaceGenericRGB,
+    };
+    use crate::frameworks::core_foundation::cf_array::{
+        CFArrayGetCount, CFArrayGetValueAtIndex,
+    };
+
     let space_name = env
         .objc
-        .borrow::<crate::frameworks::core_graphics::cg_color_space::CGColorSpaceHostObject>(space)
+        .borrow::<CGColorSpaceHostObject>(space)
         .name;
 
+    // touchHLE limitation (same as CGColor)
     assert_eq!(space_name, kCGColorSpaceGenericRGB);
 
     let count = CFArrayGetCount(env, colors) as usize;
@@ -40,7 +50,9 @@ fn CGGradientCreateWithColors(
     let mut out_colors = Vec::with_capacity(count);
     for i in 0..count {
         let color_ref: CGColorRef =
-            CFArrayGetValueAtIndex(env, colors, i as i32).cast();
+            CFArrayGetValueAtIndex(env, colors, i as i32)
+                .cast_const()
+                .cast_mut();
 
         let (r, g, b, a) = to_rgba(&env.objc, color_ref);
 
