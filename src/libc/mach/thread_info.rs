@@ -12,7 +12,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::mach::core_types::{boolean_t, integer_t, natural_t};
 use crate::libc::mach::init::mach_task_self;
-use crate::mem::{guest_size_of, MutPtr, SafeRead};
+use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
 use crate::Environment;
 
 // TODO: Move these common definitions into separate modules
@@ -264,6 +264,26 @@ fn mach_port_deallocate(
     KERN_SUCCESS
 }
 
+pub type vm_map_t = u32;
+pub type vm_address_t = MutVoidPtr;
+pub type vm_size_t = GuestUSize;
+
+fn vm_deallocate(
+    env: &mut Environment,
+    _target_task: vm_map_t,
+    address: vm_address_t,
+    size: vm_size_t,
+) -> kern_return_t {
+    if address.is_null() || size == 0 {
+        return KERN_FAILURE;
+    }
+
+    // Your Mem implementation already owns the allocation
+    env.mem.free(address);
+
+    KERN_SUCCESS
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
@@ -278,4 +298,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(task_threads(_, _, _)),
     export_c_func!(mach_thread_self()),
     export_c_func!(mach_port_deallocate(_, _)),
+    export_c_func!(vm_deallocate(_, _, _)),
 ];
