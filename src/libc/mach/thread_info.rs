@@ -14,6 +14,7 @@ use crate::libc::mach::core_types::{boolean_t, integer_t, natural_t};
 use crate::libc::mach::init::mach_task_self;
 use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, SafeRead};
 use crate::Environment;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 // TODO: Move these common definitions into separate modules
 pub type kern_return_t = i32;
@@ -79,6 +80,8 @@ impl MachState {
         self.next_port
     }
 }
+
+static NEXT_MACH_PORT: AtomicU32 = AtomicU32::new(100);
 
 /// Undocumented Darwin function that returns information about a thread.
 ///
@@ -304,8 +307,7 @@ fn mach_port_allocate(
     _right: i32,
     name: MutPtr<mach_port_t>,
 ) -> kern_return_t {
-    // Simple monotonically increasing port namespace
-    let port = env.mach.next_port();
+    let port = NEXT_MACH_PORT.fetch_add(1, Ordering::Relaxed);
     env.mem.write(name, port);
     KERN_SUCCESS
 }
@@ -317,7 +319,6 @@ fn mach_port_insert_right(
     _poly: mach_port_t,
     _poly_poly: i32,
 ) -> kern_return_t {
-    // Rights are ignored in userland emulation
     KERN_SUCCESS
 }
 
