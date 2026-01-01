@@ -211,9 +211,46 @@ fn thread_get_exception_ports(
     KERN_SUCCESS
 }
 
+type task_t = u32;
+type thread_act_array_t = MutPtr<thread_t>;
+
+fn task_threads(
+    env: &mut Environment,
+    task: task_t,
+    threads_out: MutPtr<thread_act_array_t>,
+    thread_count_out: MutPtr<mach_msg_type_number_t>,
+) -> kern_return_t {
+    // Only support current task
+    let self_task = mach_task_self(env);
+    if task != self_task {
+        return KERN_FAILURE;
+    }
+
+    let threads: Vec<thread_t> = env
+        .threads
+        .iter()
+        .map(|(id, _)| *id as thread_t)
+        .collect();
+
+    let count = threads.len() as mach_msg_type_number_t;
+
+    // Allocate array in guest memory
+    let array = env.mem.alloc_array::<thread_t>(count);
+
+    for (i, tid) in threads.iter().enumerate() {
+        env.mem.write(array + (i as u32), *tid);
+    }
+
+    env.mem.write(threads_out, array);
+    env.mem.write(thread_count_out, count);
+
+    KERN_SUCCESS
+}
+
 fn mach_thread_self(env: &mut Environment) -> mach_port_t {
     env.current_thread as mach_port_t
 }
+
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
