@@ -7,12 +7,13 @@
 
 use std::ops::{Add, Mul, Sub};
 
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::core_graphics::cg_color_space::{
     kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceCreateWithName, CGColorSpaceRef,
 };
 use crate::frameworks::core_graphics::CGFloat;
+use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::mem::{guest_size_of, MutPtr};
 use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
 use crate::Environment;
@@ -83,6 +84,13 @@ impl Sub<CGColorHostObject> for CGColorHostObject {
 }
 
 pub type CGColorRef = CFTypeRef;
+
+pub struct CGColorState {
+    pub constant_white: Option<CGColorRef>,
+    pub constant_black: Option<CGColorRef>,
+    pub constant_clear: Option<CGColorRef>,
+}
+
 pub fn CGColorRelease(env: &mut Environment, c: CGColorRef) {
     if !c.is_null() {
         CFRelease(env, c);
@@ -200,6 +208,57 @@ fn CGColorEqualToColor(
         && a.a == b.a
 }
 
+fn CGColorGetConstantColor(
+    env: &mut Environment,
+    name: CFTypeRef,
+) -> CGColorRef {
+    if name.is_null() {
+        return MutPtr::null();
+    }
+
+    let name = to_rust_string(env, name);
+
+    // Lazily create and cache constants
+    let state = &mut env.core_graphics;
+
+    match name.as_str() {
+        "kCGColorWhite" => {
+            state.constant_white.get_or_insert_with(|| {
+                from_rgba(env, (1.0, 1.0, 1.0, 1.0))
+            }).clone()
+        }
+        "kCGColorBlack" => {
+            state.constant_black.get_or_insert_with(|| {
+                from_rgba(env, (0.0, 0.0, 0.0, 1.0))
+            }).clone()
+        }
+        "kCGColorClear" => {
+            state.constant_clear.get_or_insert_with(|| {
+                from_rgba(env, (0.0, 0.0, 0.0, 0.0))
+            }).clone()
+        }
+        _ => MutPtr::null(),
+    }
+}
+
+pub const kCGColorWhite: &str = "kCGColorWhite";
+pub const kCGColorBlack: &str = "kCGColorBlack";
+
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_kCGColorWhite",
+        HostConstant::NSString(kCGColorWhite),
+    ),
+    (
+        "_kCGColorBlack",
+        HostConstant::NSString(kCGColorBlack),
+    ),
+    (
+        "_kCGColorClear",
+        HostConstant::NSString(kCGColorClear),
+    ),
+];
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGColorRetain(_)),
     export_c_func!(CGColorRelease(_)),
@@ -210,6 +269,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGColorGetAlpha(_)),
     export_c_func!(CGColorGetColorSpace(_)),
     export_c_func!(CGColorEqualToColor(_, _)),
+    export_c_func!(CGColorGetConstantColor(_)),
 ];
 
 /// Shortcut for use by `UIColor`: directly construct a `CGColor` instance from
