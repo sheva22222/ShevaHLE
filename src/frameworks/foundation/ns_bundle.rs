@@ -91,6 +91,55 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, preferredLocalizations)
 }
 
++ (id)bundleForClass:(id)cls {
+    // iOS usually returns mainBundle for app classes
+    msg_class![env; NSBundle mainBundle]
+}
+
++ (id)bundleWithPath:(id)path {
+    if path == nil {
+        return nil;
+    }
+
+    let bundle_path = retain(env, path);
+
+    // Best-effort bundle identifier:
+    // lastPathComponent without ".bundle" / ".app"
+    let last: id = msg![env; path lastPathComponent];
+    let mut ident = ns_string::to_rust_string(env, last).into_owned();
+
+    for suffix in [".bundle", ".app"] {
+        if ident.ends_with(suffix) {
+            ident.truncate(ident.len() - suffix.len());
+        }
+    }
+
+    let bundle_identifier = ns_string::from_rust_string(env, ident.to_string());
+
+    let host_object = NSBundleHostObject {
+        bundle: None,
+        bundle_path,
+        bundle_identifier,
+        bundle_url: None,
+        info_dictionary: None,
+    };
+
+    let new = env.objc.alloc_object(
+        this,
+        Box::new(host_object),
+        &mut env.mem,
+    );
+
+    autorelease(env, new)
+}
+
++ (id)allBundles {
+    let array: id = msg_class![env; NSMutableArray array];
+    let main: id = msg_class![env; NSBundle mainBundle];
+    let _: () = msg![env; array addObject:main];
+    array
+}
+
 - (())dealloc {
     let &NSBundleHostObject {
         bundle: _,
@@ -106,6 +155,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         release(env, info_dictionary);
     }
     env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (id)executableURL {
+    let exec_path: id = msg![env; this executablePath];
+    let url: id = msg_class![env; NSURL alloc];
+    let url: id = msg![env; url initFileURLWithPath:exec_path];
+    autorelease(env, url)
 }
 
 - (id)bundlePath {
@@ -124,6 +180,102 @@ pub const CLASSES: ClassExports = objc_classes! {
         env.objc.borrow_mut::<NSBundleHostObject>(this).bundle_url = Some(new);
         new
     }
+}
+
+- (id)principalClass {
+    let key = ns_string::get_static_str(env, "NSPrincipalClass");
+    msg![env; this objectForInfoDictionaryKey:key]
+}
+
+- (id)bundleName {
+    let key = ns_string::get_static_str(env, "CFBundleName");
+    let value: id = msg![env; this objectForInfoDictionaryKey:key];
+    if value == nil {
+        return ns_string::get_static_str(env, "");
+    }
+    value
+}
+
+- (id)classNamed:(id)className {
+    if className == nil {
+        return nil;
+    }
+
+    msg_class![env; NSObject classNamed:className]
+}
+
+- (id)pathsForResourcesOfType:(id)extension
+                 inDirectory:(id)directory {
+    let array: id = msg_class![env; NSMutableArray array];
+
+    let base_path: id = msg![env; this resourcePath];
+    let search_path: id = if directory != nil {
+        msg![env; base_path stringByAppendingPathComponent:directory]
+    } else {
+        base_path
+    };
+
+    let file_manager: id = msg_class![env; NSFileManager defaultManager];
+    let contents: id =
+        msg![env; file_manager contentsOfDirectoryAtPath:search_path error:nil];
+    if contents == nil {
+        return array;
+    }
+
+    let count: NSUInteger = msg![env; contents count];
+    for i in 0..count {
+        let filename: id = msg![env; contents objectAtIndex:i];
+
+        if extension != nil {
+            let ext: id = msg![env; filename pathExtension];
+            let equal: bool = msg![env; ext isEqualToString:extension];
+            if !equal {
+                continue;
+            }
+        }
+
+        let full_path: id =
+            msg![env; search_path stringByAppendingPathComponent:filename];
+        let _: () = msg![env; array addObject:full_path];
+    }
+
+    array
+}
+
+- (id)URLsForResourcesWithExtension:(id)extension
+                      subdirectory:(id)subpath {
+    let paths: id = msg![env; this pathsForResourcesOfType:extension
+                                             inDirectory:subpath];
+    let urls: id = msg_class![env; NSMutableArray array];
+
+    let count: NSUInteger = msg![env; paths count];
+    for i in 0..count {
+        let path: id = msg![env; paths objectAtIndex:i];
+        let url: id = msg_class![env; NSURL alloc];
+        let url: id = msg![env; url initFileURLWithPath:path];
+        let _: () = msg![env; urls addObject:url];
+        release(env, url);
+    }
+
+    urls
+}
+
+- (id)developmentLocalization {
+    let key = ns_string::get_static_str(env, "CFBundleDevelopmentRegion");
+    let value: id = msg![env; this objectForInfoDictionaryKey:key];
+    if value == nil {
+        ns_string::get_static_str(env, "en")
+    } else {
+        value
+    }
+}
+
+- (bool)load {
+    true
+}
+
+- (bool)isLoaded {
+    true
 }
 
 - (id)loadNibNamed:(id)name // NSString*

@@ -61,6 +61,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     // classes are not refcounted
 }
 
++ (Class)classNamed:(id)name { // NSString*
+    if name == nil {
+        return Class::null();
+    }
+
+    let class_name = to_rust_string(env, name);
+    env.objc.get_known_class(&class_name, &mut env.mem)
+}
+
 + (bool)instancesRespondToSelector:(SEL)selector {
     env.objc.class_has_method(this, selector)
 }
@@ -237,6 +246,23 @@ forUndefinedKey:(id)key { // NSString*
     msg_send(env, (this, sel, o1, o2))
 }
 
+- (())performSelectorInBackground:(SEL)sel
+                       withObject:(id)arg
+{
+    assert!(!sel.is_null());
+
+    log_dbg!(
+        "performSelectorInBackground:{} withObject:{:?}",
+        sel.as_str(&env.mem),
+        arg
+    );
+
+    // No real background threads exist in this runtime.
+    // Cocoa apps typically only rely on async behavior, not true parallelism.
+    // We therefore enqueue the selector to run asynchronously via the run loop.
+    msg![env; this performSelector:sel withObject:arg afterDelay:0.0]
+}
+    
 - (())performSelector:(SEL)sel withObject:(id)arg afterDelay:(NSTimeInterval)delay {
     log_dbg!("performSelector:{} withObject:{:?} afterDelay:{}", sel.as_str(&env.mem), arg, delay);
 

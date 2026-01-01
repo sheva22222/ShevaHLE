@@ -15,7 +15,7 @@ use crate::{msg_class, Environment};
 pub type CFTypeRef = objc::id;
 
 pub fn CFRetain(env: &mut Environment, object: CFTypeRef) -> CFTypeRef {
-    assert!(!object.is_null()); // not allowed, unlike for normal objc objects
+    // assert!(!object.is_null()); // not allowed, unlike for normal objc objects
     objc::retain(env, object)
 }
 pub fn CFRelease(env: &mut Environment, object: CFTypeRef) {

@@ -13,8 +13,10 @@
 
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
-use crate::mem::{MutPtr, MutVoidPtr};
+use crate::mem::{GuestISize, MutPtr, MutVoidPtr};
 use crate::Environment;
+
+type OSSpinLock = i32;
 
 fn OSAtomicAdd32(env: &mut Environment, amount: i32, value_ptr: MutPtr<i32>) -> i32 {
     OSAtomicAdd32Barrier(env, amount, value_ptr)
@@ -167,21 +169,139 @@ fn OSAtomicTestAndClear(
     was_set
 }
 
+fn OSAtomicOr32(
+    env: &mut Environment,
+    mask: u32,
+    value: MutPtr<u32>,
+) -> u32 {
+    let cur = env.mem.read(value);
+    let new = cur | mask;
+    env.mem.write(value, new);
+    new
+}
+
+fn OSAtomicAnd32(
+    env: &mut Environment,
+    mask: u32,
+    value: MutPtr<u32>,
+) -> u32 {
+    let cur = env.mem.read(value);
+    let new = cur & mask;
+    env.mem.write(value, new);
+    new
+}
+
+fn OSAtomicXor32(
+    env: &mut Environment,
+    mask: u32,
+    value: MutPtr<u32>,
+) -> u32 {
+    let cur = env.mem.read(value);
+    let new = cur ^ mask;
+    env.mem.write(value, new);
+    new
+}
+
+fn OSAtomicIncrement64(env: &mut Environment, value: MutPtr<i64>) -> i64 {
+    OSAtomicIncrement64Barrier(env, value)
+}
+
+fn OSAtomicIncrement64Barrier(env: &mut Environment, value: MutPtr<i64>) -> i64 {
+    let v = env.mem.read(value) + 1;
+    env.mem.write(value, v);
+    v
+}
+
+fn OSAtomicDecrement64(env: &mut Environment, value: MutPtr<i64>) -> i64 {
+    OSAtomicDecrement64Barrier(env, value)
+}
+
+fn OSAtomicDecrement64Barrier(env: &mut Environment, value: MutPtr<i64>) -> i64 {
+    let v = env.mem.read(value) - 1;
+    env.mem.write(value, v);
+    v
+}
+
+fn OSAtomicAddPtr(
+    env: &mut Environment,
+    amount: GuestISize,
+    value: MutPtr<MutVoidPtr>,
+) -> MutVoidPtr {
+    OSAtomicAddPtrBarrier(env, amount, value)
+}
+
+fn OSAtomicAddPtrBarrier(
+    env: &mut Environment,
+    amount: GuestISize, // or i32
+    value: MutPtr<MutVoidPtr>,
+) -> MutVoidPtr {
+    let cur = env.mem.read(value);
+    let new = MutVoidPtr::from_bits(
+        cur.to_bits().wrapping_add(amount as u32)
+    );
+    env.mem.write(value, new);
+    new
+}
+
+
+fn OSAtomicCompareAndSwapInt(
+    env: &mut Environment,
+    old: i32,
+    new: i32,
+    value: MutPtr<i32>,
+) -> bool {
+    OSAtomicCompareAndSwap32Barrier(env, old, new, value)
+}
+
+fn OSSpinLockLock(env: &mut Environment, lock: MutPtr<OSSpinLock>) {
+    let cur = env.mem.read(lock);
+    if cur == 0 {
+        env.mem.write(lock, 1);
+    } else {
+        // In a real system we'd spin.
+        // In touchHLE, contention cannot occur.
+        env.mem.write(lock, 1);
+    }
+}
+
+fn OSSpinLockTry(env: &mut Environment, lock: MutPtr<OSSpinLock>) -> bool {
+    let cur = env.mem.read(lock);
+    if cur == 0 {
+        env.mem.write(lock, 1);
+        true
+    } else {
+        false
+    }
+}
+
+fn OSSpinLockUnlock(env: &mut Environment, lock: MutPtr<OSSpinLock>) {
+    env.mem.write(lock, 0);
+}
+
+fn OSSpinLockLockBarrier(env: &mut Environment, lock: MutPtr<OSSpinLock>) {
+    OSSpinLockLock(env, lock)
+}
+
+fn OSSpinLockUnlockBarrier(env: &mut Environment, lock: MutPtr<OSSpinLock>) {
+    OSSpinLockUnlock(env, lock)
+}
+
+fn OSSpinLockTryBarrier(env: &mut Environment, lock: MutPtr<OSSpinLock>) -> bool {
+    OSSpinLockTry(env, lock)
+}
+
 /* --- Memory barriers (no-op by design) --- */
 
 fn OSMemoryBarrier(_env: &mut Environment) {}
 fn OSAtomicBarrier(_env: &mut Environment) {}
 
 pub const FUNCTIONS: FunctionExports = &[
-    /* existing */
     export_c_func!(OSAtomicAdd32(_, _)),
     export_c_func!(OSAtomicAdd32Barrier(_, _)),
     export_c_func!(OSAtomicCompareAndSwap32(_, _, _)),
     export_c_func!(OSAtomicCompareAndSwapIntBarrier(_, _, _)),
     export_c_func!(OSAtomicCompareAndSwap32Barrier(_, _, _)),
     export_c_func!(OSAtomicCompareAndSwapPtrBarrier(_, _, _)),
-
-    /* new */
     export_c_func!(OSAtomicIncrement32(_)),
     export_c_func!(OSAtomicIncrement32Barrier(_)),
     export_c_func!(OSAtomicDecrement32(_)),
@@ -193,6 +313,22 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(OSAtomicCompareAndSwapPtr(_, _, _)),
     export_c_func!(OSAtomicTestAndSet(_, _)),
     export_c_func!(OSAtomicTestAndClear(_, _)),
+    export_c_func!(OSAtomicOr32(_, _)),
+    export_c_func!(OSAtomicAnd32(_, _)),
+    export_c_func!(OSAtomicXor32(_, _)),
+    export_c_func!(OSAtomicIncrement64(_)),
+    export_c_func!(OSAtomicIncrement64Barrier(_)),
+    export_c_func!(OSAtomicDecrement64(_)),
+    export_c_func!(OSAtomicDecrement64Barrier(_)),
+    export_c_func!(OSAtomicAddPtr(_, _)),
+    export_c_func!(OSAtomicAddPtrBarrier(_, _)),
+    export_c_func!(OSAtomicCompareAndSwapInt(_, _, _)),
+    export_c_func!(OSSpinLockLock(_)),
+    export_c_func!(OSSpinLockUnlock(_)),
+    export_c_func!(OSSpinLockTry(_)),
+    export_c_func!(OSSpinLockLockBarrier(_)),
+    export_c_func!(OSSpinLockUnlockBarrier(_)),
+    export_c_func!(OSSpinLockTryBarrier(_)),
     export_c_func!(OSMemoryBarrier()),
     export_c_func!(OSAtomicBarrier()),
 ];

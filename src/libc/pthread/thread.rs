@@ -61,6 +61,7 @@ struct ThreadHostObject {
     thread_id: ThreadId,
     joined_by: Option<ThreadId>,
     attr: pthread_attr_t,
+    name: Option<String>,
 }
 
 /// Arbitrarily-chosen magic number for `pthread_attr_t` (not Apple's).
@@ -161,6 +162,7 @@ pub fn pthread_create(
             thread_id,
             joined_by: None,
             attr,
+            name: None,
         },
     );
 
@@ -198,6 +200,7 @@ pub fn pthread_self(env: &mut Environment) -> pthread_t {
                 thread_id: 0,
                 joined_by: None,
                 attr: DEFAULT_ATTR,
+                name: Some("main".to_string()),
             },
         );
         log_dbg!(
@@ -345,6 +348,115 @@ fn pthread_kill(_env: &mut Environment, _thread: pthread_t, _sig: i32) -> i32 {
     ESRCH
 }
 
+fn pthread_get_stacksize_np(env: &mut Environment, thread: pthread_t) -> GuestUSize {
+    let host_object = State::get(env)
+        .threads
+        .get(&thread)
+        .expect("pthread_get_stacksize_np called with invalid pthread_t");
+
+    host_object.attr.stacksize
+}
+
+fn pthread_get_stackaddr_np(env: &mut Environment, thread: pthread_t) -> MutVoidPtr {
+    let tid: u32 = match State::get(env).threads.get(&thread) {
+        Some(obj) => obj.thread_id as u32,
+        None => return MutVoidPtr::null(),
+    };
+
+    // Force 32-bit arithmetic explicitly
+    let stack_top: u32 =
+        0x7000_0000u32.wrapping_add(tid.wrapping_mul(0x0100_0000u32));
+
+    MutVoidPtr::from_bits(stack_top)
+}
+
+fn pthread_main_np(env: &mut Environment) -> i32 {
+    if env.current_thread == 0 {
+        1
+    } else {
+        0
+    }
+}
+
+fn pthread_threadid_np(
+    env: &mut Environment,
+    thread: pthread_t,
+    thread_id: MutPtr<u64>,
+) -> i32 {
+    let tid = match State::get(env).threads.get(&thread) {
+        Some(obj) => obj.thread_id,
+        None => return ESRCH,
+    };
+
+    // Borrow of State is over here
+    env.mem.write(thread_id, tid as u64);
+    0
+}
+
+fn pthread_getname_np(
+    env: &mut Environment,
+    thread: pthread_t,
+    buf: MutPtr<u8>,
+    len: GuestUSize,
+) -> i32 {
+    if len == 0 {
+        return EINVAL;
+    }
+
+    // ---- copy name out, end borrow early ----
+    let name = match State::get(env).threads.get(&thread) {
+        Some(obj) => obj.name.clone().unwrap_or_default(),
+        None => return ESRCH,
+    };
+    // ---- borrow ended here ----
+
+    let bytes = name.as_bytes();
+    let max = (len - 1) as usize;
+    let copy_len = bytes.len().min(max);
+
+    for i in 0..copy_len {
+        env.mem.write(buf + (i as u32), bytes[i]);
+    }
+
+    env.mem.write(buf + (copy_len as u32), 0u8);
+    0
+}
+
+fn pthread_setname_np(
+    env: &mut Environment,
+    thread: pthread_t,
+    name: ConstPtr<u8>,
+) -> i32 {
+    // ---- read string first (no State borrow) ----
+    let mut bytes = Vec::new();
+    let mut offset: u32 = 0;
+
+    loop {
+        let ch: u8 = env.mem.read(name + offset);
+        if ch == 0 {
+            break;
+        }
+        bytes.push(ch);
+        offset += 1;
+
+        if bytes.len() >= 63 {
+            break;
+        }
+    }
+
+    let string = String::from_utf8_lossy(&bytes).to_string();
+    // ---- env.mem borrow ends here ----
+
+    // ---- now mutate State ----
+    let host_object = match State::get(env).threads.get_mut(&thread) {
+        Some(obj) => obj,
+        None => return ESRCH,
+    };
+
+    host_object.name = Some(string);
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
@@ -364,4 +476,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_exit(_)),
     export_c_func!(pthread_cancel(_)),
     export_c_func!(pthread_kill(_, _)),
+    export_c_func!(pthread_get_stackaddr_np(_)),
+    export_c_func!(pthread_get_stacksize_np(_)),
+    export_c_func!(pthread_main_np()),
+    export_c_func!(pthread_threadid_np(_, _)),
+    export_c_func!(pthread_getname_np(_, _, _)),
+    export_c_func!(pthread_setname_np(_, _)),
 ];

@@ -240,7 +240,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
-- (bool)scanInteger:(MutPtr<isize>)result {
+- (bool)scanInteger:(MutPtr<i32>)result {
     skip_characters(env, this);
 
     let NSScannerHostObject { to_be_skipped, string, len, pos } =
@@ -268,7 +268,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     if !result.is_null() {
-        let v = st[..cutoff].parse::<isize>().unwrap_or(0);
+        let v = st[..cutoff].parse::<i32>().unwrap_or(0);
         env.mem.write(result, v);
     }
 

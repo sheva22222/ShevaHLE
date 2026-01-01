@@ -35,6 +35,52 @@ enum PixelStore {
 const PNG_MAGIC_NUMBER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 
 impl Image {
+    pub fn from_rgba_bytes(
+        _width: u32,
+        _height: u32,
+        _stride: usize,
+        _bytes: &[u8],
+    ) -> Image {
+        unimplemented!()
+    }
+
+    pub fn from_alpha_mask(
+        _width: u32,
+        _height: u32,
+        _stride: usize,
+        _bytes: &[u8],
+    ) -> Image {
+        unimplemented!()
+    }
+
+    pub fn apply_alpha_mask_mut(&mut self, mask: &Image) {
+        let mask_pixels = mask.pixels();
+        let pixels: &mut [u8] = self.pixels_mut();
+
+        for i in 0..(pixels.len() / 4) {
+            let sa = pixels[i * 4 + 3] as u16;
+            let ma = mask_pixels[i * 4 + 3] as u16;
+            pixels[i * 4 + 3] = (sa * ma / 255) as u8;
+        }
+    }
+    
+    pub fn crop(&self, x: u32, y: u32, w: u32, h: u32) -> Image {
+        let (src_w, src_h) = self.dimensions();
+        assert!(x + w <= src_w);
+        assert!(y + h <= src_h);
+
+        let src_pixels = self.pixels();
+        let mut out = Vec::with_capacity((w * h * 4) as usize);
+
+        for row in 0..h {
+            let src_row =
+                ((y + row) * src_w * 4 + x * 4) as usize;
+            let len = (w * 4) as usize;
+            out.extend_from_slice(&src_pixels[src_row..src_row + len]);
+        }
+
+        Image::from_pixel_vec(out, (w, h))
+    }
     pub fn from_bytes(bytes: &[u8]) -> Result<Image, String> {
         let len: c_int = bytes.len().try_into().unwrap();
 

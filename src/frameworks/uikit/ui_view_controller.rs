@@ -151,6 +151,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (())drawView:(id)_rect {
+    // Compatibility stub for legacy code.
+    // Some apps incorrectly send drawView: to UIViewController.
+    log_dbg!(
+        "[(UIViewController*){:?} drawView:] (noop)",
+        this
+    );
+}
+
 // Usually overridden by the application
 - (())viewDidLoad {
     log_dbg!("[(UIViewController*){:?} viewDidLoad]", this);

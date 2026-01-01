@@ -18,6 +18,7 @@ use super::cg_image::{
 };
 use super::{CGFloat, CGPoint, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
 use crate::image::{gamma_decode, gamma_encode, Image};
 use crate::mem::{GuestUSize, Mem, MutVoidPtr};
 use crate::objc::ObjC;
@@ -83,6 +84,7 @@ pub fn CGBitmapContextCreate(
         // TODO: is this the correct default?
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
         transform: CGAffineTransformIdentity,
+        text_position: CGPointZero,
         state_stack: Vec::new(),
     };
     let isa = env

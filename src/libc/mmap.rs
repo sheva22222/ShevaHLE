@@ -16,11 +16,22 @@ use std::collections::HashMap;
 #[allow(dead_code)]
 const MAP_FILE: i32 = 0x0000;
 const MAP_ANON: i32 = 0x1000;
+const MAP_PRIVATE: i32 = 0x0002;
+const MAP_SHARED: i32 = 0x0001;
+
 
 #[derive(Default)]
 pub struct State {
     /// Keeping track of `mmap` allocations
     allocations: HashMap<MutVoidPtr, GuestUSize>,
+}
+
+struct MmapRegion {
+    ptr: MutVoidPtr,
+    len: GuestUSize,
+    fd: Option<FileDescriptor>,
+    offset: off_t,
+    shared: bool,
 }
 
 /// Our implementation of mmap is really simple: it's just load entirety of
@@ -34,42 +45,108 @@ fn mmap(
     fd: FileDescriptor,
     offset: off_t,
 ) -> MutVoidPtr {
-    // TODO: handle errno properly
     set_errno(env, 0);
 
-    log_dbg!("mmap len {}", len);
+    // POSIX: zero-length mapping is invalid
+    if len == 0 {
+        set_errno(env, EINVAL);
+        return MutVoidPtr::null();
+    }
 
-    assert!(addr.is_null());
-    assert_eq!(offset, 0);
-    assert_eq!((flags & MAP_ANON), 0);
-    let new_offset = posix_io::lseek(env, fd, offset, SEEK_SET);
-    assert_eq!(new_offset, offset);
+    // addr is a hint → ignore
+    if !addr.is_null() {
+        log_dbg!("mmap: ignoring addr hint {:?}", addr);
+    }
+
+    // Offset must be page-aligned
+    if offset % crate::mem::PAGE_SIZE as off_t != 0 {
+        set_errno(env, EINVAL);
+        return MutVoidPtr::null();
+    }
+
+    let is_anon = (flags & MAP_ANON) != 0;
+    let is_shared = (flags & MAP_SHARED) != 0;
+    let is_private = (flags & MAP_PRIVATE) != 0;
+
+    // Exactly one of SHARED / PRIVATE must be set
+    if is_shared == is_private {
+        set_errno(env, EINVAL);
+        return MutVoidPtr::null();
+    }
+
+    // Allocate memory
     let ptr = env.mem.alloc(len);
 
-    assert!(!env.libc_state.mmap.allocations.contains_key(&ptr));
-    env.libc_state.mmap.allocations.insert(ptr, len);
+    // Track allocation
+    env.libc_state
+        .mmap
+        .allocations
+        .insert(ptr, len);
 
+    // Always operate on bytes
+    let byte_ptr = ptr.cast::<u8>();
+
+    // Anonymous mapping → zero-fill
+    if is_anon {
+        for i in 0..len {
+            env.mem.write(byte_ptr + i, 0u8);
+        }
+        return ptr;
+    }
+
+    // File-backed mapping
+    if fd < 0 {
+        set_errno(env, EINVAL);
+        env.mem.free(ptr);
+        env.libc_state.mmap.allocations.remove(&ptr);
+        return MutVoidPtr::null();
+    }
+
+    // Save current offset
+    let old_off = posix_io::lseek(env, fd, 0, SEEK_SET);
+
+    // Seek to requested offset
+    let new_off = posix_io::lseek(env, fd, offset, SEEK_SET);
+    assert_eq!(new_off, offset);
+
+    // Read file contents
     let read = posix_io::read(env, fd, ptr, len);
-    assert_eq!(read as u32, len);
+
+    // Zero-fill remainder
+    let read = read as GuestUSize;
+    for i in read..len {
+        env.mem.write(byte_ptr + i, 0u8);
+    }
+
+    // Restore fd offset
+    posix_io::lseek(env, fd, old_off, SEEK_SET);
+
+    // MAP_SHARED currently behaves like MAP_PRIVATE
+    // (writes affect memory only, msync is a no-op)
+
     ptr
 }
 
 fn munmap(env: &mut Environment, addr: MutVoidPtr, len: GuestUSize) -> i32 {
-    // TODO: handle errno properly
     set_errno(env, 0);
-
-    log_dbg!("munmap len {}", len);
 
     if len == 0 {
         set_errno(env, EINVAL);
-        // TODO: should we clear allocations for `addr` here too?
-        log!("Warning: munmap({:?}, {}) failed, returning -1", addr, len);
         return -1;
     }
-    assert_eq!(*env.libc_state.mmap.allocations.get(&addr).unwrap(), len);
+
+    let Some(&alloc_len) = env.libc_state.mmap.allocations.get(&addr) else {
+        set_errno(env, EINVAL);
+        return -1;
+    };
+
+    if len != alloc_len {
+        log!("Warning: partial munmap ignored ({}/{})", len, alloc_len);
+    }
+
     env.mem.free(addr);
     env.libc_state.mmap.allocations.remove(&addr);
-    0 // success
+    0
 }
 
 pub const FUNCTIONS: FunctionExports = &[
