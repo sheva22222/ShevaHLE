@@ -15,9 +15,6 @@ pub struct CGPathHostObject {
     pub elements: Vec<PathElement>,
 }
 
-fn move_to(&mut self, x: CGFloat, y: CGFloat);
-fn add_line_to(&mut self, x: CGFloat, y: CGFloat);
-
 impl HostObject for CGPathHostObject {}
 
 #[derive(Clone)]
@@ -97,7 +94,7 @@ pub fn CGPathAddLines(
 
     // First point → MoveTo
     let p0 = t.apply_to_point(env.mem.read(points));
-    host.elements.push(CGPathElement::MoveToPoint {
+    host.elements.push(PathElement::MoveToPoint {
         x: p0.x,
         y: p0.y,
     });
@@ -105,7 +102,7 @@ pub fn CGPathAddLines(
     // Remaining points → LineTo
     for i in 1..count {
         let p = t.apply_to_point(env.mem.read(points + i as u32));
-        host.elements.push(CGPathElement::AddLineToPoint {
+        host.elements.push(PathElement::AddLineToPoint {
             x: p.x,
             y: p.y,
         });
@@ -116,5 +113,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPathCreateMutable()),
     export_c_func!(CGPathRetain(_)),
     export_c_func!(CGPathRelease(_)),
-    export_c_func!(CGPathAddLines(_, _, _, _, _)),
+    export_c_func!(CGPathAddLines(_, _, _, _)),
 ];
