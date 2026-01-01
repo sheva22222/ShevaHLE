@@ -5,7 +5,7 @@ use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::core_graphics::CGFloat;
 use crate::frameworks::core_graphics::cg_color::{CGColorHostObject, CGColorRef, to_rgba};
 use crate::frameworks::core_graphics::cg_color_space::{CGColorSpaceHostObject, CGColorSpaceRef, kCGColorSpaceGenericRGB};
-use crate::objc::{HostObject, ObjC};
+use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
 use crate::mem::ConstPtr;
 use crate::Environment;
 
@@ -18,6 +18,13 @@ pub struct CGGradientHostObject {
 impl HostObject for CGGradientHostObject {}
 
 pub type CGGradientRef = CFTypeRef;
+
+pub const CLASSES: ClassExports = objc_classes! {
+
+(env, this, _cmd);
+
+@implementation _touchHLE_CGGradient: NSObject
+@end
 
 fn CGGradientCreateWithColors(
     env: &mut Environment,
