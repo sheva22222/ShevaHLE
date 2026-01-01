@@ -18,7 +18,7 @@ pub struct CGPathHostObject {
 impl HostObject for CGPathHostObject {}
 
 #[derive(Clone)]
-pub enum PathElement {
+pub enum CGPathElement {
     MoveTo(CGPoint),
     LineTo(CGPoint),
     QuadCurveTo(CGPoint, CGPoint),
@@ -69,8 +69,8 @@ fn CGPathMoveToPoint(
     y: CGFloat,
 ) {
     let host = env
-        .objc
-        .borrow_mut::<CGPathHostObject>(path.cast::<objc_object>());
+    .objc
+    .borrow_mut::<CGPathHostObject>(path.cast());
     host.elements.push(CGPathElement::MoveTo { x, y });
 }
 
@@ -82,8 +82,8 @@ fn CGPathAddLineToPoint(
     y: CGFloat,
 ) {
     let host = env
-        .objc
-        .borrow_mut::<CGPathHostObject>(path.cast::<objc_object>());
+    .objc
+    .borrow_mut::<CGPathHostObject>(path.cast());
     host.elements.push(CGPathElement::LineTo { x, y });
 }
 
@@ -99,8 +99,8 @@ fn CGPathAddCurveToPoint(
     y: CGFloat,
 ) {
     let host = env
-        .objc
-        .borrow_mut::<CGPathHostObject>(path.cast::<objc_object>());
+    .objc
+    .borrow_mut::<CGPathHostObject>(path.cast());
 
     host.elements.push(CGPathElement::CurveTo {
         cp1x,
