@@ -218,25 +218,10 @@ fn CGColorGetConstantColor(
 
     let name = to_rust_string(env, name);
 
-    // Lazily create and cache constants
-    let state = &mut env.core_graphics;
-
-    match name.as_str() {
-        "kCGColorWhite" => {
-            state.constant_white.get_or_insert_with(|| {
-                from_rgba(env, (1.0, 1.0, 1.0, 1.0))
-            }).clone()
-        }
-        "kCGColorBlack" => {
-            state.constant_black.get_or_insert_with(|| {
-                from_rgba(env, (0.0, 0.0, 0.0, 1.0))
-            }).clone()
-        }
-        "kCGColorClear" => {
-            state.constant_clear.get_or_insert_with(|| {
-                from_rgba(env, (0.0, 0.0, 0.0, 0.0))
-            }).clone()
-        }
+    match &name[..] {
+        "kCGColorWhite" => from_rgba(env, (1.0, 1.0, 1.0, 1.0)),
+        "kCGColorBlack" => from_rgba(env, (0.0, 0.0, 0.0, 1.0)),
+        "kCGColorClear" => from_rgba(env, (0.0, 0.0, 0.0, 0.0)),
         _ => MutPtr::null(),
     }
 }
