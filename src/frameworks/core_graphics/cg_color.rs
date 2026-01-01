@@ -243,7 +243,6 @@ fn CGColorGetConstantColor(
 
 pub const kCGColorWhite: &str = "kCGColorWhite";
 pub const kCGColorBlack: &str = "kCGColorBlack";
-pub const kCGColorClear: &str = "kCGColorClear";
 
 pub const CONSTANTS: ConstantExports = &[
     (
