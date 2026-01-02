@@ -75,16 +75,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithTarget:(id)target selector:(SEL)sel object:(id)arg {
-    let this: id  = msg_super![env; this init];
-    let target = retain(env, target);
-    let arg = retain(env, arg);
-    if !env.objc.object_has_method(env.mem.as_mut(), target, sel) {
+    let this: id = msg_super![env; this init];
+
+    if !env.objc.object_has_method(&mut env.mem, target, sel) {
         return nil;
     }
+
+    let target = retain(env, target);
+    let arg = retain(env, arg);
+
     let host_object = env.objc.borrow_mut::<NSInvocationOperationHostObject>(this);
     host_object.target = target;
     host_object.sel = Some(sel);
     host_object.arg = arg;
+
     this
 }
 
@@ -94,13 +98,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     let target = host_object.target;
     let sel = host_object.sel.unwrap();
     let arg = host_object.arg;
-    log_dbg!("Running NSInvocationOperation [{:?} {:?}({}) {:?}]", target, sel, sel.as_str(env.mem.as_mut()),  arg);
+
+    log_dbg!(
+        "Running NSInvocationOperation [{:?} {:?}({}) {:?}]",
+        target,
+        sel,
+        sel.as_str(&env.mem),
+        arg
+    );
+
     if arg.is_null() {
-        let args = (target, sel);
-        let _: () = crate::objc::msg_send(env, args);
+        let _: () = crate::objc::msg_send(env, (target, sel));
     } else {
-        let args = (target, sel, arg);
-        let _: () = crate::objc::msg_send(env, args);
+        let _: () = crate::objc::msg_send(env, (target, sel, arg));
     }
 }
 
