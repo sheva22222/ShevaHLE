@@ -353,9 +353,21 @@ impl Mem {
     // the performance characteristics of this hasn't been profiled, but it
     // seems like a good idea to help the compiler optimise for the fast path
     #[cold]
-    fn null_check_fail(at: VAddr, size: GuestUSize) {
-        panic!("Attempted null-page access at {at:#x} ({size:#x} bytes)")
-    }
+    fn null_check_fail(at: VAddr, size: GuestUSize, is_write: bool, null_size: VAddr) -> ! {
+    let access = if is_write { "write" } else { "read" };
+
+    panic!(
+        "EXC_BAD_ACCESS (null page)\n\
+         attempted {} at address {:#010x}\n\
+         access size: {:#x} bytes\n\
+         null segment size: {:#x}\n\
+         this usually means a NULL pointer dereference",
+        access,
+        at,
+        size,
+        null_size,
+    )
+}
 
     /// Special version of [Self::bytes_at] that returns [None] rather than
     /// panicking on failure. Only for use by [crate::gdb::GdbServer].
