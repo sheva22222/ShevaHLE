@@ -116,12 +116,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())dealloc {
     let host_object = env.objc.borrow::<NSInvocationOperationHostObject>(this);
-    let target = host_object.target;
-    let arg = host_object.arg;
-    release(env, target);
-    release(env, arg);
-    env.objc.dealloc_object(this, Box::new(env.mem).as_mut());
+
+    if host_object.target != nil {
+        release(env, host_object.target);
+    }
+    if host_object.arg != nil {
+        release(env, host_object.arg);
+    }
+
+    env.objc.dealloc_object(this, &mut env.mem)
 }
+
 
 @end
 
