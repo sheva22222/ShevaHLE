@@ -905,6 +905,18 @@ fn CGContextGetTextPosition(
     env.objc.borrow::<CGContextHostObject>(context).text_position
 }
 
+fn CGContextAddPath(
+    _env: &mut Environment,
+    context: CGContextRef,
+    path: CFTypeRef, // CGPathRef
+) {
+    log!(
+        "TODO: CGContextAddPath({:?}, {:?})",
+        context,
+        path
+    );
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -979,4 +991,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextConvertPointToDeviceSpace(_, _)),
     export_c_func!(CGContextConvertPointToUserSpace(_, _)),
     export_c_func!(CGContextGetTextPosition(_)),
+    export_c_func!(CGContextAddPath(_, _)),
 ];
