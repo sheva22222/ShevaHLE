@@ -1,10 +1,11 @@
 use crate::objc::{
-    id, msg, msg_super, nil, objc_classes, retain, release,
+    id, impl_HostObject_with_superclass, msg, msg_super, nil, objc_classes, retain, release,
     ClassExports, HostObject, NSZonePtr,
 };
 use crate::frameworks::core_graphics::CGRect;
 
 pub struct UITableViewHostObject {
+    superclass: super::UIViewHostObject,
     /// UITableViewDataSource
     pub data_source: id,
 
@@ -15,6 +16,7 @@ pub struct UITableViewHostObject {
     pub style: i32,
 }
 
+impl_HostObject_with_superclass!(UITableViewHostObject);
 impl HostObject for UITableViewHostObject {}
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -24,11 +26,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UITableView : UIView
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host = UITableViewHostObject {
-        data_source: nil,
-        delegate: nil,
-        style: 0,
-    };
+    let host = UITableViewHostObject::new(env);
     env.objc.alloc_object(this, Box::new(host), &mut env.mem)
 }
 
