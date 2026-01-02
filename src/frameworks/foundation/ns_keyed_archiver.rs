@@ -226,7 +226,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
-- (())encodeBytes:(u32)bytes length:(id)length forKey:(id)key {
+- (())encodeBytes:(id)bytes length:(u32)length forKey:(id)key {
     log!(
         "TODO: [(NSKeyedArchiver*){:?} encodeBytes:{:?} length:{} forKey:{:?}]",
         this,
