@@ -732,8 +732,39 @@ fn alGetIntegerv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALint>)
 fn alGetProcAddress(env: &mut Environment, funcName: ConstPtr<u8>) -> MutVoidPtr {
     alcGetProcAddress(env, Ptr::null(), funcName)
 }
-fn alIsExtensionPresent(env: &mut Environment, _extName: ConstPtr<u8>) -> ALboolean {
-    alIsExtensionPresent(env, Ptr::null())
+fn alIsExtensionPresent(env: &mut Environment, extName: ConstPtr<u8>) -> ALboolean {
+    if extName.is_null() {
+        return al::AL_FALSE;
+    }
+
+    let ext = match env.mem.cstr_at_utf8(extName) {
+        Ok(s) => s,
+        Err(_) => return al::AL_FALSE,
+    };
+
+    // Use the same extensions string exposed by alGetString(AL_EXTENSIONS)
+    let ext_list_ptr = alGetString(env, AL_EXTENSIONS);
+    let ext_list = match env.mem.cstr_at_utf8(ext_list_ptr) {
+        Ok(s) => s,
+        Err(_) => return al::AL_FALSE,
+    };
+
+    // Extensions are space-separated tokens
+    let present = ext_list
+        .split_whitespace()
+        .any(|e| e == ext);
+
+    log_dbg!(
+        "alIsExtensionPresent({:?}) => {}",
+        ext,
+        if present { "AL_TRUE" } else { "AL_FALSE" }
+    );
+
+    if present {
+        al::AL_TRUE
+    } else {
+        al::AL_FALSE
+    }
 }
 fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
     todo!();
