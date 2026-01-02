@@ -733,7 +733,7 @@ fn alGetProcAddress(env: &mut Environment, funcName: ConstPtr<u8>) -> MutVoidPtr
     alcGetProcAddress(env, Ptr::null(), funcName)
 }
 fn alIsExtensionPresent(_env: &mut Environment, _extName: ConstPtr<u8>) -> ALboolean {
-    todo!();
+    alIsExtensionPresent(env, Ptr::null(), funcName)
 }
 fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
     todo!();
