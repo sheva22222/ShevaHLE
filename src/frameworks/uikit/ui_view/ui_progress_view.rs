@@ -54,7 +54,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIProgressViewHostObject>(this).style = style;
 }
 
-- (f32)progressViewStyle {
+- (i32)progressViewStyle {
     env.objc.borrow::<UIProgressViewHostObject>(this).style
 }
 
