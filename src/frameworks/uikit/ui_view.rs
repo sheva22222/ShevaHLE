@@ -97,7 +97,7 @@ impl Default for UIViewHostObject {
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
             multiple_touch_enabled: false,
-            observers: false,
+            observers: Vec::new(),
         }
     }
 }
@@ -493,7 +493,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc
         .borrow_mut::<UIViewHostObject>(this)
         .observers
-        .push((observer, key_path, context));
+        .push((observer, key_path.to_string(), context));
 }
 
 - (())removeObserver:(id)observer
