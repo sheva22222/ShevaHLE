@@ -60,28 +60,35 @@ pub struct stat {
 unsafe impl SafeRead for stat {}
 
 fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
-    // TODO: handle errno properly
+    // Clear errno on entry
     set_errno(env, 0);
 
-    let path_str = env.mem.cstr_at_utf8(path).unwrap();
-    // TODO: respect the mode
-    match env.fs.create_dir(GuestPath::new(&path_str)) {
-        Ok(()) => {
-            log_dbg!("mkdir({:?} {:?}, {:#x}) => 0", path, path_str, mode);
-            0
+    // Null pointer check (POSIX: EFAULT, but EINVAL is acceptable here)
+    if path.is_null() {
+        set_errno(env, EINVAL);
+        return -1;
+    }
+
+    let path_str = match env.mem.cstr_at_utf8(path) {
+        Ok(p) => p,
+        Err(_) => {
+            set_errno(env, EINVAL);
+            return -1;
         }
+    };
+
+    log_dbg!("mkdir({:?} {:?}, {:#x})", path, path_str, mode);
+
+    match env.fs.create_dir(GuestPath::new(&path_str)) {
+        Ok(()) => 0,
+
         Err(err) => {
-            log!(
-                "Warning: mkdir({:?} {:?}, {:#x}) failed with {:?}, returning -1",
-                path,
-                path_str,
-                mode,
-                err
-            );
             match err {
                 FsError::AlreadyExist => set_errno(env, EEXIST),
                 FsError::NonexistentParentDir => set_errno(env, ENOENT),
-                _ => unimplemented!(),
+
+                // Catch-all: map unknown FS failures safely
+                _ => set_errno(env, EINVAL),
             }
             -1
         }
@@ -95,63 +102,32 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
         return -1;
     };
 
-    let mut st = stat::default();
+    // FIXME: This implementation is highly incomplete. fstat() returns a huge
+    // struct with many kinds of data in it. This code is assuming the caller
+    // only wants a small part of it.
 
-    // Fake but stable identifiers
-    st.st_dev = 1;
-    st.st_ino = fd as ino_t;
+    let mut stat = stat::default();
 
-    // Single-user environment
-    st.st_uid = 0;
-    st.st_gid = 0;
+    match file.file {
+        GuestFile::File(_) | GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) => {
+            stat.st_mode |= S_IFREG;
 
-    // Reasonable defaults
-    st.st_nlink = 1;
-    st.st_blksize = 4096;
+            // TODO: use `std::fs::metadata()` instead
 
-    // Deterministic timestamps (epoch)
-    st.st_atimespec = timespec { tv_sec: 0, tv_nsec: 0 };
-    st.st_mtimespec = timespec { tv_sec: 0, tv_nsec: 0 };
-    st.st_ctimespec = timespec { tv_sec: 0, tv_nsec: 0 };
-    st.st_birthtimespec = timespec { tv_sec: 0, tv_nsec: 0 };
-
-    match &file.file {
-        GuestFile::File(_)
-        | GuestFile::IpaBundleFile(_)
-        | GuestFile::ResourceFile(_) => {
-            // Regular file
-            st.st_mode = S_IFREG | 0o644;
-
-            let size: off_t = file
-                .file
-                .stream_len()
-                .unwrap()
-                .try_into()
-                .unwrap();
-
-            st.st_size = size;
-
-            // POSIX blocks are 512 bytes
-            st.st_blocks = ((size as u64) + 511) / 512;
+            // Obtain file size
+            stat.st_size = file.file.stream_len().unwrap().try_into().unwrap();
         }
-
         GuestFile::Directory => {
-            // Directory
-            st.st_mode = S_IFDIR | 0o755;
-            st.st_size = 0;
-            st.st_blocks = 0;
-            st.st_nlink = 2; // "." and ".."
-        }
+            stat.st_mode |= S_IFDIR;
 
-        _ => {
-            log!("fstat: unsupported GuestFile variant");
-            set_errno(env, EBADF);
-            return -1;
+            // TODO: st_size
         }
+        _ => unimplemented!(),
     }
 
-    env.mem.write(buf, st);
-    0
+    env.mem.write(buf, stat);
+
+    0 // success
 }
 
 fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
