@@ -15,7 +15,7 @@ use crate::libc::stdio::{fwrite, getc, ungetc, EOF, FILE};
 use crate::libc::stdlib::{atof_inner_generic, str_to_int_inner_generic};
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
-use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
+use crate::mem::{guest_size_of, ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{id, msg, nil};
 use crate::Environment;
 use std::collections::HashSet;
