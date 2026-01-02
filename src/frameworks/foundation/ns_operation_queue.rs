@@ -83,37 +83,56 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())addOperation:(id)operation {
     let operation = retain(env, operation);
-    let host_object = env.objc.borrow_mut::<NSOperationQueueHostObject>(this);
-    if !host_object.thread_exists {
-        host_object.thread_exists = true;
-        let state = State::get(env);
-        let operation_queue_gf = if state.helper_guest_func.to_ptr().is_null() {
-            let operation_queue_hf: HostFunction =
-                &(operation_queue_thread_helper as fn(&mut Environment, _) -> _);
-            let operation_queue_gf = env.dyld.create_guest_function(
-                env.mem.as_mut(),
-                "__touchHLE_operation_queue_helper",
-                operation_queue_hf,
-            );
+
+    // ---------- thread startup (no host borrow held across env calls)
+    let need_thread = {
+        let host = env.objc.borrow::<NSOperationQueueHostObject>(this);
+        !host.thread_exists
+    };
+
+    if need_thread {
+        {
+            let host = env.objc.borrow_mut::<NSOperationQueueHostObject>(this);
+            host.thread_exists = true;
+        }
+
+        let operation_queue_gf = {
             let state = State::get(env);
-            state.helper_guest_func = operation_queue_gf;
-            operation_queue_gf
-        } else {
-            state.helper_guest_func
+            if state.helper_guest_func.to_ptr().is_null() {
+                let operation_queue_hf: HostFunction =
+                    &(operation_queue_thread_helper as fn(&mut Environment, _) -> _);
+
+                let gf = env.dyld.create_guest_function(
+                    &mut env.mem, // ✅ correct
+                    "__touchHLE_operation_queue_helper",
+                    operation_queue_hf,
+                );
+
+                State::get(env).helper_guest_func = gf;
+                gf
+            } else {
+                state.helper_guest_func
+            }
         };
-        // We need to call retain before the thread starts, otherwise we can
-        // lose the queue before the thread even begins.
+
+        // retain before thread start
         retain(env, this);
+
         env.new_thread(
             operation_queue_gf,
             this.cast(),
             crate::mem::Mem::SECONDARY_THREAD_DEFAULT_STACK_SIZE,
         );
     }
-    let host_object = env.objc.borrow_mut::<NSOperationQueueHostObject>(this);
-    host_object.queue.push_back(operation);
-    let queue_semaphore = host_object.queued_operations_semaphore;
-    sem_post(env, queue_semaphore);
+
+    // ---------- enqueue operation
+    let semaphore = {
+        let host = env.objc.borrow_mut::<NSOperationQueueHostObject>(this);
+        host.queue.push_back(operation);
+        host.queued_operations_semaphore
+    };
+
+    sem_post(env, semaphore);
 }
 
 - (())waitUntilAllOperationsAreFinished {
