@@ -6,7 +6,7 @@
 //! `NSKeyedArchiver` - Currently just a fake implementation.
 
 use crate::objc::{
-    autorelease, id, msg_class, nil, objc_classes, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, nil, objc_classes, ClassExports, HostObject,
     NSZonePtr,
 };
 use crate::Environment;
@@ -148,7 +148,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this);
     host.plist.insert(
         format!("{:?}", key),
-        plist::Value::Integer(value as i64),
+        plist::Value::Integer((value as i64).into()),
     );
 }
 
@@ -192,7 +192,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())encodeConditionalObject:(id)obj forKey:(id)key {
     // Behaves the same as encodeObject:forKey: for now
-    msg_send![env; this encodeObject:obj forKey:key];
+    msg![env; this encodeObject:obj forKey:key];
 }
 
 - (())encodeObject:(id)obj {
@@ -226,7 +226,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
-- (())encodeBytes:(u32)bytes length:(u32)length forKey:(id)key {
+- (())encodeBytes:(u32)bytes length:(id)length forKey:(id)key {
     log!(
         "TODO: [(NSKeyedArchiver*){:?} encodeBytes:{:?} length:{} forKey:{:?}]",
         this,
