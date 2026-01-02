@@ -110,7 +110,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let arg = host_object.arg;
     release(env, target);
     release(env, arg);
-    env.objc.dealloc_object(this, env.mem.as_mut());
+    env.objc.dealloc_object(this, Box::new(env.mem).as_mut());
 }
 
 @end
