@@ -8,7 +8,7 @@
 use super::{close, off_t, open_direct, FileDescriptor};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{FsError, GuestFile, GuestPath};
-use crate::libc::errno::{set_errno, EBADF, EEXIST, ENOENT};
+use crate::libc::errno::{set_errno, EBADF, EEXIST, EINVAL, ENOENT};
 use crate::libc::time::timespec;
 use crate::mem::{ConstPtr, MutPtr, SafeRead};
 use crate::Environment;
