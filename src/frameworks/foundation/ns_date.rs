@@ -214,16 +214,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     let s = format!("NSDate({})", unix_secs);
-    let cstr = s.as_bytes();
+    let bytes = s.as_bytes();
+    let ptr = bytes.as_ptr();
 
-    // Correct Objective-C class lookup
-    let cls: id = msg_class![env; NSString];
-
-    // alloc
-    let ns_str: id = msg![env; cls alloc];
+    // NSString alloc (msg_class! REQUIRES a selector)
+    let ns_str: id = msg_class![env; NSString alloc];
 
     // initWithUTF8String:
-    let ns_str: id = msg![env; ns_str initWithUTF8String:cstr.as_ptr()];
+    let ns_str: id = msg![env; ns_str initWithUTF8String:ptr];
 
     autorelease(env, ns_str)
 }
