@@ -81,15 +81,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setProgressTintColor:(id)color {
-    let host = env.objc.borrow_mut::<UIProgressViewHostObject>(this);
+    let color = retain(env, color);
 
-    if host.progress_tint_color != nil {
-        release(env, host.progress_tint_color);
-    }
+    let old = {
+        let host = env.objc.borrow_mut::<UIProgressViewHostObject>(this);
+        let old = host.progress_tint_color;
+        host.progress_tint_color = color;
+        old
+    };
 
-    host.progress_tint_color = color;
-    if color != nil {
-        retain(env, color);
+    if old != nil {
+        release(env, old);
     }
 }
 
@@ -98,15 +100,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setTrackTintColor:(id)color {
-    let host = env.objc.borrow_mut::<UIProgressViewHostObject>(this);
+    let color = retain(env, color);
 
-    if host.track_tint_color != nil {
-        release(env, host.track_tint_color);
-    }
+    let old = {
+        let host = env.objc.borrow_mut::<UIProgressViewHostObject>(this);
+        let old = host.track_tint_color;
+        host.track_tint_color = color;
+        old
+    };
 
-    host.track_tint_color = color;
-    if color != nil {
-        retain(env, color);
+    if old != nil {
+        release(env, old);
     }
 }
 
@@ -115,13 +119,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let host = env.objc.borrow::<UIProgressViewHostObject>(this);
+    let (progress_tint, track_tint) = {
+        let host = env.objc.borrow::<UIProgressViewHostObject>(this);
+        (host.progress_tint_color, host.track_tint_color)
+    };
 
-    if host.progress_tint_color != nil {
-        release(env, host.progress_tint_color);
+    if progress_tint != nil {
+        release(env, progress_tint);
     }
-    if host.track_tint_color != nil {
-        release(env, host.track_tint_color);
+    if track_tint != nil {
+        release(env, track_tint);
     }
 
     env.objc.dealloc_object(this, &mut env.mem)
