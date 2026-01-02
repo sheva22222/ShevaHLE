@@ -39,38 +39,30 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (())setDataSource:(id)dataSource {
+- (())setDataSource:(id)data_source {
+    let data_source = retain(env, data_source);
     let old = {
         let host = env.objc.borrow_mut::<UITableViewHostObject>(this);
-        let old = host.data_source;
-        host.data_source = dataSource;
-        old
+        std::mem::replace(&mut host.data_source, data_source)
     };
     if old != nil {
         release(env, old);
     }
-    if dataSource != nil {
-        retain(env, dataSource);
+}
+
+- (())setDelegate:(id)delegate {
+    let delegate = retain(env, delegate);
+    let old = {
+        let host = env.objc.borrow_mut::<UITableViewHostObject>(this);
+        std::mem::replace(&mut host.delegate, delegate)
+    };
+    if old != nil {
+        release(env, old);
     }
 }
 
 - (id)dataSource {
     env.objc.borrow::<UITableViewHostObject>(this).data_source
-}
-
-- (())setDelegate:(id)delegate {
-    let old = {
-        let host = env.objc.borrow_mut::<UITableViewHostObject>(this);
-        let old = host.delegate;
-        host.delegate = delegate;
-        old
-    };
-    if old != nil {
-        release(env, old);
-    }
-    if delegate != nil {
-        retain(env, delegate);
-    }
 }
 
 - (id)delegate {
@@ -88,13 +80,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let host = env.objc.borrow::<UITableViewHostObject>(this);
-    if host.data_source != nil {
-        release(env, host.data_source);
+    let (data_source, delegate) = {
+        let host = env.objc.borrow::<UITableViewHostObject>(this);
+        (host.data_source, host.delegate)
+    };
+
+    if data_source != nil {
+        release(env, data_source);
     }
-    if host.delegate != nil {
-        release(env, host.delegate);
+    if delegate != nil {
+        release(env, delegate);
     }
+
     msg_super![env; this dealloc]
 }
 
