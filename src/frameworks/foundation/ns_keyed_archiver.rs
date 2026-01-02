@@ -133,7 +133,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
-- (())encodeInteger:(isize)value forKey:(id)key {
+- (())encodeInteger:(i32)value forKey:(id)key {
     log!(
         "TODO: [(NSKeyedArchiver*){:?} encodeInteger:{} forKey:{:?}]",
         this,
