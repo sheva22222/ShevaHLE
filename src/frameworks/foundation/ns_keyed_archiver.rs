@@ -75,6 +75,167 @@ pub const CLASSES: ClassExports = objc_classes! {
     return false;
 }
 
+- (())encodeObject:(id)obj forKey:(id)key {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeObject:{:?} forKey:{:?}]",
+        this,
+        obj,
+        key
+    );
+
+    if key == nil {
+        return;
+    }
+
+    let host = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this);
+    // Placeholder: store NSNull-like marker
+    host.plist.insert(
+        format!("{:?}", key),
+        plist::Value::String(format!("{:?}", obj)),
+    );
+}
+
+- (())encodeBool:(bool)value forKey:(id)key {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeBool:{} forKey:{:?}]",
+        this,
+        value,
+        key
+    );
+
+    if key == nil {
+        return;
+    }
+
+    let host = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this);
+    host.plist.insert(
+        format!("{:?}", key),
+        plist::Value::Boolean(value),
+    );
+}
+
+- (())encodeInt:(i32)value forKey:(id)key {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeInt:{} forKey:{:?}]",
+        this,
+        value,
+        key
+    );
+
+    if key == nil {
+        return;
+    }
+
+    let host = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this);
+    host.plist.insert(
+        format!("{:?}", key),
+        plist::Value::Integer(value.into()),
+    );
+}
+
+- (())encodeInteger:(isize)value forKey:(id)key {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeInteger:{} forKey:{:?}]",
+        this,
+        value,
+        key
+    );
+
+    if key == nil {
+        return;
+    }
+
+    let host = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this);
+    host.plist.insert(
+        format!("{:?}", key),
+        plist::Value::Integer(value as i64),
+    );
+}
+
+- (())encodeFloat:(f32)value forKey:(id)key {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeFloat:{} forKey:{:?}]",
+        this,
+        value,
+        key
+    );
+
+    if key == nil {
+        return;
+    }
+
+    let host = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this);
+    host.plist.insert(
+        format!("{:?}", key),
+        plist::Value::Real(value as f64),
+    );
+}
+
+- (())encodeDouble:(f64)value forKey:(id)key {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeDouble:{} forKey:{:?}]",
+        this,
+        value,
+        key
+    );
+
+    if key == nil {
+        return;
+    }
+
+    let host = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this);
+    host.plist.insert(
+        format!("{:?}", key),
+        plist::Value::Real(value),
+    );
+}
+
+- (())encodeConditionalObject:(id)obj forKey:(id)key {
+    // Behaves the same as encodeObject:forKey: for now
+    msg_send![env; this encodeObject:obj forKey:key];
+}
+
+- (())encodeObject:(id)obj {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeObject:{:?}]",
+        this,
+        obj
+    );
+}
+
+- (())encodeRootObject:(id)obj {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeRootObject:{:?}]",
+        this,
+        obj
+    );
+}
+
+- (bool)requiresSecureCoding {
+    false
+}
+
+- (bool)allowsKeyedCoding {
+    true
+}
+
+- (())finishEncoding {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} finishEncoding]",
+        this
+    );
+}
+
+- (())encodeBytes:(u32)bytes length:(u32)length forKey:(id)key {
+    log!(
+        "TODO: [(NSKeyedArchiver*){:?} encodeBytes:{:?} length:{} forKey:{:?}]",
+        this,
+        bytes,
+        length,
+        key
+    );
+}
+
 // TODO: add more decode methods
 
 @end
