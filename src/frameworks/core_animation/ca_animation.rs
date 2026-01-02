@@ -240,7 +240,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-@implementation CAAnimationGroup: NSObject
+@implementation CAAnimationGroup: CAAnimation
 
 + (id)animation {
     let object = msg![env; this new];
