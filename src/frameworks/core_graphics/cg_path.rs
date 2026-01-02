@@ -202,6 +202,41 @@ pub fn CGPathMoveToPoint(
     host.elements.push(PathElement::MoveTo(point));
 }
 
+pub fn CGPathAddLineToPoint(
+    env: &mut Environment,
+    path: CGMutablePathRef,
+    transform: ConstPtr<CGAffineTransform>,
+    x: CGFloat,
+    y: CGFloat,
+) {
+    if path.is_null() {
+        return;
+    }
+
+    // Borrow mutable path host object
+    let host = env
+        .objc
+        .borrow_mut::<CGPathHostObject>(path.cast());
+
+    // Resolve transform (identity if NULL)
+    let t = if transform.is_null() {
+        CGAffineTransform {
+            a: 1.0,
+            b: 0.0,
+            c: 0.0,
+            d: 1.0,
+            tx: 0.0,
+            ty: 0.0,
+        }
+    } else {
+        env.mem.read(transform)
+    };
+
+    let p = t.apply_to_point(CGPoint { x, y });
+
+    host.elements.push(PathElement::LineTo(p));
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPathCreateMutable()),
     export_c_func!(CGPathRetain(_)),
@@ -211,4 +246,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPathAddRect(_, _, _)),
     export_c_func!(CGPathCreateCopy()),
     export_c_func!(CGPathMoveToPoint(_, _, _, _)),
+    export_c_func!(CGPathAddLineToPoint(_, _, _, _)),
 ];
