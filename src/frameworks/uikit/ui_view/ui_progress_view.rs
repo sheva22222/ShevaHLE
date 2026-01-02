@@ -3,8 +3,6 @@
  * License, v. 2.0.
  */
 
-use crate::frameworks::core_graphics::cg_geometry::CGRect;
-use crate::frameworks::uikit::ui_view::UIViewHostObject;
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg_super, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
     retain, release,
@@ -15,8 +13,6 @@ use crate::frameworks::uikit::ui_view::UIViewHostObject;
 use crate::objc::{id, impl_HostObject_with_superclass};
 
 pub struct UIProgressViewHostObject {
-    pub superclass: UIViewHostObject,
-
     pub progress: f32,
     pub progress_tint_color: id,
     pub track_tint_color: id,
@@ -29,14 +25,6 @@ impl_HostObject_with_superclass!(UIProgressViewHostObject);
 impl Default for UIProgressViewHostObject {
     fn default() -> Self {
         Self {
-            superclass: UIViewHostObject {
-                frame: CGRect::zero(),
-                bounds: CGRect::zero(),
-                hidden: false,
-                user_interaction_enabled: true,
-                alpha: 1.0,
-                // …EVERY required UIView field…
-            },
             progress: 0.0,
             progress_tint_color: nil,
             track_tint_color: nil,
@@ -53,12 +41,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host = UIProgressViewHostObject {
-        superclass: UIViewHostObject {
-            frame: CGRect::zero(),
-            bounds: CGRect::zero(),
-            hidden: false,
-            // …every required UIView field…
-        },
         progress: 0.0,
         progress_tint_color: nil,
         track_tint_color: nil,
