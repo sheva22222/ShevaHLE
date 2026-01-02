@@ -97,11 +97,11 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
 
     let mut st = stat::default();
 
-    // Fake but consistent device/inode
+    // Fake but stable device/inode
     st.st_dev = 1;
     st.st_ino = fd as ino_t;
 
-    // Single-user, single-group environment
+    // Single-user environment
     st.st_uid = 0;
     st.st_gid = 0;
 
@@ -109,8 +109,12 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
     st.st_nlink = 1;
     st.st_blksize = 4096;
 
-    // Time: "now"
-    let now = env.now_timespec();
+    // Deterministic timestamps (epoch)
+    let now = timespec {
+        tv_sec: 0,
+        tv_nsec: 0,
+    };
+
     st.st_atimespec = now;
     st.st_mtimespec = now;
     st.st_ctimespec = now;
@@ -147,6 +151,7 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
 
         _ => {
             log!("fstat: unsupported GuestFile variant");
+            set_errno(env, EBADF);
             return -1;
         }
     }
