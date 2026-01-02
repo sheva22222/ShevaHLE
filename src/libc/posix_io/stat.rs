@@ -97,7 +97,7 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
 
     let mut st = stat::default();
 
-    // Fake but stable device/inode
+    // Fake but stable identifiers
     st.st_dev = 1;
     st.st_ino = fd as ino_t;
 
@@ -110,15 +110,10 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
     st.st_blksize = 4096;
 
     // Deterministic timestamps (epoch)
-    let now = timespec {
-        tv_sec: 0,
-        tv_nsec: 0,
-    };
-
-    st.st_atimespec = now;
-    st.st_mtimespec = now;
-    st.st_ctimespec = now;
-    st.st_birthtimespec = now;
+    st.st_atimespec = timespec { tv_sec: 0, tv_nsec: 0 };
+    st.st_mtimespec = timespec { tv_sec: 0, tv_nsec: 0 };
+    st.st_ctimespec = timespec { tv_sec: 0, tv_nsec: 0 };
+    st.st_birthtimespec = timespec { tv_sec: 0, tv_nsec: 0 };
 
     match &file.file {
         GuestFile::File(_)
@@ -143,7 +138,6 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
         GuestFile::Directory => {
             // Directory
             st.st_mode = S_IFDIR | 0o755;
-
             st.st_size = 0;
             st.st_blocks = 0;
             st.st_nlink = 2; // "." and ".."
