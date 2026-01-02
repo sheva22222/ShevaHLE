@@ -16,6 +16,7 @@ pub struct UIProgressViewHostObject {
     pub progress: f32,
     pub progress_tint_color: id,
     pub track_tint_color: id,
+    pub style: id,
 }
 
 impl_HostObject_with_superclass!(UIProgressViewHostObject);
@@ -44,6 +45,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         progress: 0.0,
         progress_tint_color: nil,
         track_tint_color: nil,
+        style: nil,
     };
 
     env.objc.alloc_object(this, Box::new(host), &mut env.mem)
