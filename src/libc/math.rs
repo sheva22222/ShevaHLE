@@ -540,6 +540,20 @@ fn sqlite3_column_name(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
 fn sqlite3_bind_parameter_index(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
     arg1.min(arg2)
 }
+fn hypot(env: &mut Environment, x: f64, y: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    // Use stable hypot to avoid overflow/underflow
+    x.hypot(y)
+}
+
+fn hypotf(env: &mut Environment, x: f32, y: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    x.hypot(y)
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(abs(_)),
@@ -645,4 +659,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sqlite3_column_count(_, _)),
     export_c_func!(sqlite3_column_name(_, _)),
     export_c_func!(sqlite3_bind_parameter_index(_, _)),
+    export_c_func!(hypot(_, _)),
+    export_c_func!(hypotf(_, _)),
 ];

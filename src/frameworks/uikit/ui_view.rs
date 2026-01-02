@@ -81,6 +81,7 @@ pub(super) struct UIViewHostObject {
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
     multiple_touch_enabled: bool,
+    observers: Vec<(id, String, ConstVoidPtr)>,
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -96,6 +97,7 @@ impl Default for UIViewHostObject {
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
             multiple_touch_enabled: false,
+            observers: Vec::new(),
         }
     }
 }
@@ -450,6 +452,73 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: ignoring setExclusiveTouch:{} for view {:?}", exclusive, this);
 }
 
+// CAAnimationDelegate (optional for UIView)
+
+- (())animationDidStart:(id)animation { // CAAnimation*
+    log_dbg!(
+        "[(UIView*){:?} animationDidStart:{:?}]",
+        this,
+        animation
+    );
+}
+
+- (())animationDidStop:(id)animation
+              finished:(bool)finished {
+    log_dbg!(
+        "[(UIView*){:?} animationDidStop:{:?} finished:{}]",
+        this,
+        animation,
+        finished
+    );
+}
+
+// KVO (stub implementation)
+
+- (())addObserver:(id)observer
+       forKeyPath:(id)key_path // NSString*
+          options:(NSUInteger)_options
+          context:(ConstVoidPtr)context {
+    let key_path = to_rust_string(env, key_path);
+
+    log_dbg!(
+        "[(UIView*){:?} addObserver:{:?} forKeyPath:{} context:{:?}] (stub)",
+        this,
+        observer,
+        key_path,
+        context
+    );
+
+    retain(env, observer);
+
+    env.objc
+        .borrow_mut::<UIViewHostObject>(this)
+        .observers
+        .push((observer, key_path.to_string(), context));
+}
+
+- (())removeObserver:(id)observer
+          forKeyPath:(id)key_path {
+    let key_path = to_rust_string(env, key_path);
+
+    log_dbg!(
+        "[(UIView*){:?} removeObserver:{:?} forKeyPath:{}] (stub)",
+        this,
+        observer,
+        key_path
+    );
+
+    let host = env.objc.borrow_mut::<UIViewHostObject>(this);
+
+    if let Some(idx) = host
+        .observers
+        .iter()
+        .position(|(obs, kp, _)| *obs == observer && *kp == key_path)
+    {
+        let (obs, _, _) = host.observers.remove(idx);
+        release(env, obs);
+    }
+}
+
 - (())layoutSubviews {
     // On iOS 5.1 and earlier, the default implementation of this method does
     // nothing.
@@ -632,6 +701,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
         multiple_touch_enabled: _,
+        observers,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);

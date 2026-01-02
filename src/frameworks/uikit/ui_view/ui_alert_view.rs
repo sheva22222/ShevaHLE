@@ -14,6 +14,75 @@ pub const CLASSES: ClassExports = objc_classes! {
 (env, this, _cmd);
 
 @implementation UIAlertView: UIView
+
+- (id)addButtonWithTitle:(id)title {
+    log!(
+        "TODO: [(UIAlertView*){:?} addButtonWithTitle:{:?}]",
+        this,
+        title
+    );
+    // UIKit returns the index of the new button
+    nil
+}
+
+- (id)buttonTitleAtIndex:(id)index {
+    log!(
+        "TODO: [(UIAlertView*){:?} buttonTitleAtIndex:{:?}]",
+        this,
+        index
+    );
+    nil
+}
+
+- (id)numberOfButtons {
+    log!(
+        "TODO: [(UIAlertView*){:?} numberOfButtons]",
+        this
+    );
+    nil
+}
+
+- (id)cancelButtonIndex {
+    log!(
+        "TODO: [(UIAlertView*){:?} cancelButtonIndex]",
+        this
+    );
+    nil
+}
+
+- (())setCancelButtonIndex:(id)index {
+    log!(
+        "TODO: [(UIAlertView*){:?} setCancelButtonIndex:{:?}]",
+        this,
+        index
+    );
+}
+
+- (id)delegate {
+    log!(
+        "TODO: [(UIAlertView*){:?} delegate]",
+        this
+    );
+    nil
+}
+
+- (())setDelegate:(id)delegate {
+    log!(
+        "TODO: [(UIAlertView*){:?} setDelegate:{:?}]",
+        this,
+        delegate
+    );
+}
+
+- (())dismissWithClickedButtonIndex:(id)index animated:(bool)animated {
+    log!(
+        "TODO: [(UIAlertView*){:?} dismissWithClickedButtonIndex:{:?} animated:{}]",
+        this,
+        index,
+        animated
+    );
+}
+
 - (id)initWithTitle:(id)title
                       message:(id)message
                      delegate:(id)delegate

@@ -97,6 +97,14 @@ struct CAPropertyAnimationHostObject {
 impl_HostObject_with_superclass!(CAPropertyAnimationHostObject);
 
 #[derive(Default)]
+struct CAKeyframeAnimationHostObject {
+    superclass: CAAnimationHostObject,
+    key_path: id, // NSString*
+    path: id,     // CGPathRef (toll-free bridged, treated as id)
+}
+impl_HostObject_with_superclass!(CAKeyframeAnimationHostObject);
+
+#[derive(Default)]
 struct CABasicAnimationHostObject {
     superclass: CAPropertyAnimationHostObject,
     from_value: id,
@@ -114,6 +122,7 @@ struct CATransitionHostObject {
     by_value: id,
     start_progress: f32,
     end_progress: f32,
+    key_path: id, // NSString*
 }
 impl_HostObject_with_superclass!(CATransitionHostObject);
 
@@ -231,7 +240,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-
 @implementation CAPropertyAnimation: CAAnimation
 
 + (id)allocWithZone:(NSZonePtr)_zone {
@@ -266,6 +274,72 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+
+@implementation CAKeyframeAnimation: CAPropertyAnimation
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<CAKeyframeAnimationHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (id)animationWithKeyPath:(id)path { // NSString*
+    let object = msg![env; this new];
+    log_dbg!("[CAKeyframeAnimation animationWithKeyPath:{:?} ({:?})] -> {:?}", path, to_rust_string(env, path), object);
+    () = msg![env; object setKeyPath:path];
+    autorelease(env, object)
+}
+
+- (())setKeyPath:(id)path { // NSString*
+    log_dbg!("[(CAKeyframeAnimation*){:?} setKeyPath:{:?} ({:?})]", this, path, to_rust_string(env, path));
+    let path_copy: id = msg![env; path copy];
+    env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this).key_path = path_copy;
+}
+
+- (id)keyPath {
+    env.objc.borrow::<CAKeyframeAnimationHostObject>(this).key_path
+}
+
+- (())dealloc {
+    let &CAKeyframeAnimationHostObject { key_path, path, .. } =
+        env.objc.borrow(this);
+
+    if key_path != nil {
+        release(env, key_path);
+    }
+    if path != nil {
+        release(env, path);
+    }
+
+    msg_super![env; this dealloc]
+}
+
+- (())setPath:(id)path { // CGPathRef
+    log_dbg!(
+        "[(CAKeyframeAnimation*){:?} setPath:{:?}]",
+        this,
+        path
+    );
+
+    let old_path = {
+        let host = env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this);
+        let old = host.path;
+        host.path = path;
+        old
+    };
+
+    if old_path != nil {
+        release(env, old_path);
+    }
+    if path != nil {
+        retain(env, path);
+    }
+}
+
+- (id)path {
+    env.objc.borrow::<CAKeyframeAnimationHostObject>(this).path
+}
+
+@end 
 
 @implementation CABasicAnimation: CAPropertyAnimation
 
@@ -454,6 +528,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)byValue {
     env.objc.borrow::<CATransitionHostObject>(this).by_value
+}
+
+- (())setKeyPath:(id)path { // NSString*
+    log_dbg!("[(CATransition*){:?} setKeyPath:{:?} ({:?})]", this, path, to_rust_string(env, path));
+    let path_copy: id = msg![env; path copy];
+    env.objc.borrow_mut::<CATransitionHostObject>(this).key_path = path_copy;
+}
+
+- (id)keyPath {
+    env.objc.borrow::<CATransitionHostObject>(this).key_path
 }
 
 @end
