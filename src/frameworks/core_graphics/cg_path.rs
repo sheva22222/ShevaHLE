@@ -159,17 +159,14 @@ pub fn CGPathAddRect(
     host.elements.push(PathElement::CloseSubpath);
 }
 
-pub fn CGPathCreateCopy(
-    env: &mut Environment,
-    path: CGPathRef,
-) -> CGPathRef {
+fn CGPathCreateCopy(env: &mut Environment, path: CGPathRef) -> CGPathRef {
     if path.is_null() {
-        return path;
+        return Ptr::null();
     }
 
     let src = env
         .objc
-        .borrow::<CGPathHostObject>(path.cast::<id>());
+        .borrow::<CGPathHostObject>(path.cast().cast::<id>());
 
     let host_obj = Box::new(CGPathHostObject {
         elements: src.elements.clone(),
@@ -179,10 +176,7 @@ pub fn CGPathCreateCopy(
         .objc
         .get_known_class("_touchHLE_CGPath", &mut env.mem);
 
-    let new_obj = env.objc.alloc_object(class, host_obj, &mut env.mem);
-
-    // return immutable CGPathRef
-    new_obj.cast().cast_const()
+    env.objc.alloc_object(class, host_obj, &mut env.mem).cast()
 }
 
 pub const FUNCTIONS: FunctionExports = &[
