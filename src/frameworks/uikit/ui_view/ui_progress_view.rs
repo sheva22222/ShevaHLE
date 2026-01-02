@@ -35,4 +35,4 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-}
+};
