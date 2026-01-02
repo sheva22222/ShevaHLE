@@ -3,6 +3,7 @@
  * License, v. 2.0.
  */
 
+use crate::frameworks::core_graphics::cg_geometry::CGRect;
 use crate::frameworks::uikit::ui_view::UIViewHostObject;
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg_super, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
@@ -10,13 +11,16 @@ use crate::objc::{
 };
 use crate::Environment;
 
+use crate::frameworks::uikit::ui_view::UIViewHostObject;
+use crate::objc::{id, impl_HostObject_with_superclass};
+
 pub struct UIProgressViewHostObject {
-    superclass: UIViewHostObject,
+    pub superclass: UIViewHostObject,
 
     pub progress: f32,
     pub progress_tint_color: id,
     pub track_tint_color: id,
-    pub style: id,
+    pub style: i32,
 }
 
 impl_HostObject_with_superclass!(UIProgressViewHostObject);
@@ -25,10 +29,18 @@ impl_HostObject_with_superclass!(UIProgressViewHostObject);
 impl Default for UIProgressViewHostObject {
     fn default() -> Self {
         Self {
+            superclass: UIViewHostObject {
+                frame: CGRect::zero(),
+                bounds: CGRect::zero(),
+                hidden: false,
+                user_interaction_enabled: true,
+                alpha: 1.0,
+                // …EVERY required UIView field…
+            },
             progress: 0.0,
             progress_tint_color: nil,
             track_tint_color: nil,
-            style: 0, // UIProgressViewStyleDefault
+            style: 0,
         }
     }
 }
@@ -41,11 +53,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host = UIProgressViewHostObject {
-        superclass: UIViewHostObject::new(),
+        superclass: UIViewHostObject {
+            frame: CGRect::zero(),
+            bounds: CGRect::zero(),
+            hidden: false,
+            // …every required UIView field…
+        },
         progress: 0.0,
         progress_tint_color: nil,
         track_tint_color: nil,
-        style: nil,
+        style: 0, // UIProgressViewStyleDefault
     };
 
     env.objc.alloc_object(this, Box::new(host), &mut env.mem)
