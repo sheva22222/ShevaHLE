@@ -196,6 +196,32 @@ pub const CLASSES: ClassExports = objc_classes! {
     time_interval - host_object.time_interval
 }
 
+- (id)descriptionWithCalendarFormat:(id)_format
+                           timeZone:(id)_timeZone
+                             locale:(id)_locale
+{
+    // Ignore format / timezone / locale (acceptable for early iPhone OS)
+    let secs = env.objc.borrow::<NSDateHostObject>(this).time_interval;
+
+    let system_time = if secs >= 0.0 {
+        apple_epoch() + Duration::from_secs_f64(secs)
+    } else {
+        apple_epoch() - Duration::from_secs_f64(-secs)
+    };
+
+    let unix_secs = match system_time.duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(d) => d.as_secs(),
+        Err(_) => 0,
+    };
+
+    // Stable, debugger-friendly output
+    let s = format!("NSDate({})", unix_secs);
+
+    let ns_str: id = msg![env; objc_classes::NSString alloc];
+    let ns_str: id = msg![env; ns_str initWithUTF8String:s.as_ptr()];
+    autorelease(env, ns_str)
+}
+
 - (NSTimeInterval)timeIntervalSince1970 {
     let time_interval = env.objc.borrow::<NSDateHostObject>(this).time_interval;
     let new_time = if time_interval >= 0.0 {
