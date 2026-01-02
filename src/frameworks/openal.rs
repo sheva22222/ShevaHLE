@@ -732,8 +732,8 @@ fn alGetIntegerv(_env: &mut Environment, _param: ALenum, _values: MutPtr<ALint>)
 fn alGetProcAddress(env: &mut Environment, funcName: ConstPtr<u8>) -> MutVoidPtr {
     alcGetProcAddress(env, Ptr::null(), funcName)
 }
-fn alIsExtensionPresent(_env: &mut Environment, _extName: ConstPtr<u8>) -> ALboolean {
-    alIsExtensionPresent(env, Ptr::null(), funcName)
+fn alIsExtensionPresent(env: &mut Environment, _extName: ConstPtr<u8>) -> ALboolean {
+    alIsExtensionPresent(env, Ptr::null(), _extName)
 }
 fn alIsEnabled(_env: &mut Environment, _capability: ALenum) -> ALboolean {
     todo!();
