@@ -467,6 +467,20 @@ fn exc_server(
     0 // FALSE
 }
 
+fn task_set_exception_ports(
+    _env: &mut Environment,
+    _task: task_t,
+    _mask: exception_mask_t,
+    _new_port: mach_port_t,
+    _behavior: exception_behavior_t,
+    _new_flavor: thread_state_flavor_t,
+) -> kern_return_t {
+    // Early Darwin / iOS behavior:
+    // - Usually succeeds
+    // - Exception ports are ignored
+    KERN_SUCCESS
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(thread_info(_, _, _, _)),
     export_c_func!(thread_policy_set(_, _, _, _)),
@@ -487,4 +501,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(task_info(_, _, _, _)),
     export_c_func!(mach_msg(_, _, _, _, _, _, _)),
     export_c_func!(exc_server(_, _)),
+    export_c_func!(task_set_exception_ports(_, _, _, _, _)),
 ];
