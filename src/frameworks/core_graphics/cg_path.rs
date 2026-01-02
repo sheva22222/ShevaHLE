@@ -174,6 +174,34 @@ fn CGPathCreateCopy(env: &mut Environment) -> CGMutablePathRef {
         .cast()
 }
 
+pub fn CGPathMoveToPoint(
+    env: &mut Environment,
+    path: CGMutablePathRef,
+    transform: ConstPtr<CGAffineTransform>,
+    x: CGFloat,
+    y: CGFloat,
+) {
+    if path.is_null() {
+        return;
+    }
+
+    // Borrow the path host object
+    let host = env
+        .objc
+        .borrow_mut::<CGPathHostObject>(path.cast());
+
+    // Apply transform if present
+    let point = if transform.is_null() {
+        CGPoint { x, y }
+    } else {
+        let t = env.mem.read(transform);
+        t.apply_to_point(CGPoint { x, y })
+    };
+
+    // Record path element
+    host.elements.push(PathElement::MoveTo(point));
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPathCreateMutable()),
     export_c_func!(CGPathRetain(_)),
@@ -182,4 +210,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPathCloseSubpath(_)),
     export_c_func!(CGPathAddRect(_, _, _)),
     export_c_func!(CGPathCreateCopy()),
+    export_c_func!(CGPathMoveToPoint(_, _, _, _)),
 ];
