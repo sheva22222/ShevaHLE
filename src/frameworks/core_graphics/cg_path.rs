@@ -3,7 +3,7 @@ use crate::frameworks::core_foundation::{CFRelease, CFRetain};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::mem::{ConstPtr, Ptr};
-use crate::objc::{objc_classes, ClassExports, HostObject};
+use crate::objc::{id, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 use std::ffi::c_void;
 
@@ -169,9 +169,7 @@ pub fn CGPathCreateCopy(
 
     let src = env
         .objc
-        .borrow::<CGPathHostObject>(
-            path.cast::<objc_object>().cast_mut(),
-        );
+        .borrow::<CGPathHostObject>(path.cast::<id>());
 
     let host_obj = Box::new(CGPathHostObject {
         elements: src.elements.clone(),
