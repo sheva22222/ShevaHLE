@@ -20,6 +20,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 pub type kern_return_t = i32;
 pub const KERN_SUCCESS: kern_return_t = 0;
 pub const KERN_FAILURE: kern_return_t = 5;
+pub const KERN_INVALID_ARGUMENT: kern_return_t = 6;
 
 pub type mach_port_t = u32;
 
@@ -133,15 +134,22 @@ fn thread_info(
     thread_info_out: thread_info_t,
     thread_info_out_count: MutPtr<mach_msg_type_number_t>,
 ) -> kern_return_t {
-    let thread = env.threads.get(target_act as usize).unwrap();
+    let Some(thread) = env.threads.get(target_act as usize) else {
+        return KERN_INVALID_ARGUMENT;
+    };
 
-    let out_size_available = env.mem.read(thread_info_out_count);
+    let out_count_available = env.mem.read(thread_info_out_count);
 
     match flavor {
         THREAD_BASIC_INFO => {
-            let out_size_expected =
-                guest_size_of::<thread_basic_info>() / guest_size_of::<integer_t>();
-            assert!(out_size_expected == out_size_available);
+            let out_count_expected =
+                (guest_size_of::<thread_basic_info>() / guest_size_of::<integer_t>()) as mach_msg_type_number_t;
+
+            if out_count_available < out_count_expected {
+                env.mem.write(thread_info_out_count, out_count_expected);
+                return KERN_INVALID_ARGUMENT;
+            }
+
             env.mem.write(
                 thread_info_out.cast(),
                 thread_basic_info {
@@ -154,22 +162,30 @@ fn thread_info(
                         microseconds: 0,
                     },
                     cpu_usage: 0,
-                    policy: POLICY_TIMESHARE, // no idea if this is realistic
+                    policy: POLICY_TIMESHARE,
                     run_state: if thread.active {
                         TH_STATE_RUNNING
                     } else {
                         TH_STATE_STOPPED
                     },
-                    flags: 0, // FIXME
+                    flags: 0,
                     suspend_count: 0,
                     sleep_time: 0,
                 },
             );
+
+            env.mem.write(thread_info_out_count, out_count_expected);
         }
+
         THREAD_SCHED_TIMESHARE_INFO => {
-            let out_size_expected =
-                guest_size_of::<policy_timeshare_info>() / guest_size_of::<integer_t>();
-            assert!(out_size_expected == out_size_available);
+            let out_count_expected =
+                (guest_size_of::<policy_timeshare_info>() / guest_size_of::<integer_t>()) as mach_msg_type_number_t;
+
+            if out_count_available < out_count_expected {
+                env.mem.write(thread_info_out_count, out_count_expected);
+                return KERN_INVALID_ARGUMENT;
+            }
+
             env.mem.write(
                 thread_info_out.cast(),
                 policy_timeshare_info {
@@ -180,8 +196,17 @@ fn thread_info(
                     depress_priority: 0,
                 },
             );
+
+            env.mem.write(thread_info_out_count, out_count_expected);
         }
-        _ => unimplemented!("TODO: flavor {:?}", flavor),
+
+        _ => {
+            log!(
+                "thread_info(): unsupported flavor {:?}, returning KERN_INVALID_ARGUMENT",
+                flavor
+            );
+            return KERN_INVALID_ARGUMENT;
+        }
     }
 
     KERN_SUCCESS
