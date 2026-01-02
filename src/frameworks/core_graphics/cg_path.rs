@@ -3,7 +3,7 @@ use crate::frameworks::core_foundation::{CFRelease, CFRetain};
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::mem::{ConstPtr, Ptr};
-use crate::objc::{id, objc_classes, ClassExports, HostObject};
+use crate::objc::{objc_classes, ClassExports, HostObject};
 use crate::Environment;
 use std::ffi::c_void;
 
@@ -159,24 +159,19 @@ pub fn CGPathAddRect(
     host.elements.push(PathElement::CloseSubpath);
 }
 
-fn CGPathCreateCopy(env: &mut Environment, path: CGPathRef) -> CGPathRef {
-    if path.is_null() {
-        return Ptr::null();
-    }
-
-    let src = env
-        .objc
-        .borrow::<CGPathHostObject>(path.cast().cast::<id>());
-
+fn CGPathCreateCopy(env: &mut Environment) -> CGMutablePathRef {
     let host_obj = Box::new(CGPathHostObject {
-        elements: src.elements.clone(),
+        elements: Vec::new(),
     });
 
     let class = env
         .objc
         .get_known_class("_touchHLE_CGPath", &mut env.mem);
 
-    env.objc.alloc_object(class, host_obj, &mut env.mem).cast()
+    env.objc
+        .alloc_object(class, host_obj, &mut env.mem)
+        .cast::<c_void>()
+        .cast()
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -186,5 +181,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGPathAddLines(_, _, _, _)),
     export_c_func!(CGPathCloseSubpath(_)),
     export_c_func!(CGPathAddRect(_, _, _)),
-    export_c_func!(CGPathCreateCopy(_)),
+    export_c_func!(CGPathCreateCopy()),
 ];
