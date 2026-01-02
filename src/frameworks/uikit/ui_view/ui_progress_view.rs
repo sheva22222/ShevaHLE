@@ -1,74 +1,22 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0.
- */
-
-use crate::objc::{
-    id, msg_super, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
-    retain, release,
-};
-use crate::Environment;
-
-struct UIProgressViewHostObject {
-    progress: f32,
-    progress_tint_color: id,
-    track_tint_color: id,
-    style: i32, // UIProgressViewStyle
-}
-
-impl HostObject for UIProgressViewHostObject {}
-
-
-impl Default for UIProgressViewHostObject {
-    fn default() -> Self {
-        Self {
-            progress: 0.0,
-            progress_tint_color: nil,
-            track_tint_color: nil,
-            style: 0, // UIProgressViewStyleDefault
-        }
-    }
-}
+use crate::objc::{id, msg_super, nil, objc_classes, ClassExports, NSZonePtr};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-@implementation UIProgressView : UIView
-
-+ (id)allocWithZone:(NSZonePtr)_zone {
-    let host = Box::<UIProgressViewHostObject>::default();
-    env.objc.alloc_object(this, host, &mut env.mem)
-}
+@implementation UIProgressView: UIView
 
 - (id)initWithProgressViewStyle:(i32)style {
     let this: id = msg_super![env; this init];
-    if this == nil {
-        return nil;
-    }
-
-    env.objc.borrow_mut::<UIProgressViewHostObject>(this).style = style;
+    log_dbg!("[(UIProgressView*){:?} initWithProgressViewStyle:{}]", this, style);
     this
 }
 
-- (())setProgressViewStyle:(i32)style {
-    env.objc.borrow_mut::<UIProgressViewHostObject>(this).style = style;
-}
-
-- (i32)progressViewStyle {
-    env.objc.borrow::<UIProgressViewHostObject>(this).style
-}
-
 - (())setProgress:(f32)progress {
-    env.objc.borrow_mut::<UIProgressViewHostObject>(this).progress = progress;
+    log_dbg!("[(UIProgressView*){:?} setProgress:{}]", this, progress);
 }
 
 - (())setProgress:(f32)progress animated:(bool)animated {
-    let host = env.objc.borrow_mut::<UIProgressViewHostObject>(this);
-
-    // Animation is ignored for now (UIKit-compatible stub)
-    host.progress = progress;
-
     log_dbg!(
         "[(UIProgressView*){:?} setProgress:{} animated:{}]",
         this,
@@ -77,64 +25,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
-- (f32)progress {
-    env.objc.borrow::<UIProgressViewHostObject>(this).progress
-}
-
 - (())setProgressTintColor:(id)color {
-    let color = retain(env, color);
-
-    let old = {
-        let host = env.objc.borrow_mut::<UIProgressViewHostObject>(this);
-        let old = host.progress_tint_color;
-        host.progress_tint_color = color;
-        old
-    };
-
-    if old != nil {
-        release(env, old);
-    }
-}
-
-- (id)progressTintColor {
-    env.objc.borrow::<UIProgressViewHostObject>(this).progress_tint_color
+    log_dbg!("[(UIProgressView*){:?} setProgressTintColor:{:?}]", this, color);
 }
 
 - (())setTrackTintColor:(id)color {
-    let color = retain(env, color);
-
-    let old = {
-        let host = env.objc.borrow_mut::<UIProgressViewHostObject>(this);
-        let old = host.track_tint_color;
-        host.track_tint_color = color;
-        old
-    };
-
-    if old != nil {
-        release(env, old);
-    }
-}
-
-- (id)trackTintColor {
-    env.objc.borrow::<UIProgressViewHostObject>(this).track_tint_color
-}
-
-- (())dealloc {
-    let (progress_tint, track_tint) = {
-        let host = env.objc.borrow::<UIProgressViewHostObject>(this);
-        (host.progress_tint_color, host.track_tint_color)
-    };
-
-    if progress_tint != nil {
-        release(env, progress_tint);
-    }
-    if track_tint != nil {
-        release(env, track_tint);
-    }
-
-    env.objc.dealloc_object(this, &mut env.mem)
+    log_dbg!("[(UIProgressView*){:?} setTrackTintColor:{:?}]", this, color);
 }
 
 @end
 
-};
+}
