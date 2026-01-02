@@ -737,25 +737,25 @@ fn alIsExtensionPresent(env: &mut Environment, extName: ConstPtr<u8>) -> ALboole
         return al::AL_FALSE;
     }
 
-    let ext = match env.mem.cstr_at_utf8(extName) {
-        Ok(s) => s,
+    // Copy extension name to avoid holding an immutable borrow of `env`
+    let ext: String = match env.mem.cstr_at_utf8(extName) {
+        Ok(s) => s.to_owned(),
         Err(_) => return al::AL_FALSE,
     };
 
-    // Use the same extensions string exposed by alGetString(AL_EXTENSIONS)
+    // Now we can mutably borrow `env`
     let ext_list_ptr = alGetString(env, AL_EXTENSIONS);
     let ext_list = match env.mem.cstr_at_utf8(ext_list_ptr) {
         Ok(s) => s,
         Err(_) => return al::AL_FALSE,
     };
 
-    // Extensions are space-separated tokens
     let present = ext_list
         .split_whitespace()
         .any(|e| e == ext);
 
     log_dbg!(
-        "alIsExtensionPresent({:?}) => {}",
+        "alIsExtensionPresent({}) => {}",
         ext,
         if present { "AL_TRUE" } else { "AL_FALSE" }
     );
