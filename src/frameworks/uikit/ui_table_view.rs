@@ -2,9 +2,7 @@ use crate::objc::{
     id, msg, msg_super, nil, objc_classes, retain, release,
     ClassExports, HostObject, NSZonePtr,
 };
-use crate::frameworks::core_graphics::cg_rect::CGRect;
-
-use crate::objc::{id, nil, HostObject};
+use crate::frameworks::core_graphics::CGRect;
 
 pub struct UITableViewHostObject {
     /// UITableViewDataSource
