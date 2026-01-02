@@ -208,23 +208,22 @@ pub const CLASSES: ClassExports = objc_classes! {
         apple_epoch() - Duration::from_secs_f64(-secs)
     };
 
-    let unix_secs = match system_time.duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(d) => d.as_secs(),
-        Err(_) => 0,
-    };
+    let unix_secs = system_time
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
 
     let s = format!("NSDate({})", unix_secs);
 
-    // ✅ Allocate string in GUEST memory
+    // Allocate guest C string
     let cstr = env.mem.alloc_and_write_cstr(s.as_bytes());
 
-    // NSString alloc
+    // IMPORTANT: bind to variable
+    let cstr_ptr = cstr.cast_const();
+
     let ns_str: id = msg_class![env; NSString alloc];
+    let ns_str: id = msg![env; ns_str initWithUTF8String:cstr_ptr];
 
-    // ✅ Pass guest pointer (ConstPtr<u8>)
-    let ns_str: id = msg![env; ns_str initWithUTF8String:cstr.cast_const()];
-
-    // Free temporary C string
     env.mem.free(cstr.cast());
 
     autorelease(env, ns_str)
