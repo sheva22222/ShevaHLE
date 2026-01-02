@@ -240,6 +240,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+@implementation CAAnimationGroup: NSObject
+
++ (id)animation {
+    let object = msg![env; this new];
+    autorelease(env, object)
+}
+
+@end
+
 @implementation CAPropertyAnimation: CAAnimation
 
 + (id)allocWithZone:(NSZonePtr)_zone {
