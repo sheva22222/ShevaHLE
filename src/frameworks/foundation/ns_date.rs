@@ -200,7 +200,6 @@ pub const CLASSES: ClassExports = objc_classes! {
                            timeZone:(id)_timeZone
                              locale:(id)_locale
 {
-    // Ignore format / timezone / locale (acceptable for early iPhone OS)
     let secs = env.objc.borrow::<NSDateHostObject>(this).time_interval;
 
     let system_time = if secs >= 0.0 {
@@ -214,11 +213,18 @@ pub const CLASSES: ClassExports = objc_classes! {
         Err(_) => 0,
     };
 
-    // Stable, debugger-friendly output
     let s = format!("NSDate({})", unix_secs);
+    let cstr = s.as_bytes();
 
-    let ns_str: id = msg![env; objc_classes::NSString alloc];
-    let ns_str: id = msg![env; ns_str initWithUTF8String:s.as_ptr()];
+    // Correct Objective-C class lookup
+    let cls: id = msg_class![env; NSString];
+
+    // alloc
+    let ns_str: id = msg![env; cls alloc];
+
+    // initWithUTF8String:
+    let ns_str: id = msg![env; ns_str initWithUTF8String:cstr.as_ptr()];
+
     autorelease(env, ns_str)
 }
 
