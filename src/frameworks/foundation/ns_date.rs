@@ -214,14 +214,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
 
     let s = format!("NSDate({})", unix_secs);
-    let bytes = s.as_bytes();
-    let ptr = bytes.as_ptr();
 
-    // NSString alloc (msg_class! REQUIRES a selector)
+    // ✅ Allocate string in GUEST memory
+    let cstr = env.mem.alloc_and_write_cstr(s.as_bytes());
+
+    // NSString alloc
     let ns_str: id = msg_class![env; NSString alloc];
 
-    // initWithUTF8String:
-    let ns_str: id = msg![env; ns_str initWithUTF8String:ptr];
+    // ✅ Pass guest pointer (ConstPtr<u8>)
+    let ns_str: id = msg![env; ns_str initWithUTF8String:cstr.cast_const()];
+
+    // Free temporary C string
+    env.mem.free(cstr.cast());
 
     autorelease(env, ns_str)
 }
