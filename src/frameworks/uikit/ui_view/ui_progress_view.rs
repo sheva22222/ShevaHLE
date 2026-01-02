@@ -4,10 +4,9 @@
  */
 
 use crate::objc::{
-    id, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
+    id, msg_super, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
     retain, release,
 };
-use crate::frameworks::uikit::ui_view::UIView;
 use crate::Environment;
 
 struct UIProgressViewHostObject {
