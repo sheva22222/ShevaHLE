@@ -95,32 +95,64 @@ fn fstat_inner(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> 
         return -1;
     };
 
-    // FIXME: This implementation is highly incomplete. fstat() returns a huge
-    // struct with many kinds of data in it. This code is assuming the caller
-    // only wants a small part of it.
+    let mut st = stat::default();
 
-    let mut stat = stat::default();
+    // Fake but consistent device/inode
+    st.st_dev = 1;
+    st.st_ino = fd as ino_t;
 
-    match file.file {
-        GuestFile::File(_) | GuestFile::IpaBundleFile(_) | GuestFile::ResourceFile(_) => {
-            stat.st_mode |= S_IFREG;
+    // Single-user, single-group environment
+    st.st_uid = 0;
+    st.st_gid = 0;
 
-            // TODO: use `std::fs::metadata()` instead
+    // Reasonable defaults
+    st.st_nlink = 1;
+    st.st_blksize = 4096;
 
-            // Obtain file size
-            stat.st_size = file.file.stream_len().unwrap().try_into().unwrap();
+    // Time: "now"
+    let now = env.now_timespec();
+    st.st_atimespec = now;
+    st.st_mtimespec = now;
+    st.st_ctimespec = now;
+    st.st_birthtimespec = now;
+
+    match &file.file {
+        GuestFile::File(_)
+        | GuestFile::IpaBundleFile(_)
+        | GuestFile::ResourceFile(_) => {
+            // Regular file
+            st.st_mode = S_IFREG | 0o644;
+
+            let size: off_t = file
+                .file
+                .stream_len()
+                .unwrap()
+                .try_into()
+                .unwrap();
+
+            st.st_size = size;
+
+            // POSIX blocks are 512 bytes
+            st.st_blocks = ((size as u64) + 511) / 512;
         }
+
         GuestFile::Directory => {
-            stat.st_mode |= S_IFDIR;
+            // Directory
+            st.st_mode = S_IFDIR | 0o755;
 
-            // TODO: st_size
+            st.st_size = 0;
+            st.st_blocks = 0;
+            st.st_nlink = 2; // "." and ".."
         }
-        _ => unimplemented!(),
+
+        _ => {
+            log!("fstat: unsupported GuestFile variant");
+            return -1;
+        }
     }
 
-    env.mem.write(buf, stat);
-
-    0 // success
+    env.mem.write(buf, st);
+    0
 }
 
 fn fstat(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<stat>) -> i32 {
