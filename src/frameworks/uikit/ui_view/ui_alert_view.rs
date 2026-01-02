@@ -22,7 +22,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         title
     );
     // UIKit returns the index of the new button
-    0
+    nil
 }
 
 - (id)buttonTitleAtIndex:(id)index {
@@ -39,7 +39,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         "TODO: [(UIAlertView*){:?} numberOfButtons]",
         this
     );
-    0
+    nil
 }
 
 - (id)cancelButtonIndex {
@@ -47,7 +47,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         "TODO: [(UIAlertView*){:?} cancelButtonIndex]",
         this
     );
-    0
+    nil
 }
 
 - (())setCancelButtonIndex:(id)index {
