@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::libc::errno::set_errno;
+use crate::libc::errno::{set_errno, EINVAL}
 use crate::libc::sysctl::SysInfoType::String;
 use crate::mem::{guest_size_of, ConstPtr, GuestUSize, MutPtr, MutVoidPtr, PAGE_SIZE};
 use crate::Environment;
@@ -64,6 +64,14 @@ enum SysInfoType {
     Int32(i32),
     Int64(i64),
 }
+
+// POSIX sysconf names (subset, Darwin-compatible)
+const _SC_PAGESIZE: i32 = 29;
+const _SC_PAGE_SIZE: i32 = _SC_PAGESIZE;
+const _SC_OPEN_MAX: i32 = 5;
+const _SC_NPROCESSORS_ONLN: i32 = 58;
+const _SC_PHYS_PAGES: i32 = 200;
+const _SC_AVPHYS_PAGES: i32 = 201;
 
 fn sysctl(
     env: &mut Environment,
@@ -188,7 +196,38 @@ where
     0 // success
 }
 
+fn sysconf(env: &mut Environment, name: i32) -> i64 {
+    // Clear errno
+    set_errno(env, 0);
+
+    match name {
+        _SC_PAGESIZE | _SC_PAGE_SIZE => PAGE_SIZE as i64,
+
+        _SC_OPEN_MAX => 256, // matches getdtablesize()
+
+        _SC_NPROCESSORS_ONLN => 1, // single-core emulation
+
+        // Physical memory in pages
+        _SC_PHYS_PAGES => {
+            // Match hw.memsize / pagesize
+            (121_634_816u64 / PAGE_SIZE as u64) as i64
+        }
+
+        _SC_AVPHYS_PAGES => {
+            // Same as phys pages (no memory pressure simulation)
+            (121_634_816u64 / PAGE_SIZE as u64) as i64
+        }
+
+        _ => {
+            // POSIX: return -1 and set errno on invalid name
+            set_errno(env, EINVAL);
+            -1
+        }
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sysctl(_, _, _, _, _, _)),
     export_c_func!(sysctlbyname(_, _, _, _, _)),
+    export_c_func!(sysconf(_)),
 ];
