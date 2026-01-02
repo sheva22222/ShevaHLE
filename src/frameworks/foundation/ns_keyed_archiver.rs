@@ -192,7 +192,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())encodeConditionalObject:(id)obj forKey:(id)key {
     // Behaves the same as encodeObject:forKey: for now
-    msg![env; this encodeObject:obj forKey:key];
+    () = msg![env; this encodeObject:obj forKey:key];
 }
 
 - (())encodeObject:(id)obj {
