@@ -4,22 +4,19 @@
  */
 
 use crate::objc::{
-    id, impl_HostObject_with_superclass, msg_super, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
+    id, msg_super, nil, objc_classes, ClassExports, HostObject, NSZonePtr,
     retain, release,
 };
 use crate::Environment;
 
-use crate::frameworks::uikit::ui_view::UIViewHostObject;
-use crate::objc::{id, impl_HostObject_with_superclass};
-
-pub struct UIProgressViewHostObject {
-    pub progress: f32,
-    pub progress_tint_color: id,
-    pub track_tint_color: id,
-    pub style: i32,
+struct UIProgressViewHostObject {
+    progress: f32,
+    progress_tint_color: id,
+    track_tint_color: id,
+    style: i32, // UIProgressViewStyle
 }
 
-impl_HostObject_with_superclass!(UIProgressViewHostObject);
+impl HostObject for UIProgressViewHostObject {}
 
 
 impl Default for UIProgressViewHostObject {
@@ -28,7 +25,7 @@ impl Default for UIProgressViewHostObject {
             progress: 0.0,
             progress_tint_color: nil,
             track_tint_color: nil,
-            style: 0,
+            style: 0, // UIProgressViewStyleDefault
         }
     }
 }
@@ -40,14 +37,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation UIProgressView : UIView
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host = UIProgressViewHostObject {
-        progress: 0.0,
-        progress_tint_color: nil,
-        track_tint_color: nil,
-        style: 0, // UIProgressViewStyleDefault
-    };
-
-    env.objc.alloc_object(this, Box::new(host), &mut env.mem)
+    let host = Box::<UIProgressViewHostObject>::default();
+    env.objc.alloc_object(this, host, &mut env.mem)
 }
 
 - (id)initWithProgressViewStyle:(i32)style {
