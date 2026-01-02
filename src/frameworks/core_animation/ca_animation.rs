@@ -100,6 +100,7 @@ impl_HostObject_with_superclass!(CAPropertyAnimationHostObject);
 struct CAKeyframeAnimationHostObject {
     superclass: CAAnimationHostObject,
     key_path: id, // NSString*
+    path: id,     // CGPathRef (toll-free bridged, treated as id)
 }
 impl_HostObject_with_superclass!(CAKeyframeAnimationHostObject);
 
@@ -299,12 +300,43 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let &CAKeyframeAnimationHostObject { key_path, .. } = env.objc.borrow(this);
+    let &CAKeyframeAnimationHostObject { key_path, path, .. } =
+        env.objc.borrow(this);
+
     if key_path != nil {
         release(env, key_path);
     }
+    if path != nil {
+        release(env, path);
+    }
 
     msg_super![env; this dealloc]
+}
+
+- (())setPath:(id)path { // CGPathRef
+    log_dbg!(
+        "[(CAKeyframeAnimation*){:?} setPath:{:?}]",
+        this,
+        path
+    );
+
+    let old_path = {
+        let host = env.objc.borrow_mut::<CAKeyframeAnimationHostObject>(this);
+        let old = host.path;
+        host.path = path;
+        old
+    };
+
+    if old_path != nil {
+        release(env, old_path);
+    }
+    if path != nil {
+        retain(env, path);
+    }
+}
+
+- (id)path {
+    env.objc.borrow::<CAKeyframeAnimationHostObject>(this).path
 }
 
 @end 
