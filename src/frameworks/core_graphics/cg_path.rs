@@ -167,10 +167,12 @@ pub fn CGPathCreateCopy(
         return path;
     }
 
+    // ⬇️ Step 1: cast immutable CGPathRef → mutable ObjC id
     let src = env
         .objc
-        .borrow::<CGPathHostObject>(path.cast());
+        .borrow::<CGPathHostObject>(path.cast_mut());
 
+    // ⬇️ Step 2: clone elements
     let host_obj = Box::new(CGPathHostObject {
         elements: src.elements.clone(),
     });
@@ -179,7 +181,11 @@ pub fn CGPathCreateCopy(
         .objc
         .get_known_class("_touchHLE_CGPath", &mut env.mem);
 
-    env.objc.alloc_object(class, host_obj, &mut env.mem).cast()
+    // ⬇️ Step 3: alloc gives mutable ObjC pointer
+    let new_obj = env.objc.alloc_object(class, host_obj, &mut env.mem);
+
+    // ⬇️ Step 4: return as immutable CGPathRef
+    new_obj.cast()
 }
 
 pub const FUNCTIONS: FunctionExports = &[
