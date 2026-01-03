@@ -22,9 +22,9 @@ fn iconv(
     inbytesleft: MutPtr<u32>,
     outbuf: MutPtr<MutPtr<u8>>,
     outbytesleft: MutPtr<u32>,
-) -> usize {
+) -> u32 {
     if cd.is_null() {
-        env.errno = EINVAL;
+        env.libc_state.errno = EINVAL;
         return u32::MAX;
     }
 
@@ -47,8 +47,8 @@ fn iconv(
     }
 
     if in_left > 0 {
-        env.libc_state.errno = E2BIG;
-        return usize::MAX;
+        env.errno = E2BIG;
+        return u32::MAX;
     }
 
     env.mem.write(inbuf, in_ptr);
