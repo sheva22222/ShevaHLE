@@ -21,6 +21,7 @@ pub mod dlfcn;
 pub mod dns_sd;
 pub mod errno;
 pub mod ifaddrs;
+pub mod iconv;
 pub mod keymgr;
 pub mod libkern;
 pub mod mach;
