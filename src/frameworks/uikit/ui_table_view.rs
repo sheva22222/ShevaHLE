@@ -3,9 +3,10 @@ use crate::objc::{
     ClassExports, HostObject, NSZonePtr,
 };
 use crate::frameworks::core_graphics::CGRect;
+use crate::frameworks::uikit::ui_view::UIViewHostObject;
 
 pub struct UITableViewHostObject {
-    superclass: super::UIViewHostObject,
+    superclass: UIViewHostObject,
     /// UITableViewDataSource
     pub data_source: id,
 
@@ -18,6 +19,16 @@ pub struct UITableViewHostObject {
 
 impl_HostObject_with_superclass!(UITableViewHostObject);
 impl HostObject for UITableViewHostObject {}
+
+impl UITableViewHostObject {
+    pub fn new(env: &mut Environment) -> Self {
+        Self {
+            superclass: UIViewHostObject::new(env),
+            data_source: nil,
+            delegate: nil,
+        }
+    }
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
