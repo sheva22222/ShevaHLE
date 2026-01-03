@@ -60,6 +60,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         dns_sd::FUNCTIONS,
         errno::FUNCTIONS,
         ifaddrs::FUNCTIONS,
+        iconv::FUNCTIONS,
         keymgr::FUNCTIONS,
         libkern::os_atomic::FUNCTIONS,
         mach::host::FUNCTIONS,
