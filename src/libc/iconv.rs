@@ -1,8 +1,7 @@
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::libc::errno::set_errno;
+use crate::libc::errno::{EINVAL, E2BIG};
 use crate::mem::{ConstPtr, MutPtr};
 use crate::Environment;
-use std::ops::Add;
 
 type iconv_t = MutPtr<()>;
 
@@ -22,16 +21,18 @@ fn iconv(
     inbytesleft: MutPtr<u32>,
     outbuf: MutPtr<MutPtr<u8>>,
     outbytesleft: MutPtr<u32>,
-) -> u32 {
+) -> usize {
     if cd.is_null() {
-        env.libc_state.set_errno(crate::libc::errno::EINVAL);
-        return u32::MAX; // (size_t)-1
+        env.errno = EINVAL;
+        return u32::MAX;
     }
 
     let mut in_ptr = env.mem.read(inbuf);
     let mut out_ptr = env.mem.read(outbuf);
     let mut in_left = env.mem.read(inbytesleft);
     let mut out_left = env.mem.read(outbytesleft);
+
+    let mut converted = 0usize;
 
     while in_left > 0 && out_left > 0 {
         let byte = env.mem.read(in_ptr);
@@ -41,11 +42,12 @@ fn iconv(
         out_ptr = out_ptr.add(1);
         in_left -= 1;
         out_left -= 1;
+        converted += 1;
     }
 
     if in_left > 0 {
-        env.libc_state.set_errno(crate::libc::errno::E2BIG);
-        return u32::MAX;
+        env.errno = E2BIG;
+        return usize::MAX;
     }
 
     env.mem.write(inbuf, in_ptr);
@@ -55,7 +57,6 @@ fn iconv(
 
     0
 }
-
 
 fn iconv_close(_env: &mut Environment, _cd: iconv_t) -> i32 {
     0
