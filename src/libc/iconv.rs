@@ -2,6 +2,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::{EINVAL, E2BIG};
 use crate::mem::{ConstPtr, MutPtr};
 use crate::Environment;
+use std::ops::Add;
 
 type iconv_t = MutPtr<()>;
 
@@ -46,7 +47,7 @@ fn iconv(
     }
 
     if in_left > 0 {
-        env.errno = E2BIG;
+        env.libc_state.errno = E2BIG;
         return usize::MAX;
     }
 
