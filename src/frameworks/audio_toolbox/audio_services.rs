@@ -38,6 +38,27 @@ fn AudioServicesGetProperty(
     }
 }
 
+fn AudioServicesSetProperty(
+    _env: &mut Environment,
+    in_property_id: AudioServicesPropertyID,
+    _in_specifier_size: u32,
+    _in_specifier: crate::mem::ConstVoidPtr,
+    _in_property_data_size: u32,
+    _in_property_data: crate::mem::ConstVoidPtr,
+) -> OSStatus {
+    // No writable AudioServices properties are currently supported.
+    // Accept known-bad / undocumented property IDs gracefully.
+    if in_property_id == 0xfff {
+        kAudioServicesUnsupportedPropertyError
+    } else {
+        log!(
+            "AudioServicesSetProperty: unsupported property id {:#x}, ignoring",
+            in_property_id
+        );
+        0 // noErr — many callers do not check failures here
+    }
+}
+
 fn AudioServicesPlaySystemSound(_env: &mut Environment, in_system_sound_id: SystemSoundID) {
     // assert_eq!(in_system_sound_id, kSystemSoundID_Vibrate);
     log!("TODO: vibration (AudioServicesPlaySystemSound)");
@@ -91,6 +112,7 @@ fn AudioServicesAddSystemSoundCompletion(
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioServicesGetProperty(_, _, _, _, _)),
+    export_c_func!(AudioServicesSetProperty(_, _, _, _, _)),
     export_c_func!(AudioServicesPlaySystemSound(_)),
     export_c_func!(AudioServicesPlayAlertSound(_)),
     export_c_func!(AudioServicesCreateSystemSoundID(_, _)),
