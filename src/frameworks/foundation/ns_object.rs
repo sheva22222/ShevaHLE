@@ -143,9 +143,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let class: Class = msg![env; this class];
 
-    if let Some(imp) = env.objc.class_get_method_imp(class, sel) {
-        // imp: &Ptr<u8, false>
-        MutVoidPtr::from_ptr(imp.cast())
+    if env.objc.class_has_method(class, sel) {
+        // Runtime does not expose IMPs — return non-null sentinel not supported
+        MutVoidPtr::null()
     } else {
         MutVoidPtr::null()
     }
