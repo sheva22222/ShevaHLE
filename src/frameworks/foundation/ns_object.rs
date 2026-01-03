@@ -145,7 +145,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if let Some(imp) = env.objc.class_get_method_signature(class, sel) {
         // imp: &Ptr<u8, false>  →  MutVoidPtr
-        MutVoidPtr::from_ptr(imp.cast())
+        MutVoidPtr::from(imp.cast())
     } else {
         MutVoidPtr::null()
     }
