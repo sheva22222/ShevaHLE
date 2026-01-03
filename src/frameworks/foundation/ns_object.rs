@@ -143,7 +143,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     let class: Class = msg![env; this class];
 
-    if let Some(imp) = env.objc.class_get_method(class, sel) {
+    if let Some(imp) = env.objc.class_get_method_signature(class, sel) {
         imp
     } else {
         MutVoidPtr::null()
