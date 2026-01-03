@@ -21,6 +21,7 @@ pub mod dlfcn;
 pub mod dns_sd;
 pub mod errno;
 pub mod ifaddrs;
+pub mod iconv;
 pub mod keymgr;
 pub mod libkern;
 pub mod mach;
@@ -59,6 +60,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         dns_sd::FUNCTIONS,
         errno::FUNCTIONS,
         ifaddrs::FUNCTIONS,
+        iconv::FUNCTIONS,
         keymgr::FUNCTIONS,
         libkern::os_atomic::FUNCTIONS,
         mach::host::FUNCTIONS,

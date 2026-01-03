@@ -8,7 +8,7 @@
 use super::{close, off_t, open_direct, FileDescriptor};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::{FsError, GuestFile, GuestPath};
-use crate::libc::errno::{set_errno, EBADF, EEXIST, ENOENT};
+use crate::libc::errno::{set_errno, EBADF, EEXIST, EINVAL, ENOENT};
 use crate::libc::time::timespec;
 use crate::mem::{ConstPtr, MutPtr, SafeRead};
 use crate::Environment;
@@ -60,28 +60,35 @@ pub struct stat {
 unsafe impl SafeRead for stat {}
 
 fn mkdir(env: &mut Environment, path: ConstPtr<u8>, mode: mode_t) -> i32 {
-    // TODO: handle errno properly
+    // Clear errno on entry
     set_errno(env, 0);
 
-    let path_str = env.mem.cstr_at_utf8(path).unwrap();
-    // TODO: respect the mode
-    match env.fs.create_dir(GuestPath::new(&path_str)) {
-        Ok(()) => {
-            log_dbg!("mkdir({:?} {:?}, {:#x}) => 0", path, path_str, mode);
-            0
+    // Null pointer check (POSIX: EFAULT, but EINVAL is acceptable here)
+    if path.is_null() {
+        set_errno(env, EINVAL);
+        return -1;
+    }
+
+    let path_str = match env.mem.cstr_at_utf8(path) {
+        Ok(p) => p,
+        Err(_) => {
+            set_errno(env, EINVAL);
+            return -1;
         }
+    };
+
+    log_dbg!("mkdir({:?} {:?}, {:#x})", path, path_str, mode);
+
+    match env.fs.create_dir(GuestPath::new(&path_str)) {
+        Ok(()) => 0,
+
         Err(err) => {
-            log!(
-                "Warning: mkdir({:?} {:?}, {:#x}) failed with {:?}, returning -1",
-                path,
-                path_str,
-                mode,
-                err
-            );
             match err {
                 FsError::AlreadyExist => set_errno(env, EEXIST),
                 FsError::NonexistentParentDir => set_errno(env, ENOENT),
-                _ => unimplemented!(),
+
+                // Catch-all: map unknown FS failures safely
+                _ => set_errno(env, EINVAL),
             }
             -1
         }

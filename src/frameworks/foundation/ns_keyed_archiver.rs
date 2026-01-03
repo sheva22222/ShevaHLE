@@ -133,7 +133,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
-- (())encodeInteger:(isize)value forKey:(id)key {
+- (())encodeInteger:(i32)value forKey:(id)key {
     log!(
         "TODO: [(NSKeyedArchiver*){:?} encodeInteger:{} forKey:{:?}]",
         this,
@@ -192,7 +192,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())encodeConditionalObject:(id)obj forKey:(id)key {
     // Behaves the same as encodeObject:forKey: for now
-    msg![env; this encodeObject:obj forKey:key];
+    () = msg![env; this encodeObject:obj forKey:key];
 }
 
 - (())encodeObject:(id)obj {

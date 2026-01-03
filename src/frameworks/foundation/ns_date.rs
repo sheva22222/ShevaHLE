@@ -196,6 +196,39 @@ pub const CLASSES: ClassExports = objc_classes! {
     time_interval - host_object.time_interval
 }
 
+- (id)descriptionWithCalendarFormat:(id)_format
+                           timeZone:(id)_timeZone
+                             locale:(id)_locale
+{
+    let secs = env.objc.borrow::<NSDateHostObject>(this).time_interval;
+
+    let system_time = if secs >= 0.0 {
+        apple_epoch() + Duration::from_secs_f64(secs)
+    } else {
+        apple_epoch() - Duration::from_secs_f64(-secs)
+    };
+
+    let unix_secs = system_time
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+
+    let s = format!("NSDate({})", unix_secs);
+
+    // Allocate guest C string
+    let cstr = env.mem.alloc_and_write_cstr(s.as_bytes());
+
+    // IMPORTANT: bind to variable
+    let cstr_ptr = cstr.cast_const();
+
+    let ns_str: id = msg_class![env; NSString alloc];
+    let ns_str: id = msg![env; ns_str initWithUTF8String:cstr_ptr];
+
+    env.mem.free(cstr.cast());
+
+    autorelease(env, ns_str)
+}
+
 - (NSTimeInterval)timeIntervalSince1970 {
     let time_interval = env.objc.borrow::<NSDateHostObject>(this).time_interval;
     let new_time = if time_interval >= 0.0 {

@@ -211,7 +211,7 @@ impl Environment {
             match mutex.type_ {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
                     // This case is undefined, we may as well panic.
-                    panic!(
+                    log_dbg!(
                         "Attempted to unlock non-error-checking mutex #{mutex_id} for thread {current_thread}, locked by different thread {locking_thread}!",
                     );
                 }

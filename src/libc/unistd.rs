@@ -197,6 +197,12 @@ fn fork(env: &mut Environment) -> pid_t {
     -1
 }
 
+fn getdtablesize(_env: &mut Environment) -> i32 {
+    // Reasonable fixed limit for a fake single-process environment.
+    // macOS typically returns 256 or higher.
+    256
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sleep(_)),
     export_c_func!(usleep(_)),
@@ -213,5 +219,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(get_end()),
     export_c_func!(pipe(_)),
     export_c_func!(fork()),
+    export_c_func!(getdtablesize()),
 ];
 

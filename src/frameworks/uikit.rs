@@ -26,6 +26,7 @@ pub mod ui_image_picker_controller;
 pub mod ui_nib;
 pub mod ui_responder;
 pub mod ui_screen;
+pub mod ui_table_view;
 pub mod ui_touch;
 pub mod ui_view;
 pub mod ui_view_controller;
@@ -46,10 +47,12 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ui_nib::CLASSES,
         ui_responder::CLASSES,
         ui_screen::CLASSES,
+        ui_table_view::CLASSES,
         ui_touch::CLASSES,
         ui_view::CLASSES,
         ui_view::ui_alert_view::CLASSES,
         ui_view::ui_control::CLASSES,
+        ui_view::ui_control::ui_bar_button_item::CLASSES,
         ui_view::ui_control::ui_button::CLASSES,
         ui_view::ui_control::ui_segmented_control::CLASSES,
         ui_view::ui_control::ui_slider::CLASSES,
@@ -58,8 +61,10 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ui_view::ui_image_view::CLASSES,
         ui_view::ui_label::CLASSES,
         ui_view::ui_picker_view::CLASSES,
+        ui_view::ui_progress_view::CLASSES,
         ui_view::ui_scroll_view::CLASSES,
         ui_view::ui_scroll_view::ui_text_view::CLASSES,
+        ui_view::ui_toolbar::CLASSES,
         ui_view::ui_web_view::CLASSES,
         ui_view::ui_window::CLASSES,
         ui_view_controller::CLASSES,
