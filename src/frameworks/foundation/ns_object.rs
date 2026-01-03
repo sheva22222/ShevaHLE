@@ -136,6 +136,48 @@ pub const CLASSES: ClassExports = objc_classes! {
     this == other
 }
 
+- (MutVoidPtr)methodForSelector:(SEL)sel {
+    if sel.is_null() {
+        return MutVoidPtr::null();
+    }
+
+    let class: Class = msg![env; this class];
+
+    if let Some(imp) = env.objc.class_get_method_imp(class, sel) {
+        imp
+    } else {
+        MutVoidPtr::null()
+    }
+}
+
+- (())willChangeValueForKey:(id)key { // NSString*
+    if key == nil {
+        return;
+    }
+
+    log_dbg!(
+        "willChangeValueForKey:{} on {:?}",
+        to_rust_string(env, key),
+        this
+    );
+
+    // No-op: full KVO dependency graph not implemented
+}
+
+- (())didChangeValueForKey:(id)key { // NSString*
+    if key == nil {
+        return;
+    }
+
+    log_dbg!(
+        "didChangeValueForKey:{} on {:?}",
+        to_rust_string(env, key),
+        this
+    );
+
+    // No-op
+}
+
 // TODO: description and debugDescription (both the instance and class method).
 // This is not hard to add, but before adding a fallback implementation of it,
 // we should make sure all the Foundation classes' overrides of it are there,
