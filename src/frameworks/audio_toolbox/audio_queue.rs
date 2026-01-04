@@ -95,6 +95,17 @@ pub struct AudioQueueBuffer {
 }
 unsafe impl SafeRead for AudioQueueBuffer {}
 
+#[repr(C)]
+pub struct AudioTimeStamp {
+    pub sample_time: f64,
+    pub host_time: u64,
+    pub rate_scalar: f64,
+    pub word_clock_time: u64,
+    pub smpte_time: [u8; 8],
+    pub flags: u32,
+    pub reserved: u32,
+}
+
 pub type AudioQueueBufferRef = MutPtr<AudioQueueBuffer>;
 
 /// (*void)(void *in_user_data, AudioQueueRef in_aq, AudioQueueBufferRef in_buf)
@@ -1081,6 +1092,104 @@ pub fn AudioQueueDispose(
     0 // success
 }
 
+pub fn AudioQueueGetCurrentTime(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    _in_timeline: ConstVoidPtr,
+    out_time: MutPtr<AudioTimeStamp>,
+    out_discontinuity: MutPtr<u32>,
+) -> OSStatus {
+    return_if_null!(in_aq);
+
+    env.mem.write(out_time, AudioTimeStamp {
+        sample_time: 0.0, // TODO: derive from OpenAL AL_SEC_OFFSET
+        host_time: 0,
+        rate_scalar: 1.0,
+        word_clock_time: 0,
+        smpte_time: [0; 8],
+        flags: 0,
+        reserved: 0,
+    });
+
+    if !out_discontinuity.is_null() {
+        env.mem.write(out_discontinuity, 0);
+    }
+
+    0
+}
+
+pub fn AudioQueueGetPropertyInfo(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_property_id: AudioQueuePropertyID,
+    out_data_size: MutPtr<u32>,
+    out_writable: MutPtr<u32>,
+) -> OSStatus {
+    return_if_null!(in_aq);
+
+    let size = property_size(in_property_id);
+    env.mem.write(out_data_size, size);
+    env.mem.write(out_writable, 0); // properties are read-only for now
+
+    0
+}
+
+pub fn AudioQueueSetProperty(
+    _env: &mut Environment,
+    _in_aq: AudioQueueRef,
+    in_property_id: AudioQueuePropertyID,
+    _in_data: ConstVoidPtr,
+    _in_data_size: u32,
+) -> OSStatus {
+    match in_property_id {
+        kAudioQueueProperty_IsRunning => {
+            // read-only
+            kAudioQueueErr_InvalidPropertySize
+        }
+        _ => {
+            log!("Unimplemented AudioQueueSetProperty {}", debug_fourcc(in_property_id));
+            0
+        }
+    }
+}
+
+pub fn AudioQueueSetOfflineRenderFormat(
+    _env: &mut Environment,
+    _in_aq: AudioQueueRef,
+    _in_format: ConstPtr<AudioStreamBasicDescription>,
+    _in_layout: ConstVoidPtr,
+) -> OSStatus {
+    0
+}
+
+pub fn AudioQueueOfflineRender(
+    _env: &mut Environment,
+    _in_aq: AudioQueueRef,
+    _in_timestamp: ConstVoidPtr,
+    _io_buffer: MutPtr<AudioQueueBuffer>,
+    _in_number_frames: u32,
+) -> OSStatus {
+    // Not supported
+    -50 // paramErr
+}
+
+pub fn AudioQueueDeviceGetCurrentTime(
+    _env: &mut Environment,
+    _in_aq: AudioQueueRef,
+    _out_time: MutPtr<AudioTimeStamp>,
+) -> OSStatus {
+    -50
+}
+
+pub fn AudioQueueDeviceTranslateTime(
+    _env: &mut Environment,
+    _in_aq: AudioQueueRef,
+    _in_time: ConstVoidPtr,
+    _out_time: MutPtr<AudioTimeStamp>,
+) -> OSStatus {
+    -50
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
     export_c_func!(AudioQueueGetParameter(_, _, _)),
@@ -1100,4 +1209,11 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueFlush(_)),
     export_c_func!(AudioQueueFreeBuffer(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
+    export_c_func!(AudioQueueGetCurrentTime(_, _, _, _, _)),
+    export_c_func!(AudioQueueGetPropertyInfo(_, _, _, _, _)),
+    export_c_func!(AudioQueueSetProperty(_, _, _, _, _)),
+    export_c_func!(AudioQueueSetOfflineRenderFormat(_, _, _, _)),
+    export_c_func!(AudioQueueOfflineRender(_, _, _, _, _)),
+    export_c_func!(AudioQueueDeviceGetCurrentTime(_, _)),
+    export_c_func!(AudioQueueDeviceTranslateTime(_, _, _, _)),
 ];
