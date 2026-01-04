@@ -1140,7 +1140,7 @@ pub fn AudioQueueGetPropertyInfo(
 pub fn AudioQueueSetProperty(
     _env: &mut Environment,
     _in_aq: AudioQueueRef,
-    _in_property_id: AudioQueuePropertyID,
+    in_property_id: AudioQueuePropertyID,
     _in_data: ConstVoidPtr,
     _in_data_size: u32,
 ) -> OSStatus {
