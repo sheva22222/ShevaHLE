@@ -3,6 +3,7 @@
  * License, v. 2.0.
  */
 
+use crate::frameworks::foundation::NSInteger;
 use crate::objc::{
     id, nil, msg, objc_classes, retain, release,
     ClassExports, HostObject, NSZonePtr,
@@ -45,48 +46,61 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (id)initWithTitle:(id)title
            delegate:(id)delegate
   cancelButtonTitle:(id)cancel
- destructiveButtonTitle:(id)destructive
-  otherButtonTitles:(id)other
+destructiveButtonTitle:(id)destructive
+  otherButtonTitles:(id)_others
 {
-    let this: id = msg![env; this init];
+    // retain first (NO host borrow yet)
+    let title = if title != nil { retain(env, title) } else { nil };
+    let delegate = if delegate != nil { retain(env, delegate) } else { nil };
+    let cancel = if cancel != nil { retain(env, cancel) } else { nil };
+    let destructive = if destructive != nil { retain(env, destructive) } else { nil };
 
-    let host = env.objc.borrow_mut::<UIActionSheetHostObject>(this);
+    let mut host = env.objc.borrow_mut::<UIActionSheetHostObject>(this);
 
-    if title != nil {
-        host.title = retain(env, title);
-    }
-
-    if delegate != nil {
-        host.delegate = retain(env, delegate);
-    }
+    host.title = title;
+    host.delegate = delegate;
+    host.buttons.clear();
+    host.cancel_button_index = -1;
+    host.destructive_button_index = -1;
 
     if destructive != nil {
         host.destructive_button_index = host.buttons.len() as i32;
-        host.buttons.push(retain(env, destructive));
+        host.buttons.push(destructive);
     }
 
     if cancel != nil {
         host.cancel_button_index = host.buttons.len() as i32;
-        host.buttons.push(retain(env, cancel));
+        host.buttons.push(cancel);
     }
-
-    // NOTE: `otherButtonTitles` is variadic in ObjC.
-    // touchHLE cannot support varargs here, so we ignore it safely.
 
     this
 }
 
-- (i32)addButtonWithTitle:(id)title {
-    let host = env.objc.borrow_mut::<UIActionSheetHostObject>(this);
-    let index = host.buttons.len() as i32;
-    if title != nil {
-        host.buttons.push(retain(env, title));
+- (NSInteger)addButtonWithTitle:(id)title {
+    if title == nil {
+        return -1;
     }
+
+    let title = retain(env, title);
+
+    let mut host = env.objc.borrow_mut::<UIActionSheetHostObject>(this);
+    let index = host.buttons.len() as i32;
+    host.buttons.push(title);
     index
 }
 
+- (id)buttonTitleAtIndex:(NSInteger)index {
+    let host = env.objc.borrow::<UIActionSheetHostObject>(this);
+    host.buttons.get(index as usize).copied().unwrap_or(nil)
+}
+
+- (NSInteger)numberOfButtons {
+    let host = env.objc.borrow::<UIActionSheetHostObject>(this);
+    host.buttons.len() as i32
+}
+
 - (())showInView:(id)_view {
-    log!("UIActionSheet showInView: (stub, no UI shown)");
+    log!("UIActionSheet showInView: (stub)");
 }
 
 - (())dismissWithClickedButtonIndex:(i32)index animated:(bool)_animated {
@@ -97,21 +111,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let host = env.objc.borrow::<UIActionSheetHostObject>(this);
+    // extract only
+    let (title, delegate, buttons) = {
+        let host = env.objc.borrow::<UIActionSheetHostObject>(this);
+        (host.title, host.delegate, host.buttons.clone())
+    };
 
-    if host.title != nil {
-        release(env, host.title);
+    // release AFTER borrow ends
+    if title != nil {
+        release(env, title);
+    }
+    if delegate != nil {
+        release(env, delegate);
+    }
+    for b in buttons {
+        release(env, b);
     }
 
-    if host.delegate != nil {
-        release(env, host.delegate);
-    }
-
-    for button in host.buttons.iter() {
-        release(env, *button);
-    }
-
-    env.objc.dealloc_object(this, &mut env.mem)
+    env.objc.dealloc_object(this, &mut env.mem);
 }
 
 @end
