@@ -144,6 +144,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; text_label setTextAlignment:text_alignment];
 }
 
+- (())setContentVerticalAlignment:(bool)vertical {
+    log!("TODO: setContentVerticalAlignment:{}", vertical);
+}
+
+- (())setReversesTitleShadowWhenHighlighted:(bool)shadow {
+    log!("TODO: setReversesTitleShadowWhenHighlighted:{}", shadow);
+}
+
+- (())setContentHorizontalAlignment:(bool)horizontal {
+    log!("TODO: setContentHorizontalAlignment:{}", horizontal);
+}
+
 - (())setFont:(id)new_font { // UIFont*
     let text_label = env.objc.borrow_mut::<UITextFieldHostObject>(this).text_label;
     msg![env; text_label setFont:new_font]
