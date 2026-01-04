@@ -375,6 +375,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<CABasicAnimationHostObject>(this).to_value
 }
 
+    // Cause of Death expects to be able to write to "animation-name"
+// Currently we have no way to either declare an ivar or declare a setter with a non-identifier name
+- (())setValue:(id)value
+       forKey:(id)key { // NSString*
+    let key_string = to_rust_string(env, key); // TODO: avoid copy?
+    if key_string == "animation-name" {
+        log!("Ignoring set to \"animation-name\" on CABasicAnimation({:?})!", this);
+        return;
+    }
+    msg_super![env; this setValue:value forKey:key]
+}
+
+- (()) setBeginTime: (f32) beginTime {
+    log!("Ignoring setBeginTime: {}", beginTime);
+    // Apple docs does not mention beginTime in any
+    // class of CABasicAnimation but Cause of Death calls it?
+}
+    
 - (())setByValue:(id)value {
     log_dbg!("[(CABasicAnimation*){:?} setByValue:{:?}]", this, value);
     env.objc.borrow_mut::<CABasicAnimationHostObject>(this).by_value = value;
