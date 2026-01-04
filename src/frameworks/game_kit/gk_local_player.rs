@@ -35,11 +35,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())authenticateWithCompletionHandler:(id)_handler {
     log!("GKLocalPlayer authenticateWithCompletionHandler: (stub)");
-
-    if _handler != nil {
-        // Call block with 1 argument: NSError * (nil)
-        env.call_block(_handler, (nil,));
-    }
+    nil
 }
 
 
