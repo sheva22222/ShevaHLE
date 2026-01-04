@@ -555,6 +555,18 @@ fn hypotf(env: &mut Environment, x: f32, y: f32) -> f32 {
     x.hypot(y)
 }
 
+fn rint(_env: &mut Environment, x: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+    x.round()
+}
+
+fn rintf(_env: &mut Environment, x: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+    x.round()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(abs(_)),
     export_c_func!(fabs(_)),
@@ -661,4 +673,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sqlite3_bind_parameter_index(_, _)),
     export_c_func!(hypot(_, _)),
     export_c_func!(hypotf(_, _)),
+    export_c_func!(rint(_)),
+    export_c_func!(rintf(_)),
 ];
