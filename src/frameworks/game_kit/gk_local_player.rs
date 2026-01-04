@@ -33,7 +33,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     false
 }
 
-- (())authenticateWithCompletionHandler:(id)_handler {
+- (id)authenticateWithCompletionHandler:(id)_handler {
     log!("GKLocalPlayer authenticateWithCompletionHandler: (stub)");
     nil
 }
