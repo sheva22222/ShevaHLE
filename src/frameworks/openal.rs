@@ -113,12 +113,22 @@ fn alcGetString(
     device: MutPtr<GuestALCdevice>,
     param: ALenum,
 ) -> ConstPtr<u8> {
-    assert!(device.is_null());
+    let device_ptr = if device.is_null() {
+        std::ptr::null_mut()
+    } else {
+        // Guest device objects are not yet supported; treat as NULL
+        std::ptr::null_mut()
+    };
 
-    let res = unsafe { al::alcGetString(std::ptr::null_mut(), param) };
+    let res = unsafe { al::alcGetString(device_ptr, param) };
+    if res.is_null() {
+        return ConstPtr::null();
+    }
+
     let s = unsafe { CStr::from_ptr(res) };
     log_dbg!("alcGetString({:?}) => {:?}", param, s);
     log!("TODO: alcGetString({}) leaks memory", param);
+
     env.mem.alloc_and_write_cstr(s.to_bytes()).cast_const()
 }
 
