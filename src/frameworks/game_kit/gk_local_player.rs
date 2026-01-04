@@ -52,15 +52,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)playerID {
-    env.alloc_nsstring("local_player")
+    nil
 }
 
 - (id)alias {
-    env.alloc_nsstring("Player")
+    nil
 }
 
 - (id)displayName {
-    env.alloc_nsstring("Player")
+    nil
 }
 
 @end
