@@ -40,7 +40,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // If a block is provided, call it with nil error
     if _handler != nil {
         // handler(nil)
-        msg![env; _handler callWithError:nil];
+        let _: () = msg![env; _handler callWithError:nil];
     }
 }
 
