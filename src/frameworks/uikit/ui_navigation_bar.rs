@@ -47,16 +47,25 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setDelegate:(id)delegate {
-    let host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
-
-    if host.delegate != nil {
-        release(env, host.delegate);
-    }
-    host.delegate = if delegate != nil {
+    // retain first
+    let new_delegate = if delegate != nil {
         retain(env, delegate)
     } else {
         nil
     };
+
+    // swap inside borrow
+    let old_delegate = {
+        let mut host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
+        let old = host.delegate;
+        host.delegate = new_delegate;
+        old
+    };
+
+    // release AFTER borrow ends
+    if old_delegate != nil {
+        release(env, old_delegate);
+    }
 }
 
 - (id)delegate {
@@ -65,10 +74,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())pushNavigationItem:(id)item animated:(bool)_animated {
-    let host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
-    if item != nil {
-        host.items.push(retain(env, item));
+    if item == nil {
+        return;
     }
+
+    let item = retain(env, item);
+
+    let mut host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
+    host.items.push(item);
 }
 
 - (id)popNavigationItemAnimated:(bool)_animated {
@@ -102,27 +115,41 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setBarTintColor:(id)color {
-    let host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
-    if host.bar_tint_color != nil {
-        release(env, host.bar_tint_color);
-    }
-    host.bar_tint_color = if color != nil {
+    let new_color = if color != nil {
         retain(env, color)
     } else {
         nil
     };
+
+    let old_color = {
+        let mut host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
+        let old = host.bar_tint_color;
+        host.bar_tint_color = new_color;
+        old
+    };
+
+    if old_color != nil {
+        release(env, old_color);
+    }
 }
 
 - (())setTintColor:(id)color {
-    let host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
-    if host.tint_color != nil {
-        release(env, host.tint_color);
-    }
-    host.tint_color = if color != nil {
+    let new_color = if color != nil {
         retain(env, color)
     } else {
         nil
     };
+
+    let old_color = {
+        let mut host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
+        let old = host.tint_color;
+        host.tint_color = new_color;
+        old
+    };
+
+    if old_color != nil {
+        release(env, old_color);
+    }
 }
 
 - (())setTranslucent:(bool)translucent {
@@ -136,22 +163,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let host = env.objc.borrow::<UINavigationBarHostObject>(this);
+    let (delegate, bar_tint_color, tint_color, items) = {
+        let host = env.objc.borrow::<UINavigationBarHostObject>(this);
+        (
+            host.delegate,
+            host.bar_tint_color,
+            host.tint_color,
+            host.items.clone(),
+        )
+    };
 
-    if host.delegate != nil {
-        release(env, host.delegate);
+    if delegate != nil {
+        release(env, delegate);
     }
-    if host.bar_tint_color != nil {
-        release(env, host.bar_tint_color);
+    if bar_tint_color != nil {
+        release(env, bar_tint_color);
     }
-    if host.tint_color != nil {
-        release(env, host.tint_color);
+    if tint_color != nil {
+        release(env, tint_color);
     }
-    for item in host.items.iter() {
-        release(env, *item);
+    for item in items {
+        release(env, item);
     }
 
-    env.objc.dealloc_object(this, &mut env.mem)
+    env.objc.dealloc_object(this, &mut env.mem);
 }
 
 @end
