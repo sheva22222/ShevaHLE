@@ -105,7 +105,6 @@ pub struct AudioTimeStamp {
     pub flags: u32,
     pub reserved: u32,
 }
-
 unsafe impl SafeRead for AudioTimeStamp {}
 
 pub type AudioQueueBufferRef = MutPtr<AudioQueueBuffer>;
@@ -1097,22 +1096,25 @@ pub fn AudioQueueDispose(
 pub fn AudioQueueGetCurrentTime(
     env: &mut Environment,
     in_aq: AudioQueueRef,
-    in_timeline: MutVoidPtr,          // MUST exist
+    _in_timeline: MutVoidPtr,
     out_time: MutPtr<AudioTimeStamp>,
     out_discontinuity: MutPtr<u32>,
-    _reserved: u32,                   // MUST exist
+    _reserved: u32,
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    env.mem.write(out_time, AudioTimeStamp {
-        sample_time: 0.0, // TODO: derive from OpenAL AL_SEC_OFFSET
-        host_time: 0,
-        rate_scalar: 1.0,
-        word_clock_time: 0,
-        smpte_time: [0; 8],
-        flags: 0,
-        reserved: 0,
-    });
+    env.mem.write(
+        out_time,
+        AudioTimeStamp {
+            sample_time: 0.0,
+            host_time: 0,
+            rate_scalar: 1.0,
+            word_clock_time: 0,
+            smpte_time: [0; 8],
+            flags: 0,
+            reserved: 0,
+        },
+    );
 
     if !out_discontinuity.is_null() {
         env.mem.write(out_discontinuity, 0);
@@ -1122,7 +1124,7 @@ pub fn AudioQueueGetCurrentTime(
 }
 
 pub fn AudioQueueGetPropertyInfo(
-    env: &mut Environment,
+    _env: &mut Environment,
     in_aq: AudioQueueRef,
     in_property_id: AudioQueuePropertyID,
     out_data_size: MutPtr<u32>,
@@ -1132,7 +1134,7 @@ pub fn AudioQueueGetPropertyInfo(
 
     let size = property_size(in_property_id);
     env.mem.write(out_data_size, size);
-    env.mem.write(out_writable, 0); // properties are read-only for now
+    env.mem.write(out_writable, 0);
 
     0
 }
@@ -1145,14 +1147,8 @@ pub fn AudioQueueSetProperty(
     _in_data_size: u32,
 ) -> OSStatus {
     match in_property_id {
-        kAudioQueueProperty_IsRunning => {
-            // read-only
-            kAudioQueueErr_InvalidPropertySize
-        }
-        _ => {
-            log!("Unimplemented AudioQueueSetProperty {}", debug_fourcc(in_property_id));
-            0
-        }
+        kAudioQueueProperty_IsRunning => kAudioQueueErr_InvalidPropertySize,
+        _ => 0,
     }
 }
 
@@ -1172,7 +1168,6 @@ pub fn AudioQueueOfflineRender(
     _io_buffer: MutPtr<AudioQueueBuffer>,
     _in_number_frames: u32,
 ) -> OSStatus {
-    // Not supported
     -50 // paramErr
 }
 
