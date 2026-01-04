@@ -95,7 +95,7 @@ pub struct AudioQueueBuffer {
 }
 unsafe impl SafeRead for AudioQueueBuffer {}
 
-#[repr(C)]
+#[repr(C, packed)]
 pub struct AudioTimeStamp {
     pub sample_time: f64,
     pub host_time: u64,
@@ -105,6 +105,8 @@ pub struct AudioTimeStamp {
     pub flags: u32,
     pub reserved: u32,
 }
+
+unsafe impl SafeRead for AudioTimeStamp {}
 
 pub type AudioQueueBufferRef = MutPtr<AudioQueueBuffer>;
 
@@ -1095,9 +1097,10 @@ pub fn AudioQueueDispose(
 pub fn AudioQueueGetCurrentTime(
     env: &mut Environment,
     in_aq: AudioQueueRef,
-    _in_timeline: ConstVoidPtr,
+    in_timeline: MutVoidPtr,          // MUST exist
     out_time: MutPtr<AudioTimeStamp>,
     out_discontinuity: MutPtr<u32>,
+    _reserved: u32,                   // MUST exist
 ) -> OSStatus {
     return_if_null!(in_aq);
 
@@ -1137,7 +1140,7 @@ pub fn AudioQueueGetPropertyInfo(
 pub fn AudioQueueSetProperty(
     _env: &mut Environment,
     _in_aq: AudioQueueRef,
-    in_property_id: AudioQueuePropertyID,
+    _in_property_id: AudioQueuePropertyID,
     _in_data: ConstVoidPtr,
     _in_data_size: u32,
 ) -> OSStatus {
@@ -1209,7 +1212,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueFlush(_)),
     export_c_func!(AudioQueueFreeBuffer(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
-    export_c_func!(AudioQueueGetCurrentTime(_, _, _, _, _)),
+    export_c_func!(AudioQueueGetCurrentTime(_, _, _, _, _, _)),
     export_c_func!(AudioQueueGetPropertyInfo(_, _, _, _, _)),
     export_c_func!(AudioQueueSetProperty(_, _, _, _, _)),
     export_c_func!(AudioQueueSetOfflineRenderFormat(_, _, _, _)),
