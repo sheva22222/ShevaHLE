@@ -18,7 +18,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    let this: id = msg![env; {super(this)} initWithCoder:coder];
+    let this: id = msg![env; this initWithCoder:coder];
     if this == nil {
         return nil;
     }
