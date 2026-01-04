@@ -53,16 +53,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)playerID {
-    // Historically required; return a stable dummy string
-    msg![env; NSString stringWithUTF8String:"local_player"]
-}
-
-- (id)alias {
-    msg![env; NSString stringWithUTF8String:"Player"]
+    HostConstant::NSString("local_player").into()
 }
 
 - (id)displayName {
-    msg![env; NSString stringWithUTF8String:"Player"]
+    HostConstant::NSString("Player").into()
+}
+
+- (id)alias {
+    HostConstant::NSString("Player").into()
 }
 
 - (())loadFriendsWithCompletionHandler:(id)handler {
