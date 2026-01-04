@@ -34,15 +34,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())authenticateWithCompletionHandler:(id)_handler {
-    // Legacy API (iOS 5–6)
     log!("GKLocalPlayer authenticateWithCompletionHandler: (stub)");
 
-    // If a block is provided, call it with nil error
     if _handler != nil {
-        // handler(nil)
-        let _: () = msg![env; _handler callWithError:nil];
+        // Call block with 1 argument: NSError * (nil)
+        env.call_block(_handler, (nil,));
     }
 }
+
 
 - (())setAuthenticateHandler:(id)_handler {
     // Modern API (iOS 6+)
