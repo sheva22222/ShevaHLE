@@ -555,13 +555,13 @@ fn hypotf(env: &mut Environment, x: f32, y: f32) -> f32 {
     x.hypot(y)
 }
 
-fn rint(_env: &mut Environment, x: f64) -> f64 {
+fn rint(env: &mut Environment, x: f64) -> f64 {
     // TODO: handle errno properly
     set_errno(env, 0);
     x.round()
 }
 
-fn rintf(_env: &mut Environment, x: f32) -> f32 {
+fn rintf(env: &mut Environment, x: f32) -> f32 {
     // TODO: handle errno properly
     set_errno(env, 0);
     x.round()
