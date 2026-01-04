@@ -922,7 +922,9 @@ impl Environment {
         }
 
         if self.gdb_server.is_none() {
-            panic!("Error during CPU execution: {error:?}");
+            let pc = self.cpu.regs()[cpu::Cpu::PC];
+            log!("Crashed at PC 0x{:x}", pc);
+            panic!("Error during CPU execution at PC(0x{:x}): {:?}", pc, error);
         }
 
         echo!("Debuggable error during CPU execution: {:?}.", error);
