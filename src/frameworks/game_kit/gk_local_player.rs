@@ -5,7 +5,6 @@
  */
 //! `GKLocalPlayer`.
 
-use crate::frameworks::game_kit::gk_local_player::HostConstant::NSString;
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::objc::{id, msg, nil, objc_classes, ClassExports};
 use crate::Environment;
@@ -53,25 +52,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)playerID {
-    HostConstant::NSString("local_player").into()
-}
-
-- (id)displayName {
-    HostConstant::NSString("Player").into()
+    env.alloc_nsstring("local_player")
 }
 
 - (id)alias {
-    HostConstant::NSString("Player").into()
+    env.alloc_nsstring("Player")
 }
 
-- (())loadFriendsWithCompletionHandler:(id)handler {
-    let nsarray = env.objc.get_class("NSArray");
-    let empty = msg![env; nsarray array];
-
-    // Call completion handler: handler(empty, nil)
-    if handler != nil {
-        msg![env; handler callWithFriends:empty error:nil];
-    }
+- (id)displayName {
+    env.alloc_nsstring("Player")
 }
 
 @end
