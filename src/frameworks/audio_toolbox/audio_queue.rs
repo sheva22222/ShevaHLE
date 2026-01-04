@@ -1081,6 +1081,48 @@ pub fn AudioQueueDispose(
     0 // success
 }
 
+fn AudioQueueGetCurrentTime(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
+    0 // success
+}
+
+fn AudioQueueGetPropertyInfo(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
+    0 // success
+}
+
+fn AudioQueueSetProperty(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
+    0 // success
+}
+
+fn AudioQueueSetOfflineRenderFormat(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
+    0 // success
+}
+
+fn AudioQueueOfflineRender(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
+    0 // success
+}
+
+fn AudioQueueDeviceGetCurrentTime(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
+    0 // success
+}
+
+fn AudioQueueDeviceTranslateTime(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
+    0 // success
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
     export_c_func!(AudioQueueGetParameter(_, _, _)),
@@ -1100,4 +1142,11 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueFlush(_)),
     export_c_func!(AudioQueueFreeBuffer(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
+    export_c_func!(AudioQueueGetCurrentTime(_)),
+    export_c_func!(AudioQueueGetPropertyInfo(_)),
+    export_c_func!(AudioQueueSetProperty(_)),
+    export_c_func!(AudioQueueSetOfflineRenderFormat(_)),
+    export_c_func!(AudioQueueOfflineRender(_)),
+    export_c_func!(AudioQueueDeviceGetCurrentTime(_)),
+    export_c_func!(AudioQueueDeviceTranslateTime(_)),
 ];
