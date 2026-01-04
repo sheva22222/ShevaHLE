@@ -104,11 +104,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setItems:(id)items animated:(bool)_animated {
-    // UIKit expects an NSArray, but we safely ignore contents for now
-    let host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
-    for item in host.items.drain(..) {
+    // Step 1: move old items out while borrowed
+    let old_items = {
+        let mut host = env.objc.borrow_mut::<UINavigationBarHostObject>(this);
+        host.items.drain(..).collect::<Vec<_>>()
+    }; // ← borrow ends here
+
+    // Step 2: now it's safe to release
+    for item in old_items {
         release(env, item);
     }
+
+    // UIKit expects NSArray; ignored for now
     if items != nil {
         log!("UINavigationBar setItems:animated: (NSArray ignored)");
     }
