@@ -13,11 +13,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-// TODO: proper inheritance chain
-pub const CLASSES: ClassExports = objc_classes! {
-
-(env, this, _cmd);
-
 @implementation GKLocalPlayer: NSObject
 
 + (id)localPlayer {
