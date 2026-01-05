@@ -5,6 +5,7 @@
  */
 //! `UIActivityIndicatorView`.
 
+use crate::frameworks::core_graphics::CGRect;
 use crate::frameworks::foundation::NSInteger;
 use crate::objc::{id, msg, ClassExports};
 use crate::objc_classes;
@@ -17,20 +18,42 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIActivityIndicatorView: UIView
 
+- (id)initWithFrame:(CGRect)frame {
+    msg![env; super(this) initWithFrame:frame]
+}
+
 - (id)initWithActivityIndicatorStyle:(UIActivityIndicatorViewStyle)_style {
-    // TODO: proper init
-    msg![env; this init]
+    // UIKit apps often ignore the return value details
+    msg![env; super(this) init]
 }
 
 - (())startAnimating {
-    log!("TODO: [(UIActivityIndicatorView *){:?} startAnimating]", this);
+    log!("UIActivityIndicatorView startAnimating {:?}", this);
 }
+
 - (())stopAnimating {
-    log!("TODO: [(UIActivityIndicatorView *){:?} stopAnimating]", this);
+    log!("UIActivityIndicatorView stopAnimating {:?}", this);
+}
+
+- (bool)isAnimating {
+    // Always report "not animating"
+    false
 }
 
 - (())setHidesWhenStopped:(bool)_hides {
-    // TODO
+    // ignored
+}
+
+- (bool)hidesWhenStopped {
+    true
+}
+
+- (())setActivityIndicatorViewStyle:(UIActivityIndicatorViewStyle)_style {
+    // ignored
+}
+
+- (UIActivityIndicatorViewStyle)activityIndicatorViewStyle {
+    0
 }
 
 @end
