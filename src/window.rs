@@ -41,8 +41,8 @@ fn size_for_orientation(
     let s = scale_hack.get();
     match orientation {
         DeviceOrientation::Portrait => (640 * s, 960 * s),
-        DeviceOrientation::LandscapeLeft => (960 * s, 640 * s),
-        DeviceOrientation::LandscapeRight => (960 * s, 640 * s),
+        DeviceOrientation::LandscapeLeft => (964 * s, 644 * s),
+        DeviceOrientation::LandscapeRight => (964 * s, 644 * s),
     }
 }
 fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
