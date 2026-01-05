@@ -36,11 +36,8 @@ use crate::frameworks::core_graphics::cg_context::{CGContextClearRect, CGContext
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_array, NSInteger, NSTimeInterval, NSUInteger};
-use crate::mem::{ConstVoidPtr, GuestUSize};
-use crate::objc::{
-    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain, Class,
-    ClassExports, HostObject, NSZonePtr, ObjC, SEL,
-};
+use crate::mem::{ConstVoidPtr, GuestUSize, MutVoidPtr};
+use crate::objc::{autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports, HostObject, NSZonePtr, ObjC, SEL};
 use crate::Environment;
 
 const _touchHLE_kCATransactionAnimationId: &str = "_touchHLE_kCATransactionAnimationId";
@@ -160,6 +157,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.get_known_class("CALayer", &mut env.mem)
 }
 
+    
++ (()) beginAnimations: (id)_animationID context: (MutVoidPtr)_context {}
+
++ (()) setAnimationCurve: (NSInteger) _curve {}
++ (()) setAnimationDuration: (NSTimeInterval) _duration {}
++ (()) setAnimationDelay: (NSTimeInterval) _delay {}
++ (()) setAnimationDelegate: (id) _delegate {}
++ (()) setAnimationWillStartSelector: (SEL) _selector {}
++ (()) setAnimationDidStopSelector: (SEL) _selector {}
+
++ (()) commitAnimations {}
+    
 + (())setAnimationDuration:(NSTimeInterval)duration {
     log_dbg!("[UIView setAnimationDuration:{:?}]", duration);
     () = msg_class![env; CATransaction setAnimationDuration:duration];
