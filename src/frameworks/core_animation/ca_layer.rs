@@ -192,6 +192,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 // TODO: sublayers accessors
 
+- (()) addAnimation:(id)anim
+             forKey:(id)key {
+    log!("Ignoring CALayer({:?}) addAnimation:{:?} forKey:{:?}", this, anim, key);
+             }
+    
 - (())addSublayer:(id)layer {
     if env.objc.borrow::<CALayerHostObject>(layer).superlayer == this {
         () = msg![env; this bringSublayerToFront:layer];
@@ -247,6 +252,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         let bounds: id = msg_class![env; NSValue valueWithCGRect: bounds];
         add_default_implied_basic_animation(env, this, "bounds", old_bounds, bounds);
     }
+}
+- (())setMasksToBounds:(bool)masksToBounds {
+    log!("Ignoring [(CALayer*){:?} setMasksToBounds:{:?}]", this, masksToBounds);
 }
 - (CGPoint)position {
     env.objc.borrow::<CALayerHostObject>(this).position
