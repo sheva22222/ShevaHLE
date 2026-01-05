@@ -42,6 +42,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.alloc_object(this, Box::new(host), &mut env.mem)
 }
 
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    let this: id = msg![env; this initWithCoder:coder];
+    if this == nil {
+        return nil;
+    }
+
+    log!("TODO: [(UINavigationBar*) {:?} initWithCoder:{:?}]", this, coder);
+    this
+}
+
 - (id)init {
     msg![env; this init]
 }
