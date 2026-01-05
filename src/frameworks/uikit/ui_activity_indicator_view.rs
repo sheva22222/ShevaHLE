@@ -18,13 +18,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIActivityIndicatorView: UIView
 
-- (id)initWithFrame:(CGRect)frame {
-    msg![env; super(this) initWithFrame:frame]
+- (id)initWithFrame:(CGRect)_frame {
+    msg![env; this init]
 }
 
 - (id)initWithActivityIndicatorStyle:(UIActivityIndicatorViewStyle)_style {
-    // UIKit apps often ignore the return value details
-    msg![env; super(this) init]
+    msg![env; this init]
 }
 
 - (())startAnimating {
