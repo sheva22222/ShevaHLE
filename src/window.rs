@@ -35,14 +35,14 @@ pub enum DeviceOrientation {
     LandscapeRight,
 }
 fn size_for_orientation(
+fn size_for_orientation(
     orientation: DeviceOrientation,
-    scale_hack: NonZeroU32
+    _scale_hack: NonZeroU32,
 ) -> (u32, u32) {
-    let s = scale_hack.get();
     match orientation {
-        DeviceOrientation::Portrait => (640 * s, 960 * s),
-        DeviceOrientation::LandscapeLeft => (964 * s, 644 * s),
-        DeviceOrientation::LandscapeRight => (964 * s, 644 * s),
+        DeviceOrientation::Portrait => (680, 1020),
+        DeviceOrientation::LandscapeLeft => (1020, 680),
+        DeviceOrientation::LandscapeRight => (1020, 680),
     }
 }
 fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
