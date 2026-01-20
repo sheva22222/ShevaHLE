@@ -65,6 +65,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)name {
+    env.objc.borrow_mut::<NSTimeZoneHostObject>(this).time_zone
+}
+    
 - (bool)isEqualToTimeZone:(id)other {
     if other == nil {
         return false;
