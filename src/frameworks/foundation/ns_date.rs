@@ -103,6 +103,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     let new: id = msg![env; new initWithTimeIntervalSinceReferenceDate:secs];
     autorelease(env, new)
 }
+    
++ (id)dateWithTimeIntervalSinceReferenceDate:(NSTimeInterval)secs {
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithTimeIntervalSinceReferenceDate:secs];
+    autorelease(env, new)
+}
 
 - (id)copyWithZone:(NSZonePtr)_zone {
     this
