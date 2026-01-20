@@ -7,7 +7,7 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
-use crate::mem::MutPtr;
+use crate::mem::{ConstPtr,MutPtr};
 use crate::Environment;
 
 // TODO: move to `fenv.h`
@@ -567,6 +567,12 @@ fn rintf(env: &mut Environment, x: f32) -> f32 {
     x.round()
 }
 
+// Other
+fn nan(env: &mut Environment, arg: ConstPtr<u8>) -> f32 {
+    assert_eq!(env.mem.read(arg), b'\0'); // TODO
+    f32::NAN
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(abs(_)),
     export_c_func!(fabs(_)),
@@ -675,4 +681,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(hypotf(_, _)),
     export_c_func!(rint(_)),
     export_c_func!(rintf(_)),
+    // Other
+    export_c_func!(nan(_)),
 ];
