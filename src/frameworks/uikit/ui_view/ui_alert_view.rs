@@ -83,6 +83,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     );
 }
 
+- (())addButtonWithTitle:(id)title {
+    log!("TODO: [(UIAlertView *){:?} addButtonWithTitle:{}]", this, ns_string::to_rust_string(env, title));
+}
+    
 - (id)initWithTitle:(id)title
                       message:(id)message
                      delegate:(id)delegate
@@ -100,6 +104,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())show {
     log!("TODO: [(UIAlertView*){:?} show]", this);
 }
+    
 @end
 
 };
