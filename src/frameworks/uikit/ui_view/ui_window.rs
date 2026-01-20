@@ -7,8 +7,15 @@
 
 use super::UIViewHostObject;
 use crate::dyld::{ConstantExports, HostConstant};
+use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string;
+use crate::frameworks::uikit::ui_application::{
+    UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight,
+};
+use crate::frameworks::uikit::ui_device::{
+    UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight,
+};
 use crate::objc::{id, msg, msg_class, msg_super, nil, objc_classes, ClassExports};
 
 #[derive(Default)]
@@ -141,6 +148,46 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; vc viewWillAppear:false];
     () = msg_super![env; this addSubview:view];
     () = msg![env; vc viewDidAppear:false];
+
+    if let Some(orientation) = match env.window.as_ref().unwrap().current_rotation() {
+        crate::window::DeviceOrientation::LandscapeLeft => Some(UIDeviceOrientationLandscapeLeft),
+        crate::window::DeviceOrientation::LandscapeRight => Some(UIDeviceOrientationLandscapeRight),
+        // Portrait is the default so we don't do anything here.
+        crate::window::DeviceOrientation::Portrait => None,
+    } {
+        // (UIInterfaceOrientation and UIDeviceOrientation are compatible enums,
+        //  here we use whichever is clearer contextually.)
+        let should = msg![env; vc shouldAutorotateToInterfaceOrientation:orientation];
+        log_dbg!("[{:?} shouldAutorotateToInterfaceOrientation:{:?}] => {:?}", vc, orientation, should);
+        if should {
+            log_dbg!("App requested autorotation; applying orientation transform to view {:?}.", view);
+            let transform = match orientation {
+                UIInterfaceOrientationLandscapeLeft => CGAffineTransform::make_rotation(-std::f32::consts::FRAC_PI_2),
+                UIInterfaceOrientationLandscapeRight => CGAffineTransform::make_rotation(std::f32::consts::FRAC_PI_2),
+                _ => unimplemented!(),
+            };
+
+            let window_frame: CGRect = msg![env; this frame];
+            log_dbg!("Window frame: {window_frame:?}");
+            let view_frame: CGRect = msg![env; view frame];
+            log_dbg!("Old view frame: {view_frame:?}");
+
+            () = msg![env; view setTransform:transform];
+
+            // Re-apply the view's old frame to compensate for the rotation
+            // effectively offseting its center position and changing the size.
+            // FIXME: I have no idea if this is how this should be solved, but
+            //        it works for DMC4 Refrain at least.
+
+            let view_frame: CGRect = msg![env; view frame];
+            log_dbg!("Old view frame after transform: {view_frame:?}");
+
+            () = msg![env; view setFrame:window_frame];
+
+            let view_frame: CGRect = msg![env; view frame];
+            log_dbg!("New view frame after re-applying old view frame: {view_frame:?}");
+        }
+    }
 }
 
 - (CGPoint)convertPoint:(CGPoint)point
