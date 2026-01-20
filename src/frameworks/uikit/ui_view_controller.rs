@@ -11,6 +11,9 @@
 use crate::frameworks::core_graphics::CGRect;
 use crate::frameworks::foundation::ns_objc_runtime::NSStringFromClass;
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
+use crate::frameworks::uikit::ui_application::{
+    UIInterfaceOrientation, UIInterfaceOrientationPortrait,
+};
 use crate::frameworks::uikit::ui_view::set_view_controller;
 use crate::objc::{
     id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports, HostObject,
@@ -193,6 +196,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     log_dbg!("[(UIViewController*){:?} setWantsFullScreenLayout:{}]", this, wants);
 }
 
+- (bool)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interface_orientation {
+    interface_orientation == UIInterfaceOrientationPortrait
+}
+    
 @end
 
 };
