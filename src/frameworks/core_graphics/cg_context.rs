@@ -7,12 +7,13 @@
 
 use super::cg_affine_transform::CGAffineTransform;
 use super::cg_image::CGImageRef;
-use super::{cg_bitmap_context, CGFloat, CGPoint, CGRect, CGSize};
+use super::{cg_bitmap_context, cg_color, CGFloat, CGPoint, CGRect, CGSize};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::core_graphics::cg_bitmap_context::{
     CGBitmapContextGetHeight, CGBitmapContextGetWidth,
 };
+use crate::frameworks::core_graphics::cg_color::CGColorRef;
 use crate::frameworks::core_graphics::cg_geometry::CGPointZero;
 use crate::mem::{ConstPtr, GuestUSize, Ptr};
 use crate::objc::{objc_classes, ClassExports, HostObject};
@@ -83,6 +84,11 @@ pub fn CGContextRetain(env: &mut Environment, c: CGContextRef) -> CGContextRef {
     } else {
         c
     }
+}
+
+fn CGContextSetFillColorWithColor(env: &mut Environment, context: CGContextRef, color: CGColorRef) {
+    let (r, g, b, a) = cg_color::to_rgba(&env.objc, color);
+    CGContextSetRGBFillColor(env, context, r, g, b, a)
 }
 
 pub fn CGContextSetRGBFillColor(
@@ -920,6 +926,7 @@ fn CGContextAddPath(
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
+    export_c_func!(CGContextSetFillColorWithColor(_, _)),
     export_c_func!(CGContextSetRGBFillColor(_, _, _, _, _)),
     export_c_func!(CGContextSetGrayFillColor(_, _, _)),
     export_c_func!(CGContextFillRect(_, _)),
