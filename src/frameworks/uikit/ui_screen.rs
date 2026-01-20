@@ -42,9 +42,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (CGRect)bounds {
     // TODO: once rotation is supported, this must change with the rotation!
+    let (width, height) = env.window().device_family().portrait_size();
     CGRect {
         origin: CGPoint { x: 0.0, y: 0.0 },
-        size: CGSize { width: 320.0, height: 480.0 },
+        size: CGSize { width: width as f32, height: height as f32 },
     }
 }
 
