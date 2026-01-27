@@ -11,7 +11,10 @@ mod av_audio_player;
 pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     path: "/System/Library/Frameworks/AVFoundation.framework/AVFoundation",
     aliases: &[],
-    class_exports: &[av_audio_player::CLASSES],
+    class_exports: &[
+        av_audio_player::CLASSES,
+        av_audio_session::CLASSES,
+    ],
     constant_exports: &[],
     function_exports: &[],
 };
