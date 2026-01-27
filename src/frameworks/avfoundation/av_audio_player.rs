@@ -1,3 +1,4 @@
+
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -5,7 +6,7 @@
  */
 //! AVAudioPlayer
 //!
-//! Implemented using Audio Queue Services based on [the PlayingAudio example](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioQueueProgrammingGuide/AQPlayback/PlayingAudio.html)
+//! Implemented using Audio Queue Services based on [the PlayingAudio example](https://developer.apple.com/library/archive/documentation/MusicAudio/Conceptual/AudioQueueProgrammingGuide/AQPlayback/Pla[...]
 
 use crate::dyld::HostFunction;
 use crate::frameworks::audio_toolbox::audio_file::{
@@ -23,6 +24,8 @@ use crate::frameworks::core_audio_types::AudioStreamBasicDescription;
 use crate::frameworks::core_foundation::cf_run_loop::kCFRunLoopCommonModes;
 use crate::frameworks::foundation::ns_error::NSOSStatusErrorDomain;
 use crate::frameworks::foundation::{ns_string, NSInteger, NSTimeInterval};
+use crate::frameworks::foundation::ns_data; // <-- added
+use crate::fs::GuestPath; // <-- added
 use crate::mem::{guest_size_of, GuestUSize, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{
     id, msg, msg_class, nil, release, retain, todo_objc_setter, Class, ClassExports, HostObject,
@@ -107,6 +110,33 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     this
+}
+
+// New initializer: create temp file from NSData and forward to initWithContentsOfURL:error.
+// This intentionally does not write to the outError pointer (i.e. "no error") — it simply
+// returns nil on filesystem write failure and otherwise calls initWithContentsOfURL: with a null error pointer.
+- (id)initWithData:(id)data error:(MutPtr<id>)outError {
+    log_dbg!("[(AVAudioPlayer*){:?} initWithData: {:?} error:{:?}]", this, data, outError);
+
+    // Convert NSData -> Rust slice
+    let bytes: &[u8] = ns_data::to_rust_slice(env, data);
+
+    // Write to a temporary file. We use a fixed filename; repeated calls will overwrite.
+    // This avoids introducing dependencies for generating unique filenames.
+    let file_path = "/tmp/touchHLE_av_audio_init.caf".to_string();
+    let guest_path = GuestPath::new(&file_path);
+
+    if env.fs.write(guest_path, bytes).is_err() {
+        // Per request: do not set outError. Just return nil on failure.
+        return nil;
+    }
+
+    // Build an NSURL for the temporary file and forward to initWithContentsOfURL:error:
+    let url: id = msg_class![env; NSURL alloc];
+    let url: id = msg![env; url initFileURLWithPath: ns_string::from_rust_string(env, file_path)];
+
+    // Forward to existing initializer, but pass a null error pointer (no error returned).
+    msg![env; this initWithContentsOfURL:url error: Ptr::null()]
 }
 
 - (())setDelegate:(id)delegate {
