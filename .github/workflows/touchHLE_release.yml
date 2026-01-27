@@ -2,9 +2,9 @@ name: Build touchHLE
 
 on:
   push:
-    branches: [ "trunk" ]
+    branches: [ "wip-acexi" ]
   pull_request:
-    branches: [ "trunk" ]
+    branches: [ "wip-acexi" ]
   create: # for tags
 
 env:
