@@ -196,10 +196,17 @@ impl Bundle {
                     .collect()
             })
             .unwrap_or_else(|| {
-                vec![self
+                if let Some(v) = self
                     .plist
-                    .get("UIInterfaceOrientation")
-                    .map_or("UIInterfaceOrientationPortrait", |o| o.as_string().unwrap())]
+                    .get("UIInterfaceOrientation") {
+                    let str = v.as_string().unwrap();
+                    if str.contains(',') {
+                        log!("UIInterfaceOrientation is a comma separated list of strings ({}), splitting!", str);
+                    }
+                    str.split(',').collect()
+                } else {
+                    vec!["UIInterfaceOrientationPortrait"]
+                }
             })
     }
     
