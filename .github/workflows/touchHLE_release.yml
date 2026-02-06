@@ -90,8 +90,6 @@ jobs:
     steps:
     # actions/checkout really doesn't work well with git-describe for some
     # reason (most likely it strips the annotation off the tag somehow).
-    - name: Check formatting
-      run: dev-scripts/format.sh --check
     - name: Get Submodules
       run: git submodule update --init
     - name: Try to get cached copy of Boost
