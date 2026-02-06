@@ -2,7 +2,7 @@ name: Build touchHLE
 
 on:
   push:
-    branches: [ "patch-1" ]
+    branches: [ "patch-16" ]
   pull_request:
     branches: [ "patch-1" ]
   create: # for tags
