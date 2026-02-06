@@ -233,6 +233,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<NSThreadHostObject>(this).finished
 }
 
+- (bool)isCancelled {
+    log!("TODO: [(NSThread *){:?} isCancelled]", this);
+    false
+}
+    
 - (id)name {
     env.objc.borrow::<NSThreadHostObject>(this).name
 }
