@@ -154,6 +154,20 @@ fn CFStringCreateWithCString(
     msg![env; ns_string initWithCString:c_string encoding:encoding]
 }
 
+fn CFStringCreateWithFileSystemRepresentation(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    file_system_rep: ConstPtr<u8>,
+) -> CFStringRef {
+    // CFStringCreateWithFileSystemRepresentation is expected to create a CFString
+    // from a C file-system representation. Use NSString's convenience
+    // constructor to avoid panics.
+    // assert!(allocator == kCFAllocatorDefault);
+    // NSString has +stringWithFileSystemRepresentation:
+    let ns_string: id = msg_class![env; NSString stringWithFileSystemRepresentation:file_system_rep];
+    ns_string
+}
+
 fn CFStringCreateWithFormat(
     env: &mut Environment,
     allocator: CFAllocatorRef,
@@ -350,6 +364,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringCreateMutableCopy(_, _, _)),
     export_c_func!(CFStringCreateWithBytes(_, _, _, _, _)),
     export_c_func!(CFStringCreateWithCString(_, _, _)),
+    export_c_func!(CFStringCreateWithFileSystemRepresentation(_, _, _)),
     export_c_func!(CFStringCreateWithFormat(_, _, _, _)),
     export_c_func!(CFStringCreateWithFormatAndArguments(_, _, _, _)),
     export_c_func!(CFStringCompare(_, _, _)),
