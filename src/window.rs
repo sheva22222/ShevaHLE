@@ -13,7 +13,7 @@
 //! will be needed for the runtime of the app.
 
 use crate::gles::present::present_frame;
-use crate::gles::{create_gles1_ctx, GLES};
+use crate::gles::{create_gles1_ctx, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::options::Options;
@@ -62,7 +62,6 @@ impl TryFrom<&str> for DeviceFamily {
         }
     }
 }
-
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum DeviceOrientation {
