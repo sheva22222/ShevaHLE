@@ -59,16 +59,7 @@ fn wmemcpy(
     src: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::memcpy(env, dest, src, size, GuestUSize::MAX)
-}
-fn __wmemcpy_chk(
-    env: &mut Environment,
-    dest: MutPtr<wchar_t>,
-    src: ConstPtr<wchar_t>,
-    size: GuestUSize,
-    dest_size: GuestUSize,
-) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::memcpy(env, dest, src, size, dest_size)
+    GenericChar::<wchar_t>::memcpy(env, dest, src, size)
 }
 fn wmemmove(
     env: &mut Environment,
@@ -188,7 +179,6 @@ pub const FUNCTIONS: FunctionExports = &[
     // Functions shared with string.rs
     export_c_func!(wmemset(_, _, _)),
     export_c_func!(wmemcpy(_, _, _)),
-    export_c_func!(__wmemcpy_chk(_, _, _, _)),
     export_c_func!(wmemmove(_, _, _)),
     export_c_func!(__wmemmove_chk(_, _, _, _)),
     export_c_func!(wmemchr(_, _, _)),
