@@ -7,7 +7,7 @@
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
-use crate::libc::errno::{set_errno, EACCES, ENOENT, EROFS};
+use crate::libc::errno::{set_errno, EINVAL};
 use crate::libc::posix_io::{FileDescriptor, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use crate::mem::{ConstPtr, GuestUSize, MutPtr, PAGE_SIZE};
 use crate::Environment;
@@ -80,7 +80,6 @@ fn access(env: &mut Environment, path: ConstPtr<u8>, mode: i32) -> i32 {
             if exists {
                 0
             } else {
-                set_errno(env, ENOENT);
                 -1
             }
         }
@@ -88,7 +87,6 @@ fn access(env: &mut Environment, path: ConstPtr<u8>, mode: i32) -> i32 {
             if execute {
                 0
             } else {
-                set_errno(env, EACCES);
                 -1
             }
         }
@@ -96,7 +94,6 @@ fn access(env: &mut Environment, path: ConstPtr<u8>, mode: i32) -> i32 {
             if write {
                 0
             } else {
-                set_errno(env, EROFS);
                 -1
             }
         }
@@ -104,7 +101,6 @@ fn access(env: &mut Environment, path: ConstPtr<u8>, mode: i32) -> i32 {
             if read {
                 0
             } else {
-                set_errno(env, EACCES);
                 -1
             }
         }
