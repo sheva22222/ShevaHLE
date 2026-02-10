@@ -63,6 +63,7 @@ impl TryFrom<&str> for DeviceFamily {
     }
 }
 
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum DeviceOrientation {
     Portrait,
@@ -75,6 +76,13 @@ fn size_for_orientation(
     scale_hack: NonZeroU32,
 ) -> (u32, u32) {
     let (width, height) = family.portrait_size();
+    let scale_hack = scale_hack.get();
+    match orientation {
+        DeviceOrientation::Portrait => (width * scale_hack, height * scale_hack),
+        DeviceOrientation::LandscapeLeft => (height * scale_hack, width * scale_hack),
+        DeviceOrientation::LandscapeRight => (height * scale_hack, width * scale_hack),
+    }
+}
 fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
     let (short_side, long_side) = if screen_size.0 < screen_size.1 {
         (screen_size.0, screen_size.1)
