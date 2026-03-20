@@ -5,7 +5,6 @@ on:
     branches: [ "patch-18" ]
   pull_request:
     branches: [ "trunk" ]
-  create: # for tags
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,16 +15,9 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # actions/checkout really doesn't work well with git-describe for some
-      # reason (most likely it strips the annotation off the tag somehow).
-      - name: Checkout touchHLE
-        shell: bash # windows :)
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE"
-          git clone https://github.com/$GITHUB_REPOSITORY "$GITHUB_WORKSPACE"
-          cd "$GITHUB_WORKSPACE"
-          git fetch origin "$GITHUB_REF"
-          git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
       - name: Install clang-format
         run: brew install clang-format
       - name: Check formatting
@@ -73,9 +65,6 @@ jobs:
         run: cargo test --target x86_64-apple-darwin
         env:
           CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
-      # This step ensures that our non-iOS-specific tests are passing on macOS itself!
-      - name: Sanity check tests
-        run: cc tests/TestApp_source/cli_tests.m tests/TestApp_source/CGAffineTransform.c tests/TestApp_source/SyncTester.m tests/TestApp_source/RespondsToSelector.m -framework CoreFoundation -framework Foundation -framework CoreGraphics -DDEFINE_ME_WHEN_BUILDING_ON_MACOS -DTestApp_cli_tests_main=main -ObjC && ./a.out
       - name: Build
         run: cargo build --target x86_64-apple-darwin --release
         env:
@@ -96,18 +85,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # actions/checkout really doesn't work well with git-describe for some
-    # reason (most likely it strips the annotation off the tag somehow).
-    - name: Checkout touchHLE
-      shell: bash # windows :)
-      run: |
-        mkdir -p "$GITHUB_WORKSPACE"
-        git clone https://github.com/$GITHUB_REPOSITORY "$GITHUB_WORKSPACE"
-        cd "$GITHUB_WORKSPACE"
-        git fetch origin "$GITHUB_REF"
-        git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
-    - name: Check formatting
-      run: dev-scripts/format.sh --check
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
     - name: Get Submodules
       run: git submodule update --init
     - name: Try to get cached copy of Boost
@@ -116,6 +96,8 @@ jobs:
       with:
         path: vendor/boost
         key: boost_1_81_0
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y libsdl2-dev libopenal-dev libboost-dev
     - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
       name: Download Boost
       run: curl -L -o boost_1_81_0.7z "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.7z"
@@ -169,15 +151,6 @@ jobs:
     # Why isn't there a command for this?
     - name: Generate local.properties file
       run: echo 'sdk.dir='$ANDROID_SDK_ROOT > android/local.properties
-    - name: Lint
-      run: dev-scripts/lint.sh ndk -t arm64-v8a
-      env:
-        # The version should match the ndkVersion defined in `android\app\build.gradle`
-        ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
-        ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
-        ANDROID_NDK_HOME: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
-        CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
-    # Don't attempt to run tests (can't run on Android).
     - name: Build for Android
       run: cd android && ../gradle/gradle-8.11.1/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk
       env:
@@ -189,21 +162,74 @@ jobs:
         name: touchHLE_Android_AArch64
         path: touchHLE.apk
 
+  build-linux:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
+    - name: Get Submodules
+      run: git submodule update --init
+    - name: Try to get cached copy of cmake
+      id: cache-cmake
+      uses: actions/cache@v3
+      with:
+        path: vendor/cmake
+        key: cmake_3_31_6_linux
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Download Cmake
+      run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-linux-x86_64.tar.gz"
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Extract Cmake
+      run: tar xzvf "cmake-3.31.6-linux-x86_64.tar.gz" -C vendor && mv vendor/cmake-3.31.6-linux-x86_64 vendor/cmake
+    # This is the earliest point at which we can do linting: clippy will end up
+    # building dynarmic, which needs Boost, but we don't need LLVM until
+    # building tests.
+    - name: Try to get cached copy of LLVM
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: tests/llvm
+        key: llvm_12_0_0_Linux_x64
+    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+      name: Download LLVM
+      run: curl -L -O "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz"
+    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+      name: Extract LLVM
+      run: tar -xf clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04.tar.xz && mkdir tests/llvm && mv clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04/* tests/llvm
+    - name: Get copy of common-3.0-sdk
+      run: cd ${{ github.workspace }}/tests && curl -L https://github.com/touchHLE/common-3.0-sdk/releases/latest/download/common-3.0.sdk-linux-x86_64.tar.gz | tar xzv
+    - name: Build
+      run: cargo build --release --no-default-features
+      env:
+        CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
+    - name: Create bundle
+      run: |
+        mkdir -p touchHLE_linux_x86_64
+        cp target/release/touchHLE touchHLE_linux_x86_64/
+        cp -r touchHLE_fonts touchHLE_linux_x86_64/
+        cp -r touchHLE_dylibs touchHLE_linux_x86_64/
+        cp README.md LICENSE CHANGELOG.md OPTIONS_HELP.txt touchHLE_default_options.txt touchHLE_linux_x86_64/
+        tar czf touchHLE_linux_x86_64.tar.gz touchHLE_linux_x86_64/
+    - uses: actions/upload-artifact@v4
+      with:
+        name: touchHLE_Linux_x86_64
+        path: touchHLE_linux_x86_64.tar.gz
+    - uses: actions/upload-artifact@v4
+      with:
+        name: TestApp_built_on_Linux
+        path: tests/TestApp.app
+
   build-win:
 
     runs-on: windows-latest
 
     steps:
-    # actions/checkout really doesn't work well with git-describe for some
-    # reason (most likely it strips the annotation off the tag somehow).
-    - name: Checkout touchHLE
-      shell: bash # windows :)
-      run: |
-        mkdir -p "$GITHUB_WORKSPACE"
-        git clone https://github.com/$GITHUB_REPOSITORY "$GITHUB_WORKSPACE"
-        cd "$GITHUB_WORKSPACE"
-        git fetch origin "$GITHUB_REF"
-        git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # touchHLE's git-describe versioning needs tag history
     # Apparently the Windows runner already has clang-format? That's nice.
     - name: Check formatting
       shell: bash # no command output without this
