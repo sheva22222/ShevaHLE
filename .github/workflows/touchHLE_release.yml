@@ -204,7 +204,7 @@ jobs:
     - name: Install Boost
       run: sudo apt-get install -y libboost-dev
     - name: Build
-      run: cargo build --release --no-default-features
+      run: cargo build --release
       env:
         CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
     - name: Create bundle
